@@ -37,6 +37,14 @@ recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include examples *.py
 recursive-include examples *.sh
+recursive-include sdsc_deployer *.css
+recursive-include sdsc_deployer *.gif
 recursive-include sdsc_deployer *.html
+recursive-include sdsc_deployer *.ico
+recursive-include sdsc_deployer *.js
+recursive-include sdsc_deployer *.json
+recursive-include sdsc_deployer *.map
+recursive-include sdsc_deployer *.png
+recursive-include sdsc_deployer *.ttf
 recursive-include sdsc_deployer *.yaml
 recursive-include tests *.py

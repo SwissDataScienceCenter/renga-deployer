@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import, print_function
 
-from . import config
+from . import config, v1
 from .views import blueprint
 
 
@@ -35,6 +35,7 @@ class SDSCDeployer(object):
         """Flask application initialization."""
         self.init_config(app)
         app.register_blueprint(blueprint)
+        app.register_blueprint(v1.bp, url_prefix='/v1')
         app.extensions['sdsc-deployer'] = self
 
     def init_config(self, app):

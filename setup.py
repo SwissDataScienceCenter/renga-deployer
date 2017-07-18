@@ -52,7 +52,12 @@ setup_requires = [
 ]
 
 install_requires = [
+    'Flask>=0.12.2',
     'Flask-BabelEx>=0.9.2',
+    'Flask-RESTful>=0.3.6',
+    'Jinja2>=2.9.6',
+    'jsonschema>=2.6.0',
+    'six>=1.10.0',
 ]
 
 packages = find_packages()
@@ -69,7 +74,7 @@ setup(
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='SDSC TODO',
+    keywords='SDSC deployer',
     license='Apache License 2.0',
     author='Swiss Data Science Center',
     author_email='contact@datascience.ch',

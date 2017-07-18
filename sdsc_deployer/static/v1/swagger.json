@@ -1,0 +1,180 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "SDSC Deployer Service.",
+    "version": "1.0.0",
+    "title": "SDSC Deployer Service",
+    "termsOfService": "http://datascience.ch/terms/",
+    "contact": {
+      "email": "contact@datascience.ch"
+    },
+    "license": {
+      "name": "GPL 2.0",
+      "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"
+    }
+  },
+  "basePath": "/v1",
+  "tags": [
+    {
+      "name": "deployer",
+      "description": "Everything about deployed nodes.",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "http://datascience.ch/services/deployer"
+      }
+    }
+  ],
+  "paths": {
+    "/nodes": {
+      "get": {
+        "tags": [
+          "deployer"
+        ],
+        "summary": "List deployed nodes.",
+        "description": "",
+        "operationId": "get_nodes",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Nodes"
+            }
+          },
+          "405": {
+            "description": "Invalid input"
+          }
+        },
+        "security": [
+          {
+            "sdsc_auth": [
+              "read:nodes"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "deployer"
+        ],
+        "summary": "Create a new node.",
+        "description": "",
+        "operationId": "create_node",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Pet object that needs to be added to the store",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Node"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Pet not found"
+          },
+          "405": {
+            "description": "Validation exception"
+          }
+        },
+        "security": [
+          {
+            "sdsc_auth": [
+              "write:nodes",
+              "read:nodes"
+            ]
+          }
+        ]
+      }
+    },
+    "/nodes/{node_id}": {
+      "get": {
+        "tags": [
+          "deployer"
+        ],
+        "summary": "Find node by ID",
+        "description": "Returns a single node",
+        "operationId": "get_node",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "ID of node to return",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Node"
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Node not found"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "sdsc_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "https://testing.datascience.ch:8080",
+      "flow": "implicit",
+      "scopes": {
+        "write:nodes": "modify nodes",
+        "read:nodes": "read nodes"
+      }
+    }
+  },
+  "definitions": {
+    "Node": {
+      "type": "object",
+      "properties": {
+        "app_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "deploy_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "docker_image": {
+          "type": "string"
+        },
+        "network_ports": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Node"
+      }
+    }
+  }
+}
