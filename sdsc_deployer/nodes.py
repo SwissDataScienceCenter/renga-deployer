@@ -15,6 +15,13 @@
 # limitations under the License.
 
 
-[pytest]
-pep8ignore = docs/conf.py ALL
-addopts = --pep8 --doctest-glob="*.rst" --doctest-modules --cov=sdsc_deployer --cov-report=term-missing
+"""Nodes sub-module."""
+
+class Node(object):
+    pass
+
+class DockerNode(Node):
+    pass
+
+class K8SNode(Node):
+    pass

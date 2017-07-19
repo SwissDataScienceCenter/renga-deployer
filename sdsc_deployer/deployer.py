@@ -15,14 +15,16 @@
 # limitations under the License.
 
 
-"""Deployer sub-module tests."""
-
-from __future__ import absolute_import, print_function
+"""Deployer sub-module."""
 
 import os
 
+from .nodes import DockerNode, K8SNode
 
 class Deployer(object):
+
+    ENGINES = {'docker': DockerNode,
+               'k8s': K8SNode}
 
     def __init__(self, engines=None, **kwargs):
         self.engines = engines or {}
@@ -39,4 +41,9 @@ class Deployer(object):
                 engines[engine] =  os.environ[key]
 
         return cls(engines=engines)
+
+
+    def create(self, data):
+        """Create a Node for the engine indicated in data."""
+        return self.ENGINES[data['env']['engine']]()
 

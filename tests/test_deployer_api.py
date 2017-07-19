@@ -17,29 +17,32 @@
 
 """Deployer sub-module tests."""
 
-from __future__ import absolute_import, print_function
+import pytest
 
 from flask import Flask
 
 from sdsc_deployer.deployer import Deployer
-# from sdsc_deployer.nodes import DockerNode
+from sdsc_deployer.nodes import DockerNode, K8SNode
 
 
 def test_deployer_env_create(monkeypatch):
-    """Test creation from environment"""
-
-    monkeypatch.setenv('DEPLOYER_ENGINE_DOCKER', 'docker:///var/lib/docker.sock')
+    """Test creation from environment."""
+    monkeypatch.setenv('DEPLOYER_ENGINE_DOCKER',
+                       'docker:///var/lib/docker.sock')
 
     d = Deployer.from_env()
 
     assert 'docker' in d.engines
 
 
-def test_docker_node_create(app):
+@pytest.mark.parametrize('engine,node_cls', [
+    ('docker', DockerNode),
+    ('k8s', K8SNode)])
+def test_docker_node_create(engine, node_cls, deployer):
     """Test docker node creation."""
-    node = Deployer.create(data={'name': 'test',
+    node = deployer.create(data={'name': 'test',
                                  'ports': [9000],
-                                 'env': {'engine': 'docker',
+                                 'env': {'engine': engine,
                                          'image': 'alpine'}})
 
-    assert isinstance(node, DockerNode)
+    assert isinstance(node, node_cls)

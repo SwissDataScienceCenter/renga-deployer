@@ -26,6 +26,7 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 
+from sdsc_deployer.deployer import Deployer
 
 @pytest.yield_fixture()
 def instance_path():
@@ -52,3 +53,9 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.fixture()
+def deployer():
+    """Initiate a deployer."""
+    return Deployer(engines={'docker':'docker:///var/lib/docker.sock'})
