@@ -15,16 +15,28 @@
 # limitations under the License.
 
 
-"""SDSC Deployer Service."""
+"""Deployer sub-module tests."""
 
 from __future__ import absolute_import, print_function
 
-from .ext import SDSCDeployer
-from .version import __version__
-
-from .deployer import Deployer
+import os
 
 
-from_env = Deployer.from_env
+class Deployer(object):
 
-__all__ = ('__version__', 'SDSCDeployer', 'from_env')
+    def __init__(self, engines=None, **kwargs):
+        self.engines = engines or {}
+
+    @classmethod
+    def from_env(cls, prefix='DEPLOYER_'):
+        engines = {}
+
+        # grab engine definitions
+        engine_prefix = prefix + 'ENGINE_'
+        for key in os.environ:
+            if key.startswith(engine_prefix):
+                engine = key[len(engine_prefix):].lower()
+                engines[engine] =  os.environ[key]
+
+        return cls(engines=engines)
+
