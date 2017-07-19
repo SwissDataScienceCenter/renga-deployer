@@ -40,9 +40,6 @@ def test_deployer_env_create(monkeypatch):
     ('k8s', K8SNode)])
 def test_docker_node_create(engine, node_cls, deployer):
     """Test docker node creation."""
-    node = deployer.create(data={'name': 'test',
-                                 'ports': [9000],
-                                 'env': {'engine': engine,
-                                         'image': 'alpine'}})
+    node = deployer.create(data={'env': {'engine': engine}})
 
     assert isinstance(node, node_cls)

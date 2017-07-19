@@ -19,6 +19,7 @@
 
 from sdsc_deployer.nodes import DockerNode
 
+
 def test_docker_start():
     """Test launching a docker container."""
     node = DockerNode(env={'image': 'hello-world'})
@@ -26,5 +27,4 @@ def test_docker_start():
     execution = node.launch()
 
     assert execution.identifier
-    assert "Hello from Docker!" in execution.logs()
-
+    assert b'Hello from Docker!' in execution.logs()

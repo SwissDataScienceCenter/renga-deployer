@@ -17,11 +17,28 @@
 
 """Nodes sub-module."""
 
+from collections import namedtuple
+
 class Node(object):
     pass
 
 class DockerNode(Node):
-    pass
+    """Class for deploying nodes on docker."""
+
+    def __init__(self, env=None):
+        import docker
+
+        self.client = docker.from_env()
+        self.env = env or {}
+
+    def launch(self):
+        """Launch a docker container with the Node image."""
+        env = self.env
+        container = self.client.containers.run(env['image'], detach=True)
+        return ExecutionEnvironment(node=self, identifier=container.id, logs=container.logs)
 
 class K8SNode(Node):
     pass
+
+ExecutionEnvironment = namedtuple('ExecutionEnvironment', ['node', 'identifier', 'logs'])
+
