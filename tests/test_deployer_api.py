@@ -18,7 +18,6 @@
 """Deployer sub-module tests."""
 
 import pytest
-
 from flask import Flask
 
 from sdsc_deployer.deployer import Deployer

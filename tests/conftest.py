@@ -28,6 +28,7 @@ from flask_babelex import Babel
 
 from sdsc_deployer.deployer import Deployer
 
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""

@@ -13,24 +13,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Deployer sub-module."""
 
 import os
 
 from .nodes import DockerNode, K8SNode
 
-class Deployer(object):
 
-    ENGINES = {'docker': DockerNode,
-               'k8s': K8SNode}
+class Deployer(object):
+    """Handling the deployment of Nodes."""
+
+    ENGINES = {'docker': DockerNode, 'k8s': K8SNode}
 
     def __init__(self, engines=None, **kwargs):
+        """Create a Deployer instance.
+
+        Arguments:
+
+        engines: dict of engine name:uri pairs
+        """
         self.engines = engines or {}
 
     @classmethod
     def from_env(cls, prefix='DEPLOYER_'):
+        """Create a Deployer based on configuration read from environment variables."""
         engines = {}
 
         # grab engine definitions
@@ -38,12 +44,10 @@ class Deployer(object):
         for key in os.environ:
             if key.startswith(engine_prefix):
                 engine = key[len(engine_prefix):].lower()
-                engines[engine] =  os.environ[key]
+                engines[engine] = os.environ[key]
 
         return cls(engines=engines)
-
 
     def create(self, data):
         """Create a Node for the engine indicated in data."""
         return self.ENGINES[data['env']['engine']]()
-

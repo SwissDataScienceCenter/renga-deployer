@@ -13,18 +13,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Nodes sub-module tests."""
 
-from sdsc_deployer.nodes import DockerNode
+import pytest
+
+from sdsc_deployer.nodes import DockerNode, K8SNode
 
 
-def test_docker_start():
+@pytest.mark.parametrize('node_cls', [DockerNode, K8SNode])
+def test_launching_docker_container(node_cls):
     """Test launching a docker container."""
-    node = DockerNode(env={'image': 'hello-world'})
+    node = node_cls(env={
+        'userid': 'test-user',
+        'name': 'test-job',
+        'image': 'hello-world',
+        'namespace': 'default'
+    })
 
     execution = node.launch()
 
     assert execution.identifier
-    assert b'Hello from Docker!' in execution.logs()
+
+    logs = execution.logs()
+    print(type(logs))
+    if isinstance(logs, bytes):
+        logs = logs.decode()
+
+    assert 'Hello from Docker!' in logs

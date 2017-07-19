@@ -40,6 +40,8 @@ extras_require = {
         'Sphinx>=1.5.1',
     ],
     'tests': tests_require,
+    'docker': ['docker>=2.4.2'],
+    'k8s': ['pykube>=0.15.0'],
 }
 
 extras_require['all'] = []
