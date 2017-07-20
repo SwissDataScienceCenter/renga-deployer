@@ -19,8 +19,14 @@
 
 from __future__ import absolute_import, print_function
 
+try:
+    from flask import _app_ctx_stack as stack
+except ImportError:
+    from flask import _request_ctx_stack as stack
+
 from . import config, v1
 from .views import blueprint
+from .deployer import Deployer
 
 
 class SDSCDeployer(object):
@@ -43,3 +49,12 @@ class SDSCDeployer(object):
         for k in dir(config):
             if k.startswith('DEPLOYER_'):
                 app.config.setdefault(k, getattr(config, k))
+
+    @property
+    def deployer(self):
+        ctx = stack.top
+        if ctx is not None:
+            if not hasattr(ctx, 'sdsc_deployer'):
+                ctx.sdsc_deployer = Deployer(engines={'docker', 'docker:///var/lib/docker.sock'})
+            return ctx.sdsc_deployer
+

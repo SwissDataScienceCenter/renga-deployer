@@ -13,18 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """SDSC Deployer Service."""
 
 from __future__ import absolute_import, print_function
 
-from .ext import SDSCDeployer
-from .version import __version__
+from flask import Flask
 
-from .deployer import Deployer
-
+from sdsc_deployer.ext import SDSCDeployer
+# from .version import __version__
+from sdsc_deployer.deployer import Deployer
 
 from_env = Deployer.from_env
 
 __all__ = ('__version__', 'SDSCDeployer', 'from_env')
+
+app = Flask('SDSC-Deployer')
+deployer = SDSCDeployer(app)
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -50,4 +50,4 @@ class Deployer(object):
 
     def create(self, data):
         """Create a Node for the engine indicated in data."""
-        return self.ENGINES[data['env']['engine']]()
+        return self.ENGINES[data['env']['engine']](data['env'])
