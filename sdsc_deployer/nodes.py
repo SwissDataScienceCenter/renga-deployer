@@ -19,7 +19,13 @@ import os
 import time
 from collections import namedtuple
 
+from blinker import Namespace
+
 from .utils import decode_bytes
+
+node_signals = Namespace()
+
+node_created = node_signals.signal('node-created')
 
 
 class Node(object):
@@ -28,6 +34,7 @@ class Node(object):
     def __init__(self, env=None):
         """Create a Node instance."""
         self.env = env or {}
+        node_created.send(self)
 
 
 class DockerNode(Node):

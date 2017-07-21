@@ -26,7 +26,6 @@ paths:
         - deployer
       summary: List deployed nodes.
       description: ''
-      operationId: get_nodes
       produces:
         - application/json
       responses:
@@ -44,15 +43,14 @@ paths:
         - deployer
       summary: Create a new node.
       description: ''
-      operationId: create_node
       consumes:
         - application/json
       produces:
         - application/json
       parameters:
         - in: body
-          name: body
-          description: new node to be added
+          name: data
+          description: New node to be added.
           required: true
           schema:
             $ref: '#/definitions/Node'
@@ -78,7 +76,6 @@ paths:
         - deployer
       summary: Find node by ID
       description: Returns a single node
-      operationId: get_node
       produces:
         - application/json
       parameters:
@@ -126,9 +123,6 @@ definitions:
     type: "object"
     properties:
       identifier:
-        type: "integer"
-        format: "int64"
-      logs:
         type: "string"
 
   Nodes:

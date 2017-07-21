@@ -17,7 +17,10 @@
 
 from __future__ import absolute_import, print_function
 
-from . import config, v1
+from flask import current_app, g, request
+from werkzeug.local import LocalProxy
+
+from . import config
 from .deployer import Deployer
 from .views import blueprint
 
@@ -26,6 +29,7 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
+current_deployer = LocalProxy(lambda: current_app.extensions['sdsc-deployer'])
 
 
 class SDSCDeployer(object):
@@ -42,6 +46,9 @@ class SDSCDeployer(object):
         app.register_blueprint(blueprint)
         app.register_blueprint(v1.bp, url_prefix='/v1')
         app.extensions['sdsc-deployer'] = self
+
+        # TOOD replace with a persitent object store
+        self.storage = {}
 
     def init_config(self, app):
         """Initialize configuration."""
