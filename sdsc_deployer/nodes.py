@@ -51,11 +51,14 @@ class DockerNode(Node):
 
         super().__init__(env)
         self.client = docker.from_env()
+        container = self.client.create(env['image'], detach=True)
+        self.container_id = container.id
 
     def launch(self):
         """Launch a docker container with the Node image."""
-        env = self.env
-        container = self.client.containers.run(env['image'], detach=True)
+        container = self.client.containers.get(self.container_id)
+        container.start()
+        print(container.logs())
         return ExecutionEnvironment(
             node=self, identifier=container.id, logs=decode_bytes(container.logs))
 
