@@ -16,11 +16,39 @@
 """Utility functions."""
 
 from functools import wraps
+import time
 
 
 def decode_bytes(func):
-    """Wrap function that returns bytes to return string instead"""
+    """Function wrapper that always returns string"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        return func().decode()
+        res = func()
+        if isinstance(res, str):
+            return res
+        else:
+            return res.decode()
+
+    return wrapper
+
+
+def resource_available(func):
+    """
+    Function wrapper to catch that something is not available
+
+    Example:
+
+    while not resource_available(get_logs()):
+        # this loop continues until the logs are available
+        pass
+    logs = get_logs()
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func()
+        except Exception as e:
+            time.sleep(0.2)
+            return False
     return wrapper

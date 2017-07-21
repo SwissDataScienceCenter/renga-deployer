@@ -25,10 +25,10 @@ STORAGE = {}
 def store(node):
     STORAGE[node.id] = node
 
+
 @clear_all_nodes.connect
 def clear_all(node):
     STORAGE.clear()
-
 
 
 def search():

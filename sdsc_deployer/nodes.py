@@ -22,7 +22,7 @@ from collections import namedtuple
 
 from blinker import Namespace
 
-from .utils import decode_bytes
+from .utils import decode_bytes, resource_available
 
 node_signals = Namespace()
 
@@ -32,6 +32,9 @@ clear_all_nodes = node_signals.signal('clear-all-nodes')
 
 def storage_clear_all():
     clear_all_nodes.send(0)
+
+
+ExecutionEnvironment = namedtuple('ExecutionEnvironment', ['identifier'])
 
 
 class Node(object):
@@ -57,22 +60,26 @@ class DockerNode(Node):
         super().__init__(env)
         self.client = docker.from_env()
         container = self.client.containers.create(env['image'], detach=True)
-        self.container_id = container.id
+        self.identifier = container.id
 
     def launch(self):
         """Launch a docker container with the Node image."""
-        container = self.client.containers.get(self.container_id)
+        container = self.client.containers.get(self.identifier)
         container.start()
-        return ExecutionEnvironment(
-            node=self,
-            identifier=container.id,
-            logs=decode_bytes(container.logs))
+        return ExecutionEnvironment(identifier=container.id)
+
+    @staticmethod
+    def get_logs(identifier):
+        """Extract logs for a container."""
+        import docker
+        client = docker.from_env()
+        return decode_bytes(client.containers.get(identifier).logs)()
 
 
 class K8SNode(Node):
     """Class for deploying nodes on Kubernetes."""
 
-    def __init__(self, env=None):
+    def __init__(self, env=None, k8s_config=None, timeout=60):
         """Create a K8SNode instance.
 
         :params env: dict of Node specification.
@@ -80,9 +87,7 @@ class K8SNode(Node):
         import pykube
         super().__init__(env)
         self._pykube = pykube
-        self.api = self._pykube.HTTPClient(
-            self._pykube.KubeConfig.from_file(
-                os.path.join(os.path.expanduser('~'), ".kube/config")))
+        self.api = K8SNode.get_api(k8s_config)
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
@@ -96,12 +101,18 @@ class K8SNode(Node):
 
         # actually submit the job to k8s
         job.create()
-        time.sleep(5)
 
-        return ExecutionEnvironment(
-            node=self,
-            identifier=job.obj['metadata']['uid'],
-            logs=self._get_logs(job))
+        self.identifier = job.obj['metadata']['uid']
+
+        return ExecutionEnvironment(identifier=job.obj['metadata']['uid'])
+
+    @staticmethod
+    def get_api(config=None):
+        """Get API object."""
+        import pykube  # TODO: Fix imports
+        if config is None:
+            config = os.path.join(os.path.expanduser('~'), ".kube/config")
+        return pykube.HTTPClient(pykube.KubeConfig.from_file(config))
 
     @staticmethod
     def _k8s_job_template(namespace, name, image):
@@ -126,18 +137,29 @@ class K8SNode(Node):
             }
         }
 
-    def _get_logs(self, job):
+    @staticmethod
+    def get_logs(identifier, config=None, timeout=60):
         """Extract logs for the Job from the Pod.
 
         :params job: Instance of ``pykube.Job``
         """
-        metadata = job.obj['metadata']
-        pod = self._pykube.objects.Pod.objects(self.api).filter(
-            namespace=metadata['namespace'],
-            selector={'controller-uid':
-                      metadata['labels']['controller-uid']}).get()
-        return pod.logs
+        import pykube
+        api = K8SNode.get_api(config)
+        pod = pykube.objects.Pod.objects(api).filter(
+            namespace=pykube.all, selector={'controller-uid':
+                                            identifier}).get()
 
+        # wait for logs to be available
+        timein = time.time()
+        while not resource_available(pod.logs)():
+            if time.time() - timein > timeout:
+                raise RuntimeError("Timeout while fetching logs.")
 
-ExecutionEnvironment = namedtuple('ExecutionEnvironment',
-                                  ['node', 'identifier', 'logs'])
+        return pod.logs()
+
+    @staticmethod
+    def get_job(uid, config=None):
+        import pykube
+        api = K8SNode.get_api(config)
+        job = pykube.Job.objects(api).filter(selector={'controller-uid':
+                                                       uid}).get()

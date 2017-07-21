@@ -18,6 +18,7 @@
 import pytest
 
 from sdsc_deployer.nodes import Node, DockerNode, K8SNode
+from sdsc_deployer.utils import resource_available
 
 
 @pytest.mark.parametrize('node_cls', [DockerNode, K8SNode])
@@ -34,4 +35,6 @@ def test_launching_docker_container(node_cls):
 
     assert execution.identifier
 
-    assert 'Hello from Docker!' in execution.logs()
+    # wait for the logs to be available
+
+    assert 'Hello from Docker!' in node_cls.get_logs(execution.identifier)
