@@ -34,9 +34,4 @@ def test_launching_docker_container(node_cls):
 
     assert execution.identifier
 
-    logs = execution.logs()
-    print(type(logs))
-    if isinstance(logs, bytes):
-        logs = logs.decode()
-
-    assert 'Hello from Docker!' in logs
+    assert 'Hello from Docker!' in execution.logs()
