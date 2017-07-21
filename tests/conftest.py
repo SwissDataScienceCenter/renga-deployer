@@ -28,7 +28,6 @@ from flask_babelex import Babel
 
 from sdsc_deployer.deployer import Deployer
 
-
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -40,13 +39,14 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
-    app_.config.update(
+    # app_ = Flask('testapp', instance_path=instance_path)
+    from sdsc_deployer.app import app
+    app.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
     )
-    Babel(app_)
-    return app_
+    Babel(app)
+    return app
 
 
 @pytest.yield_fixture()

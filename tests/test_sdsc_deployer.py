@@ -23,6 +23,13 @@ from flask import Flask
 
 from sdsc_deployer import SDSCDeployer
 
+post_data = json.dumps({
+    'app_id': 0,
+    'deploy_id': 0,
+    'docker_image': 'hello-world',
+    'network_ports': 0
+})
+
 
 def test_version():
     """Test version import."""
@@ -52,27 +59,22 @@ def test_view(app):
         assert 'Welcome to SDSC-Deployer' in str(res.data)
 
 
-def test_node_get(app):
-    """Test node listing"""
-    pass
-
-
 def test_node_post(app):
     """Test docker node deployment"""
-    SDSCDeployer(app)
     with app.test_client() as client:
+        # create one node
         resp = client.post(
-            "/v1/nodes",
-            data={
-                "app_id": 0,
-                "deploy_id": 0,
-                "docker_image": "hello-world",
-                "network_ports": 0
-            }, headers={
-                'Accept-Mimetype': 'application/json',
-                'Content-Type': 'application/json',
-            })
-        data = json.loads(resp.data)
-        assert data
-        assert all([a in data.keys() for a in ['identifier', 'logs']])
-        assert "Hello from Docker!" in data['logs']
+            'v1/nodes', data=post_data, content_type='application/json')
+        assert resp.status_code == 201
+        resp_data = json.loads(resp.data)
+        assert resp_data
+        assert 'identifier' in resp_data.keys()
+
+
+def test_node_get(app):
+    """Test local node storage"""
+    with app.test_client() as client:
+        client.post(
+            'v1/nodes', data=post_data, content_type='application/json')
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing) == 2

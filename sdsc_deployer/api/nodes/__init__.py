@@ -35,11 +35,10 @@ def get():
 
 
 def post(data):
-    node = current_deployer.deployer.create(data={
-        'env': {
+    node = current_deployer.deployer.create(
+        data={'env': {
             'engine': 'docker',
             'image': data['docker_image']
-        }
-    })
+        }})
     exec_env = node.launch()
-    return {'identifier':exec_env.identifier}, 201
+    return {'identifier': exec_env.identifier}, 201
