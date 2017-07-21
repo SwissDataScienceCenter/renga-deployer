@@ -84,7 +84,7 @@ def test_node_get(app):
     """Test local node storage"""
     with app.test_client() as client:
         listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing) == 2
+        assert len(listing)
 
 
 def test_storage_clear(app):
@@ -99,3 +99,19 @@ def test_storage_clear(app):
         storage_clear_all()
         listing = json.loads(client.get('v1/nodes').data)
         assert len(listing) == 0
+
+
+def test_storage_append(app):
+    """Test that multiple nodes get added"""
+    from sdsc_deployer.nodes import Node, storage_clear_all
+
+    storage_clear_all()
+
+    with app.test_client() as client:
+        node1 = Node()
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing) == 1
+
+        node2 = Node()
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing) == 2

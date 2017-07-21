@@ -30,7 +30,7 @@ node_created = node_signals.signal('node-created')
 clear_all_nodes = node_signals.signal('clear-all-nodes')
 
 def storage_clear_all():
-    clear_all_nodes.send()
+    clear_all_nodes.send(0)
 
 
 class Node(object):

@@ -27,7 +27,8 @@ def store(node):
 
 @clear_all_nodes.connect
 def clear_all(node):
-    STORAGE = {}
+    STORAGE.clear()
+
 
 
 def search():
