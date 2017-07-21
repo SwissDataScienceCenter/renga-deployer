@@ -59,6 +59,6 @@ from flask_babelex import Babel
 from sdsc_deployer import SDSCDeployer
 
 # Create Flask application
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 Babel(app)
 SDSCDeployer(app)

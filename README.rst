@@ -36,7 +36,12 @@ SDSC Deployer Service.
 
 *This is an experimental developer preview release.*
 
-TODO: Please provide feature overview of module
-
 Further documentation is available on
 https://sdsc-deployer.readthedocs.io/
+
+Quick start:
+
+::
+
+   $ export FLASK_APP=examples/app.py
+   $ flask run
