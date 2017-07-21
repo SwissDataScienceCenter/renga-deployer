@@ -113,9 +113,13 @@ definitions:
       deploy_id:
         type: "integer"
         format: "int64"
-      docker_image:
+      image:
         type: "string"
-      network_ports:
+      engine:
+        type: "string"
+      namespace:
+        type: "string"
+      ports:
         type: "integer"
         format: "int64"
 

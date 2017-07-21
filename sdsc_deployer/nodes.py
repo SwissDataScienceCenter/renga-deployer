@@ -27,6 +27,11 @@ from .utils import decode_bytes
 node_signals = Namespace()
 
 node_created = node_signals.signal('node-created')
+clear_all_nodes = node_signals.signal('clear-all-nodes')
+
+def storage_clear_all():
+    clear_all_nodes.send()
+
 
 class Node(object):
     """Node superclass."""
@@ -36,7 +41,8 @@ class Node(object):
         self.id = uuid.uuid4().hex
         self.env = env or {}
         node_created.send(self)
-
+        print('env in node')
+        print(env)
 
 class DockerNode(Node):
     """Class for deploying nodes on docker."""
@@ -75,6 +81,7 @@ class K8SNode(Node):
         self.api = self._pykube.HTTPClient(
             self._pykube.KubeConfig.from_file(
                 os.path.join(os.path.expanduser('~'), ".kube/config")))
+        print(self.env)
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
@@ -83,7 +90,7 @@ class K8SNode(Node):
         job = self._pykube.Job(self.api,
                                self._k8s_job_template(
                                    namespace=env['namespace'],
-                                   name=env['name'],
+                                   name=self.id,
                                    image=env['image']))
 
         # actually submit the job to k8s

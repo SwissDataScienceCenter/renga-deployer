@@ -17,7 +17,7 @@
 
 import pytest
 
-from sdsc_deployer.nodes import DockerNode, K8SNode
+from sdsc_deployer.nodes import Node, DockerNode, K8SNode
 
 
 @pytest.mark.parametrize('node_cls', [DockerNode, K8SNode])

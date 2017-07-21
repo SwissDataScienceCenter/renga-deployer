@@ -16,7 +16,7 @@
 """Implement ``/nodes`` endpoint."""
 
 from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.nodes import node_created
+from sdsc_deployer.nodes import node_created, clear_all_nodes
 
 STORAGE = {}
 
@@ -24,6 +24,10 @@ STORAGE = {}
 @node_created.connect
 def store(node):
     STORAGE[node.id] = node
+
+@clear_all_nodes.connect
+def clear_all(node):
+    STORAGE = {}
 
 
 def search():
@@ -35,10 +39,6 @@ def get():
 
 
 def post(data):
-    node = current_deployer.deployer.create(
-        data={'env': {
-            'engine': 'docker',
-            'image': data['docker_image']
-        }})
+    node = current_deployer.deployer.create(data=data)
     exec_env = node.launch()
     return {'identifier': exec_env.identifier}, 201

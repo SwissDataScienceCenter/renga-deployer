@@ -20,15 +20,15 @@ from __future__ import absolute_import, print_function
 import json
 
 from flask import Flask
+import pytest
 
 from sdsc_deployer import SDSCDeployer
 
-post_data = json.dumps({
-    'app_id': 0,
-    'deploy_id': 0,
-    'docker_image': 'hello-world',
-    'network_ports': 0
-})
+base_data = {
+    'env': {
+        'image': 'hello-world',
+    }
+}
 
 
 def test_version():
@@ -59,13 +59,22 @@ def test_view(app):
         assert 'Welcome to SDSC-Deployer' in str(res.data)
 
 
-def test_node_post(app):
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_node_post(app, engine):
     """Test docker node deployment"""
     with app.test_client() as client:
-        # create one node
+        # create a node
+        data = base_data
+        data['env']['engine'] = engine
+
+        if engine == 'k8s':
+            data['env']['namespace'] = 'default'
+
         resp = client.post(
-            'v1/nodes', data=post_data, content_type='application/json')
+            'v1/nodes', data=json.dumps(data), content_type='application/json')
+
         assert resp.status_code == 201
+
         resp_data = json.loads(resp.data)
         assert resp_data
         assert 'identifier' in resp_data.keys()
@@ -74,7 +83,19 @@ def test_node_post(app):
 def test_node_get(app):
     """Test local node storage"""
     with app.test_client() as client:
-        client.post(
-            'v1/nodes', data=post_data, content_type='application/json')
         listing = json.loads(client.get('v1/nodes').data)
         assert len(listing) == 2
+
+
+def test_storage_clear(app):
+    """Test that storage gets cleared"""
+    from sdsc_deployer.nodes import Node, storage_clear_all
+
+    node = Node()
+    with app.test_client() as client:
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing) > 0
+
+        storage_clear_all()
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing) == 0

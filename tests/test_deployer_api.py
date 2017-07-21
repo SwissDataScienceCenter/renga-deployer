@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Deployer sub-module tests."""
 
 import pytest
@@ -34,11 +32,14 @@ def test_deployer_env_create(monkeypatch):
     assert 'docker' in d.engines
 
 
-@pytest.mark.parametrize('engine,node_cls', [
-    ('docker', DockerNode),
-    ('k8s', K8SNode)])
+@pytest.mark.parametrize('engine,node_cls', [('docker', DockerNode),
+                                             ('k8s', K8SNode)])
 def test_docker_node_create(engine, node_cls, deployer):
     """Test docker node creation."""
-    node = deployer.create(data={'env': {'engine': engine}})
+    node = deployer.create(
+        data={'env': {
+            'engine': engine,
+            'image': 'hello-world'
+        }})
 
     assert isinstance(node, node_cls)
