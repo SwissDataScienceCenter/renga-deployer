@@ -58,6 +58,8 @@ install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask-RESTful>=0.3.6',
     'Jinja2>=2.9.6',
+    'blinker>=1.4',
+    'connexion>=1.1.11',
     'jsonschema>=2.6.0',
     'six>=1.10.0',
 ]

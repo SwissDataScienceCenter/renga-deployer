@@ -17,6 +17,7 @@
 
 import os
 import time
+import uuid
 from collections import namedtuple
 
 from blinker import Namespace
@@ -33,6 +34,7 @@ class Node(object):
 
     def __init__(self, env=None):
         """Create a Node instance."""
+        self.id = uuid.uuid4().hex
         self.env = env or {}
         node_created.send(self)
 

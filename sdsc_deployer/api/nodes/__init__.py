@@ -15,11 +15,19 @@
 # limitations under the License.
 """Implement ``/nodes`` endpoint."""
 
-from sdsc_deployer.deployer import current_deployer
+from sdsc_deployer.ext import current_deployer
+from sdsc_deployer.nodes import node_created
+
+STORAGE = {}
+
+
+@node_created.connect
+def store(node):
+    STORAGE[node.id] = node
 
 
 def search():
-    return 'Hello'
+    return [{'identifier': k} for k in STORAGE], 200
 
 
 def get():

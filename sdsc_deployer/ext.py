@@ -44,7 +44,6 @@ class SDSCDeployer(object):
         """Flask application initialization."""
         self.init_config(app)
         app.register_blueprint(blueprint)
-        app.register_blueprint(v1.bp, url_prefix='/v1')
         app.extensions['sdsc-deployer'] = self
 
         # TOOD replace with a persitent object store
