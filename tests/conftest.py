@@ -13,11 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Pytest configuration."""
-
-from __future__ import absolute_import, print_function
 
 import shutil
 import tempfile
@@ -27,6 +23,7 @@ from flask import Flask
 from flask_babelex import Babel
 
 from sdsc_deployer.deployer import Deployer
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -43,8 +40,7 @@ def base_app(instance_path):
     from sdsc_deployer.app import app
     app.config.update(
         SECRET_KEY='SECRET_KEY',
-        TESTING=True,
-    )
+        TESTING=True, )
     Babel(app)
     return app
 

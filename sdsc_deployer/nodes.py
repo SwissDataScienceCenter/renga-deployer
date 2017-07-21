@@ -29,6 +29,7 @@ node_signals = Namespace()
 node_created = node_signals.signal('node-created')
 clear_all_nodes = node_signals.signal('clear-all-nodes')
 
+
 def storage_clear_all():
     clear_all_nodes.send(0)
 
@@ -41,8 +42,7 @@ class Node(object):
         self.id = uuid.uuid4().hex
         self.env = env or {}
         node_created.send(self)
-        print('env in node')
-        print(env)
+
 
 class DockerNode(Node):
     """Class for deploying nodes on docker."""
@@ -64,7 +64,9 @@ class DockerNode(Node):
         container = self.client.containers.get(self.container_id)
         container.start()
         return ExecutionEnvironment(
-            node=self, identifier=container.id, logs=decode_bytes(container.logs))
+            node=self,
+            identifier=container.id,
+            logs=decode_bytes(container.logs))
 
 
 class K8SNode(Node):
@@ -81,7 +83,6 @@ class K8SNode(Node):
         self.api = self._pykube.HTTPClient(
             self._pykube.KubeConfig.from_file(
                 os.path.join(os.path.expanduser('~'), ".kube/config")))
-        print(self.env)
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
@@ -133,7 +134,8 @@ class K8SNode(Node):
         metadata = job.obj['metadata']
         pod = self._pykube.objects.Pod.objects(self.api).filter(
             namespace=metadata['namespace'],
-            selector={'controller-uid': metadata['labels']['controller-uid']}).get()
+            selector={'controller-uid':
+                      metadata['labels']['controller-uid']}).get()
         return pod.logs
 
 
