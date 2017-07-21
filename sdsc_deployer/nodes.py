@@ -18,6 +18,7 @@
 import os
 import time
 from collections import namedtuple
+from functools import wraps
 
 import docker
 import pykube
@@ -29,6 +30,13 @@ class Node(object):
     def __init__(self, env=None):
         """Create a Node instance."""
         self.env = env or {}
+
+def decode_bytes(func):
+    """Wraps function that returns bytes to return string instead"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func().decode()
+    return wrapper
 
 
 class DockerNode(Node):
@@ -48,8 +56,9 @@ class DockerNode(Node):
         """Launch a docker container with the Node image."""
         env = self.env
         container = self.client.containers.run(env['image'], detach=True)
+        print(container.logs())
         return ExecutionEnvironment(
-            node=self, identifier=container.id, logs=container.logs)
+            node=self, identifier=container.id, logs=decode_bytes(container.logs))
 
 
 class K8SNode(Node):

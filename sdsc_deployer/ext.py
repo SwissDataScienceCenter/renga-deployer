@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """SDSC Deployer Service."""
 
 from __future__ import absolute_import, print_function
@@ -55,6 +53,6 @@ class SDSCDeployer(object):
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'sdsc_deployer'):
-                ctx.sdsc_deployer = Deployer(engines={'docker', 'docker:///var/lib/docker.sock'})
+                ctx.sdsc_deployer = Deployer(
+                    engines={'docker', 'docker:///var/lib/docker.sock'})
             return ctx.sdsc_deployer
-

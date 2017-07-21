@@ -18,14 +18,15 @@
 from __future__ import absolute_import, print_function
 
 from flask import Flask
+import json
 
 from sdsc_deployer import SDSCDeployer
 
 
-# def test_version():
-#     """Test version import."""
-#     from sdsc_deployer import __version__
-#     assert __version__
+def test_version():
+    """Test version import."""
+    from sdsc_deployer import __version__
+    assert __version__
 
 
 def test_init():
@@ -50,15 +51,24 @@ def test_view(app):
         assert 'Welcome to SDSC-Deployer' in str(res.data)
 
 
+def test_node_get(app):
+    """Test node listing"""
+    pass
+
+
 def test_node_post(app):
     """Test docker node deployment"""
     SDSCDeployer(app)
     with app.test_client() as client:
-        res = client.post(
-            "/nodes",
+        resp = client.post(
+            "/v1/nodes",
             data={
                 "app_id": 0,
                 "deploy_id": 0,
                 "docker_image": "hello-world",
                 "network_ports": 0
-            })
+            }, headers={'Content-Type': 'application/json'})
+        data = json.loads(resp.data)
+        assert data
+        assert all([a in data.keys() for a in ['identifier', 'logs']])
+        assert "Hello from Docker!" in data['logs']

@@ -52,22 +52,27 @@ paths:
       parameters:
         - in: body
           name: body
-          description: Pet object that needs to be added to the store
+          description: new node to be added
           required: true
           schema:
             $ref: '#/definitions/Node'
       responses:
+        '201':
+          description: create successful
+          schema:
+            $ref: "#/definitions/ExecutionEnvironment"
         '400':
           description: Invalid ID supplied
         '404':
-          description: Pet not found
+          description: Node not found
         '405':
           description: Validation exception
       security:
         - sdsc_auth:
             - 'write:nodes'
             - 'read:nodes'
-  '/nodes/{node_id}':
+
+  /nodes/{node_id}:
     get:
       tags:
         - deployer
@@ -92,30 +97,41 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Node not found
+
 securityDefinitions:
   sdsc_auth:
-    type: oauth2
-    authorizationUrl: 'https://testing.datascience.ch:8080'
-    flow: implicit
+    type: "oauth2"
+    authorizationUrl: "https://testing.datascience.ch:8080"
+    flow: "implicit"
     scopes:
-      'write:nodes': modify nodes
-      'read:nodes': read nodes
+      write:nodes: "modify nodes"
+      read:nodes: "read nodes"
 definitions:
   Node:
-    type: object
+    type: "object"
     properties:
       app_id:
-        type: integer
-        format: int64
+        type: "integer"
+        format: "int64"
       deploy_id:
-        type: integer
-        format: int64
+        type: "integer"
+        format: "int64"
       docker_image:
-        type: string
+        type: "string"
       network_ports:
-        type: integer
-        format: int64
+        type: "integer"
+        format: "int64"
+
+  ExecutionEnvironment:
+    type: "object"
+    properties:
+      identifier:
+        type: "integer"
+        format: "int64"
+      logs:
+        type: "string"
+
   Nodes:
-    type: array
+    type: "array"
     items:
       $ref: '#/definitions/Node'

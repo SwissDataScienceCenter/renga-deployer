@@ -19,13 +19,13 @@ class Nodes(Resource):
 
     def post(self):
         """Create a new node"""
-        req_data = request.get_json()
+        data = request.get_json()
         node = current_deployer.deployer.create(data={
             'env': {
                 'engine': 'docker',
-                'image': req_data['docker_image']
+                'image': data['docker_image']
             }
         })
         exec_env = node.launch()
-
-        return 'woop', 201
+        print(exec_env.identifier)
+        return {'identifier':exec_env.identifier, 'logs':exec_env.logs()}, 201

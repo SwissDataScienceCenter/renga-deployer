@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-
-"""Define schemas for the REST API."""
-
 base_path = '/v1'
 
+DefinitionsExecutionenvironment = {
+    'type': 'object',
+    'properties': {
+        'identifier': {
+            'type': 'integer',
+            'format': 'int64'
+        },
+        'logs': {
+            'type': 'string'
+        }
+    }
+}
 DefinitionsNode = {
     'type': 'object',
     'properties': {
@@ -44,6 +53,10 @@ filters = {
         }
     },
     ('nodes', 'POST'): {
+        201: {
+            'headers': None,
+            'schema': DefinitionsExecutionenvironment
+        },
         400: {
             'headers': None,
             'schema': None
@@ -217,7 +230,7 @@ def normalize(schema, data, required_defaults=None):
             'default': _normalize_default,
         }
         type_ = schema.get('type', 'object')
-        if type_ not in funcs:
+        if not type_ in funcs:
             type_ = 'default'
 
         return funcs[type_](schema, data)
