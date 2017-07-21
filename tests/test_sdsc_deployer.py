@@ -17,8 +17,9 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Flask
 import json
+
+from flask import Flask
 
 from sdsc_deployer import SDSCDeployer
 
@@ -67,7 +68,10 @@ def test_node_post(app):
                 "deploy_id": 0,
                 "docker_image": "hello-world",
                 "network_ports": 0
-            }, headers={'Content-Type': 'application/json'})
+            }, headers={
+                'Accept-Mimetype': 'application/json',
+                'Content-Type': 'application/json',
+            })
         data = json.loads(resp.data)
         assert data
         assert all([a in data.keys() for a in ['identifier', 'logs']])

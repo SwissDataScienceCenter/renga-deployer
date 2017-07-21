@@ -18,10 +18,8 @@
 import os
 import time
 from collections import namedtuple
-from functools import wraps
 
-import docker
-import pykube
+from .utils import decode_bytes
 
 
 class Node(object):
@@ -31,13 +29,6 @@ class Node(object):
         """Create a Node instance."""
         self.env = env or {}
 
-def decode_bytes(func):
-    """Wraps function that returns bytes to return string instead"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        return func().decode()
-    return wrapper
-
 
 class DockerNode(Node):
     """Class for deploying nodes on docker."""
@@ -45,10 +36,10 @@ class DockerNode(Node):
     def __init__(self, env=None):
         """Create a DockerNode instance.
 
-        Arguments:
-
-        env: dict of Node specification.
+        :params env: dict of Node specification.
         """
+        import docker
+
         super().__init__(env)
         self.client = docker.from_env()
 
@@ -56,7 +47,6 @@ class DockerNode(Node):
         """Launch a docker container with the Node image."""
         env = self.env
         container = self.client.containers.run(env['image'], detach=True)
-        print(container.logs())
         return ExecutionEnvironment(
             node=self, identifier=container.id, logs=decode_bytes(container.logs))
 
@@ -67,24 +57,24 @@ class K8SNode(Node):
     def __init__(self, env=None):
         """Create a K8SNode instance.
 
-        Arguments:
-
-        env: dict of Node specification.
+        :params env: dict of Node specification.
         """
+        import pykube
         super().__init__(env)
-        self.api = pykube.HTTPClient(
-            pykube.KubeConfig.from_file(
+        self._pykube = pykube
+        self.api = self._pykube.HTTPClient(
+            self._pykube.KubeConfig.from_file(
                 os.path.join(os.path.expanduser('~'), ".kube/config")))
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
         env = self.env
 
-        job = pykube.Job(self.api,
-                         K8SNode._k8s_job_template(
-                             namespace=env['namespace'],
-                             name=env['name'],
-                             image=env['image']))
+        job = self._pykube.Job(self.api,
+                               self._k8s_job_template(
+                                   namespace=env['namespace'],
+                                   name=env['name'],
+                                   image=env['image']))
 
         # actually submit the job to k8s
         job.create()
@@ -93,7 +83,7 @@ class K8SNode(Node):
         return ExecutionEnvironment(
             node=self,
             identifier=job.obj['metadata']['uid'],
-            logs=K8SNode._get_logs(self.api, job))
+            logs=self._get_logs(job))
 
     @staticmethod
     def _k8s_job_template(namespace, name, image):
@@ -118,19 +108,13 @@ class K8SNode(Node):
             }
         }
 
-    @staticmethod
-    def _get_logs(api, job):
+    def _get_logs(self, job):
         """Extract logs for the Job from the Pod.
 
-        Arguments:
-
-        api: pykube.api
-
-        job: pykube.Job object
+        :params job: Instance of ``pykube.Job``
         """
         metadata = job.obj['metadata']
-        print(metadata)
-        pod = pykube.objects.Pod.objects(api).filter(
+        pod = self._pykube.objects.Pod.objects(self.api).filter(
             namespace=metadata['namespace'],
             selector={'controller-uid': metadata['labels']['controller-uid']}).get()
         return pod.logs

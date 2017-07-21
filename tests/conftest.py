@@ -59,4 +59,4 @@ def app(base_app):
 @pytest.fixture()
 def deployer():
     """Initiate a deployer."""
-    return Deployer(engines={'docker':'docker:///var/lib/docker.sock'})
+    return Deployer(engines={'docker': 'docker:///var/lib/docker.sock'})

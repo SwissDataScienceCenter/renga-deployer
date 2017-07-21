@@ -17,14 +17,15 @@
 
 from __future__ import absolute_import, print_function
 
+from . import config, v1
+from .deployer import Deployer
+from .views import blueprint
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-from . import config, v1
-from .views import blueprint
-from .deployer import Deployer
 
 
 class SDSCDeployer(object):

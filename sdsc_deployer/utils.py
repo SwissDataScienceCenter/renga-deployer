@@ -13,16 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer Service."""
+"""Utility functions."""
 
-from __future__ import absolute_import, print_function
+from functools import wraps
 
-from flask import Flask
 
-from .deployer import Deployer
-from .ext import SDSCDeployer
-from .version import __version__
-
-from_env = Deployer.from_env
-
-__all__ = ('__version__', 'SDSCDeployer', 'from_env')
+def decode_bytes(func):
+    """Wrap function that returns bytes to return string instead"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func().decode()
+    return wrapper
