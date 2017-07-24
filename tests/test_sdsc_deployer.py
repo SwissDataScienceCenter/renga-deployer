@@ -22,8 +22,6 @@ import pytest
 
 from sdsc_deployer import SDSCDeployer
 
-base_data = {'image': 'hello-world'}
-
 
 def test_version():
     """Test version import."""
@@ -58,11 +56,9 @@ def test_node_post(app, engine):
     """Test docker node deployment."""
     with app.test_client() as client:
         # create a node
-        data = base_data
+        data = {}
+        data['spec'] = {'image': 'hello-world'}
         data['engine'] = engine
-
-        if engine == 'k8s':
-            data['namespace'] = 'default'
 
         resp = client.post(
             'v1/nodes', data=json.dumps(data), content_type='application/json')

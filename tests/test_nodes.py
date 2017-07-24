@@ -22,14 +22,13 @@ from sdsc_deployer.utils import resource_available
 
 
 @pytest.mark.parametrize('node_cls', [DockerNode, K8SNode])
-def test_launching_docker_container(node_cls):
+def test_launching_container(node_cls):
     """Test launching a docker container."""
-    node = node_cls(env={
-        'userid': 'test-user',
-        'name': 'test-job',
-        'image': 'hello-world',
-        'namespace': 'default'
-    })
+    node = node_cls(
+        data={'spec': {
+            'image': 'hello-world',
+            'namespace': 'default'
+        }})
 
     execution = node.launch()
 

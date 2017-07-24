@@ -48,10 +48,11 @@ class ExecutionEnvironment(ExecutionMixin):
 class Node(object):
     """Node superclass."""
 
-    def __init__(self, env=None):
+    def __init__(self, data=None):
         """Create a Node instance."""
         self.id = uuid.uuid4().hex
-        self.env = env or {}
+        self.data = data or {}
+        self.spec = self.data.get('spec', {})
         node_created.send(self)
 
     def remove(self, force=False):
@@ -62,19 +63,19 @@ class Node(object):
 class DockerNode(Node):
     """Class for deploying nodes on docker."""
 
-    def __init__(self, env=None):
+    def __init__(self, data=None):
         """Create a DockerNode instance.
 
-        :params env: dict of Node specification.
+        :params data: dict of Node specification.
         """
         import docker
 
-        super().__init__(env)
+        super().__init__(data)
         self.client = docker.from_env()
 
     def launch(self):
         """Launch a docker container with the Node image."""
-        container = self.client.containers.run(self.env['image'], detach=True)
+        container = self.client.containers.run(self.spec['image'], detach=True)
         return ExecutionEnvironment.from_node(self, engine_id=container.id)
 
     def get_logs(self, execution):
@@ -86,26 +87,24 @@ class DockerNode(Node):
 class K8SNode(Node):
     """Class for deploying nodes on Kubernetes."""
 
-    def __init__(self, env=None, k8s_config=None, timeout=60):
+    def __init__(self, data=None, k8s_config=None, timeout=60):
         """Create a K8SNode instance.
 
-        :params env: dict of Node specification.
+        :params data: dict of Node specification.
         """
         import pykube
-        super().__init__(env)
+        super().__init__(data)
         self._pykube = pykube
         self.api = K8SNode.get_api(k8s_config)
         self.timeout = timeout
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
-        env = self.env
-
         job = self._pykube.Job(self.api,
                                self._k8s_job_template(
-                                   namespace=env['namespace'],
+                                   namespace=self.spec.get('namespace', 'default'),
                                    name=self.id,
-                                   image=env['image']))
+                                   image=self.spec['image']))
 
         # actually submit the job to k8s
         job.create()
