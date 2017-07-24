@@ -40,6 +40,6 @@ def get():
 
 
 def post(data):
-    node = current_deployer.deployer.create(data=data)
+    node = current_deployer.deployer.create(data={'env':data})
     exec_env = node.launch()
     return {'identifier': exec_env.identifier}, 201
