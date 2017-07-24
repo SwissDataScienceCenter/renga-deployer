@@ -27,14 +27,22 @@ from .utils import decode_bytes, resource_available
 node_signals = Namespace()
 
 node_created = node_signals.signal('node-created')
-clear_all_nodes = node_signals.signal('clear-all-nodes')
+node_removed = node_signals.signal('node-removed')
+execution_created = node_signals.signal('execution-created')
+
+ExecutionMixin = namedtuple('ExecutionMixin', ['id', 'node_id', 'engine_id'])
 
 
-def storage_clear_all():
-    clear_all_nodes.send(0)
+class ExecutionEnvironment(ExecutionMixin):
+    def __init__(self, *args, **kwargs):
+        execution_created.send(self)
 
-
-ExecutionEnvironment = namedtuple('ExecutionEnvironment', ['identifier'])
+    @classmethod
+    def from_node(cls, node, engine_id):
+        return cls(
+            id=uuid.uuid4().hex,
+            node_id=node.id,
+            engine_id=engine_id, )
 
 
 class Node(object):
@@ -45,6 +53,10 @@ class Node(object):
         self.id = uuid.uuid4().hex
         self.env = env or {}
         node_created.send(self)
+
+    def remove(self, force=False):
+        """Remove the node."""
+        node_removed.send(self, force=force)
 
 
 class DockerNode(Node):
@@ -59,21 +71,16 @@ class DockerNode(Node):
 
         super().__init__(env)
         self.client = docker.from_env()
-        container = self.client.containers.create(env['image'], detach=True)
-        self.identifier = container.id
 
     def launch(self):
         """Launch a docker container with the Node image."""
-        container = self.client.containers.get(self.identifier)
-        container.start()
-        return ExecutionEnvironment(identifier=container.id)
+        container = self.client.containers.run(self.env['image'], detach=True)
+        return ExecutionEnvironment.from_node(self, engine_id=container.id)
 
-    @staticmethod
-    def get_logs(identifier):
+    def get_logs(self, execution):
         """Extract logs for a container."""
-        import docker
-        client = docker.from_env()
-        return decode_bytes(client.containers.get(identifier).logs)()
+        return decode_bytes(
+            self.client.containers.get(execution.engine_id).logs)()
 
 
 class K8SNode(Node):
@@ -88,6 +95,7 @@ class K8SNode(Node):
         super().__init__(env)
         self._pykube = pykube
         self.api = K8SNode.get_api(k8s_config)
+        self.timeout = timeout
 
     def launch(self):
         """Launch a kubernetes Job with the Node attributes."""
@@ -101,10 +109,8 @@ class K8SNode(Node):
 
         # actually submit the job to k8s
         job.create()
-
-        self.identifier = job.obj['metadata']['uid']
-
-        return ExecutionEnvironment(identifier=job.obj['metadata']['uid'])
+        return ExecutionEnvironment.from_node(
+            self, engine_id=job.obj['metadata']['uid'])
 
     @staticmethod
     def get_api(config=None):
@@ -137,22 +143,21 @@ class K8SNode(Node):
             }
         }
 
-    @staticmethod
-    def get_logs(identifier, config=None, timeout=60):
+    def get_logs(self, execution, timeout=None):
         """Extract logs for the Job from the Pod.
 
-        :params job: Instance of ``pykube.Job``
+        :params execution: Instance of ``ExecutionEnvironment``
         """
-        import pykube
-        api = K8SNode.get_api(config)
+        api = self.api
+        pykube = self._pykube
         pod = pykube.objects.Pod.objects(api).filter(
-            namespace=pykube.all, selector={'controller-uid':
-                                            identifier}).get()
+            namespace=pykube.all,
+            selector={'controller-uid': execution.engine_id}).get()
 
         # wait for logs to be available
         timein = time.time()
         while not resource_available(pod.logs)():
-            if time.time() - timein > timeout:
+            if time.time() - timein > (timeout or self.timeout):
                 raise RuntimeError("Timeout while fetching logs.")
 
         return pod.logs()

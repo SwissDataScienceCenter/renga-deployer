@@ -44,6 +44,7 @@ def resource_available(func):
         pass
     logs = get_logs()
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -51,4 +52,5 @@ def resource_available(func):
         except Exception as e:
             time.sleep(0.2)
             return False
+
     return wrapper

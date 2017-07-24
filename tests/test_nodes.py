@@ -33,8 +33,8 @@ def test_launching_docker_container(node_cls):
 
     execution = node.launch()
 
-    assert execution.identifier
+    assert execution
 
     # wait for the logs to be available
 
-    assert 'Hello from Docker!' in node_cls.get_logs(execution.identifier)
+    assert 'Hello from Docker!' in node.get_logs(execution)

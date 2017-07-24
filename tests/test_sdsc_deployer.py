@@ -22,11 +22,7 @@ import pytest
 
 from sdsc_deployer import SDSCDeployer
 
-base_data = {
-    'env': {
-        'image': 'hello-world',
-    }
-}
+base_data = {'image': 'hello-world'}
 
 
 def test_version():
@@ -59,14 +55,14 @@ def test_view(app):
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
 def test_node_post(app, engine):
-    """Test docker node deployment"""
+    """Test docker node deployment."""
     with app.test_client() as client:
         # create a node
         data = base_data
-        data['env']['engine'] = engine
+        data['engine'] = engine
 
         if engine == 'k8s':
-            data['env']['namespace'] = 'default'
+            data['namespace'] = 'default'
 
         resp = client.post(
             'v1/nodes', data=json.dumps(data), content_type='application/json')
@@ -79,31 +75,29 @@ def test_node_post(app, engine):
 
 
 def test_node_get(app):
-    """Test local node storage"""
+    """Test local node storage."""
     with app.test_client() as client:
         listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing)
+        assert listing
 
 
 def test_storage_clear(app):
-    """Test that storage gets cleared"""
-    from sdsc_deployer.nodes import Node, storage_clear_all
+    """Test that storage gets cleared."""
+    from sdsc_deployer.nodes import Node
 
     node = Node()
     with app.test_client() as client:
         listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing) > 0
+        assert listing
 
-        storage_clear_all()
+        app.extensions['sdsc-deployer'].storage.clear()
         listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing) == 0
+        assert not listing
 
 
 def test_storage_append(app):
-    """Test that multiple nodes get added"""
-    from sdsc_deployer.nodes import Node, storage_clear_all
-
-    storage_clear_all()
+    """Test that multiple nodes get added."""
+    from sdsc_deployer.nodes import Node
 
     with app.test_client() as client:
         node1 = Node()
