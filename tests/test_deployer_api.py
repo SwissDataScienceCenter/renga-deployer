@@ -41,3 +41,5 @@ def test_node_launch(engine, deployer):
     assert isinstance(node, Node)
     assert isinstance(execution, ExecutionEnvironment)
     assert execution.engine == engine
+
+    assert 'Hello from Docker!' in deployer.get_logs(execution)

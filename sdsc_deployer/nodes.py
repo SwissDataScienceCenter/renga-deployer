@@ -15,12 +15,8 @@
 # limitations under the License.
 """Nodes sub-module."""
 
-import os
-import time
 import uuid
 from collections import namedtuple
-
-from .utils import decode_bytes, resource_available
 
 ExecutionMixin = namedtuple('ExecutionMixin',
                             ['id', 'node_id', 'engine', 'engine_id'])

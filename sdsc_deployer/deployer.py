@@ -66,3 +66,8 @@ class Deployer(object):
         ).launch(node, engine=engine, **kwargs)
         execution_created.send(execution)
         return execution
+
+    def get_logs(self, execution):
+        """Ask engine to extract logs."""
+        return self.ENGINES[execution.engine](  # FIXME use configuration
+        ).get_logs(execution)
