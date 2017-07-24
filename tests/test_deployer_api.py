@@ -19,7 +19,7 @@ import pytest
 from flask import Flask
 
 from sdsc_deployer.deployer import Deployer
-from sdsc_deployer.nodes import DockerNode, K8SNode
+from sdsc_deployer.nodes import ExecutionEnvironment, Node
 
 
 def test_deployer_env_create(monkeypatch):
@@ -32,10 +32,12 @@ def test_deployer_env_create(monkeypatch):
     assert 'docker' in d.engines
 
 
-@pytest.mark.parametrize('engine,node_cls', [('docker', DockerNode),
-                                             ('k8s', K8SNode)])
-def test_node_create(engine, node_cls, deployer):
-    """Test docker node creation."""
-    node = deployer.create(data={'engine': engine})
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_node_launch(engine, deployer):
+    """Test node launching."""
+    node = deployer.create(data={'image': 'hello-world'})
+    execution = deployer.launch(node, engine=engine)
 
-    assert isinstance(node, node_cls)
+    assert isinstance(node, Node)
+    assert isinstance(execution, ExecutionEnvironment)
+    assert execution.engine == engine

@@ -17,20 +17,26 @@
 
 import os
 
-from .nodes import DockerNode, K8SNode
+from blinker import Namespace
+
+from . import engines
+from .nodes import ExecutionEnvironment, Node
+
+deployer_signals = Namespace()
+
+node_created = deployer_signals.signal('node-created')
+execution_created = deployer_signals.signal('execution-created')
 
 
 class Deployer(object):
     """Handling the deployment of Nodes."""
 
-    ENGINES = {'docker': DockerNode, 'k8s': K8SNode}
+    ENGINES = {'docker': engines.DockerEngine, 'k8s': engines.K8SEngine}
 
     def __init__(self, engines=None, **kwargs):
         """Create a Deployer instance.
 
-        Arguments:
-
-        engines: dict of engine name:uri pairs
+        :param engines: dict of engine name:uri pairs
         """
         self.engines = engines or {}
 
@@ -50,4 +56,13 @@ class Deployer(object):
 
     def create(self, data):
         """Create a Node for the engine indicated in data."""
-        return self.ENGINES[data['engine']](data)
+        node = Node.create(data)
+        node_created.send(node)
+        return node
+
+    def launch(self, node=None, engine=None, **kwargs):
+        """Create new execution environment for a given node."""
+        execution = self.ENGINES[engine](  # FIXME use configuration
+        ).launch(node, engine=engine, **kwargs)
+        execution_created.send(execution)
+        return execution

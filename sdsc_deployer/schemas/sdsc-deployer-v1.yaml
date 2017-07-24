@@ -31,6 +31,8 @@ paths:
       responses:
         '200':
           description: successful operation
+          schema:
+            $ref: '#/definitions/Nodes'
         '405':
           description: Invalid input
       security:
@@ -51,12 +53,12 @@ paths:
           description: New node to be added.
           required: true
           schema:
-            $ref: '#/definitions/Node'
+            $ref: '#/definitions/NewNode'
       responses:
         '201':
           description: create successful
           schema:
-            $ref: "#/definitions/ExecutionEnvironment"
+            $ref: '#/definitions/Node'
         '400':
           description: Invalid ID supplied
         '404':
@@ -81,13 +83,85 @@ paths:
           in: path
           description: ID of node to return
           required: true
-          type: integer
-          format: int64
+          type: string
       responses:
         '200':
           description: successful operation
           schema:
             $ref: '#/definitions/Node'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Node not found
+  /nodes/{node_id}/executions:
+    get:
+      tags:
+        - deployer
+      summary: List node execution environments.
+      description: ''
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ExecutionEnvironments'
+        '405':
+          description: Invalid input
+      security:
+        - sdsc_auth:
+            - 'read:nodes'
+    post:
+      tags:
+        - deployer
+      summary: Create a node execution
+      produces:
+        - application/json
+      parameters:
+        - name: node_id
+          in: path
+          description: ID of node to launch
+          required: true
+          type: string
+        - in: body
+          name: data
+          description: New execution of a node.
+          required: true
+          schema:
+            $ref: '#/definitions/NewExecutionEnvironment'
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ExecutionEnvironment'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Node not found
+  /nodes/{node_id}/executions/{execution_id}:
+    get:
+      tags:
+        - deployer
+      summary: Find execution by ID
+      description: Returns a single execution
+      produces:
+        - application/json
+      parameters:
+        - name: node_id
+          in: path
+          description: ID of execution node
+          required: true
+          type: string
+        - name: execution_id
+          in: path
+          description: ID of execution to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ExecutionEnvironment'
         '400':
           description: Invalid ID supplied
         '404':
@@ -101,30 +175,58 @@ securityDefinitions:
     scopes:
       write:nodes: "modify nodes"
       read:nodes: "read nodes"
+
 definitions:
+  NewNode:
+    type: "object"
+    properties:
+      image:
+        type: "string"
+        default: "hello-world"
+      ports:
+        type: "object"
+
   Node:
+    allOf:
+      - $ref: "#/definitions/NewNode"
+      - schema:
+          type: "object"
+          properties:
+            identifier:
+              type: "string"
+            # TODO add URLs
+
+  NewExecutionEnvironment:
     type: "object"
     properties:
       engine:
         type: "string"
-      spec:
-        type: "object"
-        properties:
-          image:
-            type: "string"
-          namespace:
-            type: "string"
-          ports:
-            type: "object"
-
+        default: "docker"
+      namespace:
+        type: "string"
+        default: "default"
 
   ExecutionEnvironment:
-    type: "object"
-    properties:
-      identifier:
-        type: "string"
+    allOf:
+      - $ref: "#/definitions/NewExecutionEnvironment"
+      - schema:
+          type: "object"
+          properties:
+            identifier:
+              type: "string"
 
   Nodes:
-    type: "array"
-    items:
-      $ref: '#/definitions/Node'
+    type: "object"
+    properties:
+      nodes:
+        type: "array"
+        items:
+          $ref: '#/definitions/Node'
+
+  ExecutionEnvironments:
+    type: "object"
+    properties:
+      environments:
+        type: "array"
+        items:
+          $ref: '#/definitions/ExecutionEnvironment'

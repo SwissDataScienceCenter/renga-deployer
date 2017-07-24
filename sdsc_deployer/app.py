@@ -22,7 +22,10 @@ from flask_babelex import Babel
 from .ext import SDSCDeployer
 
 api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
-api.add_api('sdsc-deployer-v1.yaml', resolver=RestyResolver('sdsc_deployer.api'), validate_responses=True)
+api.add_api(
+    'sdsc-deployer-v1.yaml',
+    resolver=RestyResolver('sdsc_deployer.api'),
+    )  # validate_responses=True)
 
 Babel(api.app)
 SDSCDeployer(api.app)

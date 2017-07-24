@@ -47,7 +47,8 @@ class SDSCDeployer(object):
         app.extensions['sdsc-deployer'] = self
 
         # TOOD replace with a persitent object store
-        self.storage = {}
+        from collections import defaultdict
+        self.storage = {'nodes': {}, 'executions': {}, 'index': defaultdict(list)}
 
     def init_config(self, app):
         """Initialize configuration."""

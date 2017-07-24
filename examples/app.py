@@ -51,14 +51,4 @@ To reset the example application run:
 SPHINX-END
 """
 
-from __future__ import absolute_import, print_function
-
-from flask import Flask
-from flask_babelex import Babel
-
-from sdsc_deployer import SDSCDeployer
-
-# Create Flask application
-app = Flask(__name__, static_folder=None)
-Babel(app)
-SDSCDeployer(app)
+from sdsc_deployer.app import app
