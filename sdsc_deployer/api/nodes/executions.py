@@ -31,9 +31,9 @@ def search(node_id):
         [{
             'identifier': execution.id,
             'engine': execution.engine,
-            'namespace': execution.namespace,
+            # 'namespace': execution.namespace,
         }
-         for execution in current_deployer.storage['index'][node_id].values()],
+         for execution in current_deployer.storage['index'][node_id]],
     }, 200
 
 
@@ -43,7 +43,7 @@ def get(node_id, execution_id):
     return {
         'identifier': execution.id,
         'engine': execution.engine,
-        'namespace': execution.namespace,
+        # 'namespace': execution.namespace,
     }, 200
 
 
@@ -53,5 +53,5 @@ def post(node_id, data):
     return {
         'identifier': execution.id,
         'engine': execution.engine,
-        'namespace': execution.namespace,
+        # 'namespace': execution.namespace,
     }, 201
