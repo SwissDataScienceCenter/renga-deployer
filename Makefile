@@ -1,5 +1,5 @@
 ci-setup-kubectl:
-	curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.6.4/bin/linux/amd64/kubectl
+	curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl
 	chmod +x kubectl
 	sudo mv kubectl /usr/local/bin/
 
@@ -10,6 +10,6 @@ ci-setup-minikube: ci-setup-kubectl
 	./minikube config set WantReportErrorPrompt false
 
 ci-start-minikube: ci-setup-minikube
-	./minikube start --show-libmachine-logs --vm-driver=none --use-vendored-driver
+	./minikube start --v=3 --vm-driver=none --use-vendored-driver
 
 ci: ci-start-minikube
