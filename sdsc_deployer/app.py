@@ -15,11 +15,14 @@
 # limitations under the License.
 """SDSC Deployer application."""
 
+import os
+
 import connexion
 from connexion.resolver import RestyResolver
 from flask_babelex import Babel
 
 from .ext import SDSCDeployer
+from .nodes import db
 
 api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
 api.add_api(
@@ -27,6 +30,10 @@ api.add_api(
     resolver=RestyResolver('sdsc_deployer.api'), )  # validate_responses=True)
 
 Babel(api.app)
+api.app.config.setdefault(
+    'SQLALCHEMY_DATABASE_URI',
+    os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db'), )
+db.init_app(api.app)
 SDSCDeployer(api.app)
 
 app = api.app

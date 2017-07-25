@@ -22,6 +22,7 @@ import pytest
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
+from sdsc_deployer.nodes import db
 
 
 def test_version():
@@ -80,12 +81,14 @@ def test_storage_clear(app):
     """Test that storage gets cleared."""
     from sdsc_deployer.nodes import Node
 
-    node = Node()
+    node = Node.create({'image': 'hello-world'})
     with app.test_client() as client:
         listing = json.loads(client.get('v1/nodes').data)
         assert listing['nodes']
 
-        app.extensions['sdsc-deployer'].storage['nodes'].clear()
+        Node.query.delete()
+        db.session.commit()
+
         listing = json.loads(client.get('v1/nodes').data)
         assert not listing['nodes']
 

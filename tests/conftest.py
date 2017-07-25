@@ -19,8 +19,11 @@ import shutil
 import tempfile
 
 import pytest
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
 
 from sdsc_deployer.deployer import Deployer
+from sdsc_deployer.nodes import db
 
 
 @pytest.yield_fixture()
@@ -34,19 +37,31 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    # app_ = Flask('testapp', instance_path=instance_path)
     from sdsc_deployer.app import app
     app.config.update(
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        # SQLALCHEMY_DATABASE_URI='sqlite:///{0}/test.db'.format(instance_path),
         SECRET_KEY='SECRET_KEY',
         TESTING=True, )
-    return app
+    yield app
 
 
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
+        if database_exists(db.engine.url):
+            drop_database(db.engine.url)
+            # raise RuntimeError('Database exists')
+        create_database(db.engine.url)
+        db.create_all()
+
+    with base_app.app_context():
         yield base_app
+
+    with base_app.app_context():
+        db.drop_all()
+        drop_database(db.engine.url)
 
 
 @pytest.fixture()

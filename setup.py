@@ -57,11 +57,14 @@ install_requires = [
     'Flask>=0.12.2',
     'Flask-BabelEx>=0.9.2',
     'Flask-RESTful>=0.3.6',
+    'Flask-SQLAlchemy>=2.2',
     'Jinja2>=2.9.6',
+    'SQLAlchemy>=1.1.12',
     'blinker>=1.4',
     'connexion>=1.1.11',
     'jsonschema>=2.6.0',
     'six>=1.10.0',
+    'sqlalchemy-utils>=0.32.14',
 ]
 
 packages = find_packages()

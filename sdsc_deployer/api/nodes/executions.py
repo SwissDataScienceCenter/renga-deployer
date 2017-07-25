@@ -15,6 +15,7 @@
 # limitations under the License.
 """Implement ``/nodes/{node_id}/executions(/{execution_id})`` endpoint."""
 
+from sdsc_deployer.nodes import ExecutionEnvironment, Node
 from sdsc_deployer.ext import current_deployer
 from sdsc_deployer.deployer import execution_created
 
@@ -27,31 +28,31 @@ def store_execution(execution):
 
 def search(node_id):
     return {
-        'executions':
-        [{
+        'executions': [{
             'identifier': execution.id,
             'engine': execution.engine,
-            # 'namespace': execution.namespace,
+            'namespace': execution.namespace,
         }
-         for execution in current_deployer.storage['index'][node_id]],
+                       for execution in ExecutionEnvironment.query.filter_by(
+                           node_id=node_id).all()],
     }, 200
 
 
 def get(node_id, execution_id):
-    execution = current_deployer.storage['executions'][execution_id]
+    execution = ExecutionEnvironment.query.get_or_404(execution_id)
     assert execution.node_id == node_id
     return {
         'identifier': execution.id,
         'engine': execution.engine,
-        # 'namespace': execution.namespace,
+        'namespace': execution.namespace,
     }, 200
 
 
 def post(node_id, data):
-    node = current_deployer.storage['nodes'][node_id]
+    node = Node.query.get_or_404(node_id)
     execution = current_deployer.deployer.launch(node=node, **data)
     return {
         'identifier': execution.id,
         'engine': execution.engine,
-        # 'namespace': execution.namespace,
+        'namespace': execution.namespace,
     }, 201
