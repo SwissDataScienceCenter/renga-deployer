@@ -26,8 +26,12 @@ db = SQLAlchemy()
 """Core database object."""
 
 
-class Node(db.Model):
-    """Represent node metadata."""
+class Node(db.Model, Timestamp):
+    """Represent node metadata.
+
+    Additionally it constans two columns ``created`` and ``updated``
+    with automatically managed timestamps.
+    """
 
     __tablename__ = 'nodes'
 
@@ -72,8 +76,11 @@ class ExecutionEnvironment(db.Model, Timestamp):
     node_id = db.Column(UUIDType, db.ForeignKey(Node.id))
     """Node identifier from which the execution started."""
 
-    execution = db.relationship(Node, backref=db.backref(
-        'nodes', lazy='dynamic', cascade='all, delete-orphan'), lazy='joined')
+    node = db.relationship(
+        Node,
+        backref=db.backref(
+            'executions', lazy='dynamic', cascade='all, delete-orphan'),
+        lazy='joined')
 
     @classmethod
     def from_node(cls, node, **kwargs):
