@@ -4,4 +4,7 @@ ci-setup-minikube:
 	./minikube version
 	./minikube config set WantReportErrorPrompt false
 
-ci: ci-setup-minikube
+ci-start-minikube: ci-setup-minikube
+	./minikube start
+
+ci: ci-start-minikube
