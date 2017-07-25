@@ -5,6 +5,6 @@ ci-setup-minikube:
 	./minikube config set WantReportErrorPrompt false
 
 ci-start-minikube: ci-setup-minikube
-	./minikube start
+	./minikube start --show-libmachine-logs --vm-driver=none --use-vendored-driver
 
 ci: ci-start-minikube
