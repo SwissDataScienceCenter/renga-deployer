@@ -15,18 +15,12 @@
 # limitations under the License.
 """Implement ``/nodes/{node_id}/executions(/{execution_id})`` endpoint."""
 
-from sdsc_deployer.nodes import ExecutionEnvironment, Node
 from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.deployer import execution_created
-
-
-@execution_created.connect
-def store_execution(execution):
-    current_deployer.storage['executions'][execution.id] = execution
-    current_deployer.storage['index'][execution.node_id].append(execution)
+from sdsc_deployer.nodes import ExecutionEnvironment, Node
 
 
 def search(node_id):
+    """Return currently stored ``ExecutionEnvironments of a given node."""
     return {
         'executions': [{
             'identifier': execution.id,
@@ -39,6 +33,7 @@ def search(node_id):
 
 
 def get(node_id, execution_id):
+    """Return information about a specific ``ExecutionEnvironment."""
     execution = ExecutionEnvironment.query.get_or_404(execution_id)
     assert execution.node_id == node_id
     return {
@@ -49,6 +44,7 @@ def get(node_id, execution_id):
 
 
 def post(node_id, data):
+    """Create a new ``ExecutionEnvironment for a given node."""
     node = Node.query.get_or_404(node_id)
     execution = current_deployer.deployer.launch(node=node, **data)
     return {

@@ -37,6 +37,7 @@ class DockerEngine(Engine):
 
     @cached_property
     def client(self):
+        """Create a docker client from local environment."""
         import docker
         return docker.from_env()
 
@@ -65,6 +66,7 @@ class K8SEngine(Engine):
 
     @cached_property
     def api(self):
+        """Create an k8s api interface instance from local config."""
         import pykube  # TODO: Fix imports
         if self.config is None:
             self.config = pykube.KubeConfig.from_file(
@@ -129,6 +131,7 @@ class K8SEngine(Engine):
 
     @staticmethod
     def get_job(uid, config=None):
+        """Retrieve a k8s Job instance given its ``uid``."""
         import pykube
         api = K8SNode.get_api(config)
         job = pykube.Job.objects(api).filter(selector={'controller-uid':

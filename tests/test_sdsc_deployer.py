@@ -17,8 +17,8 @@
 
 import json
 
-from flask import Flask
 import pytest
+from flask import Flask
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer

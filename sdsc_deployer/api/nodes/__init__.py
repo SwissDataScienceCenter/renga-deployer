@@ -20,6 +20,7 @@ from sdsc_deployer.nodes import Node
 
 
 def search():
+    """Return a listing of currently known nodes."""
     return {
         'nodes': [{
             'identifier': node.id,
@@ -30,6 +31,7 @@ def search():
 
 
 def get(node_id):
+    """Return information about a specific node."""
     node = Node.query.get_or_404(node_id)
     return {
         'identifier': node.id,
@@ -39,6 +41,7 @@ def get(node_id):
 
 
 def post(data):
+    """Create a new node."""
     node = current_deployer.deployer.create(data=data)
     return {
         'identifier': node.id,

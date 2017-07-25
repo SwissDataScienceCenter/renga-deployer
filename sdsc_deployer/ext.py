@@ -63,6 +63,7 @@ class SDSCDeployer(object):
 
     @property
     def deployer(self):
+        """Returns a local app :class:`~sdsc_deployer.deployer.Deployer`."""
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'sdsc_deployer'):

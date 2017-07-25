@@ -41,6 +41,7 @@ class Node(db.Model):
 
     @classmethod
     def create(cls, data=None):
+        """Create a new node."""
         node = cls(data=data)
         db.session.add(node)
         db.session.commit()

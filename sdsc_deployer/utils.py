@@ -15,13 +15,12 @@
 # limitations under the License.
 """Utility functions."""
 
-from functools import wraps
 import time
+from functools import wraps
 
 
 def decode_bytes(func):
-    """Function wrapper that always returns string"""
-
+    """Function wrapper that always returns string."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         res = func()
@@ -35,16 +34,17 @@ def decode_bytes(func):
 
 def resource_available(func):
     """
-    Function wrapper to catch that something is not available
+    Function wrapper to catch that something is not available.
 
     Example:
 
     while not resource_available(get_logs()):
         # this loop continues until the logs are available
         pass
-    logs = get_logs()
-    """
 
+    logs = get_logs()
+
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:

@@ -17,8 +17,36 @@
 API Docs
 ========
 
+Deployer
+--------
+
+.. automodule:: sdsc_deployer.deployer
+   :members:
+
+Engines
+-------
+
+.. automodule:: sdsc_deployer.engines
+   :members:
+
+Ext
+---
+
 .. automodule:: sdsc_deployer.ext
    :members:
+
+Nodes
+-----
+
+.. automodule:: sdsc_deployer.nodes
+   :members:
+
+Utils
+-----
+
+.. automodule:: sdsc_deployer.utils
+   :members:
+
 
 Views
 -----
