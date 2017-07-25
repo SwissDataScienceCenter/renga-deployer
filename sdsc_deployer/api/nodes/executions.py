@@ -27,11 +27,13 @@ def store_execution(execution):
 
 def search(node_id):
     return {
-        'executions': [{
+        'executions':
+        [{
             'identifier': execution.id,
             'engine': execution.engine,
             'namespace': execution.namespace,
-        } for execution in current_deployer.storage['index'][node_id]],
+        }
+         for execution in current_deployer.storage['index'][node_id].values()],
     }, 200
 
 

@@ -21,6 +21,7 @@ from flask import Flask
 import pytest
 
 from sdsc_deployer import SDSCDeployer
+from sdsc_deployer.ext import current_deployer
 
 
 def test_version():
@@ -56,9 +57,7 @@ def test_node_post(app, engine):
     """Test docker node deployment."""
     with app.test_client() as client:
         # create a node
-        data = {}
-        data['spec'] = {'image': 'hello-world'}
-        data['engine'] = engine
+        data = {'image': 'hello-world'}
 
         resp = client.post(
             'v1/nodes', data=json.dumps(data), content_type='application/json')
@@ -67,7 +66,7 @@ def test_node_post(app, engine):
 
         resp_data = json.loads(resp.data)
         assert resp_data
-        assert 'identifier' in resp_data.keys()
+        assert 'identifier' in resp_data
 
 
 def test_node_get(app):
@@ -84,22 +83,24 @@ def test_storage_clear(app):
     node = Node()
     with app.test_client() as client:
         listing = json.loads(client.get('v1/nodes').data)
-        assert listing
+        assert listing['nodes']
 
-        app.extensions['sdsc-deployer'].storage.clear()
+        app.extensions['sdsc-deployer'].storage['nodes'].clear()
         listing = json.loads(client.get('v1/nodes').data)
-        assert not listing
+        assert not listing['nodes']
 
 
 def test_storage_append(app):
     """Test that multiple nodes get added."""
-    from sdsc_deployer.nodes import Node
-
     with app.test_client() as client:
-        node1 = Node()
-        listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing) == 1
+        data = {'image': 'hello-world'}
 
-        node2 = Node()
+        client.post(
+            'v1/nodes', data=json.dumps(data), content_type='application/json')
         listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing) == 2
+        assert len(listing['nodes']) == 1
+
+        client.post(
+            'v1/nodes', data=json.dumps(data), content_type='application/json')
+        listing = json.loads(client.get('v1/nodes').data)
+        assert len(listing['nodes']) == 2

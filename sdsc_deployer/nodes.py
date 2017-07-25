@@ -39,7 +39,6 @@ class Node(object):
         """Create a Node instance."""
         self.id = uuid.uuid4().hex
         self.data = data or {}
-        self.spec = self.data.get('spec', {})
 
     @classmethod
     def create(cls, data=None):

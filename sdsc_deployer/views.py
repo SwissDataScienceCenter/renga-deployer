@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """SDSC Deployer Service."""
 
 # TODO: This is an example file. Remove it if you do not need it, including
@@ -29,13 +27,11 @@ blueprint = Blueprint(
     'sdsc_deployer',
     __name__,
     template_folder='templates',
-    static_folder='static',
-)
+    static_folder='static', )
 
 
 @blueprint.route("/")
 def index():
     """Basic view."""
     return render_template(
-        "sdsc_deployer/index.html",
-        module_name=_('SDSC-Deployer'))
+        "sdsc_deployer/index.html", module_name=_('SDSC-Deployer'))

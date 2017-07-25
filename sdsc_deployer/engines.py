@@ -43,7 +43,8 @@ class DockerEngine(Engine):
     def launch(self, node, engine=None, **kwargs):
         """Launch a docker container with the Node image."""
         container = self.client.containers.run(node.data['image'], detach=True)
-        return ExecutionEnvironment.from_node(node, engine=engine, engine_id=container.id)
+        return ExecutionEnvironment.from_node(
+            node, engine=engine, engine_id=container.id)
 
     def get_logs(self, execution):
         """Extract logs for a container."""

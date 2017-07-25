@@ -30,7 +30,7 @@ def search():
             'identifier': node.id,
             'image': node.data['image'],
             'ports': node.data.get('ports', {}),
-        } for node in current_deployer.storage['nodes']]
+        } for node in current_deployer.storage['nodes'].values()]
     }, 200
 
 

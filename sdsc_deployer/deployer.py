@@ -42,7 +42,7 @@ class Deployer(object):
 
     @classmethod
     def from_env(cls, prefix='DEPLOYER_'):
-        """Create a Deployer based on configuration read from environment variables."""
+        """Create a Deployer from environment variables."""
         engines = {}
 
         # grab engine definitions
@@ -63,7 +63,8 @@ class Deployer(object):
     def launch(self, node=None, engine=None, **kwargs):
         """Create new execution environment for a given node."""
         execution = self.ENGINES[engine](  # FIXME use configuration
-        ).launch(node, engine=engine, **kwargs)
+        ).launch(
+            node, engine=engine, **kwargs)
         execution_created.send(execution)
         return execution
 

@@ -43,12 +43,17 @@ class SDSCDeployer(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        app.register_blueprint(blueprint)
-        app.extensions['sdsc-deployer'] = self
 
         # TOOD replace with a persitent object store
         from collections import defaultdict
-        self.storage = {'nodes': {}, 'executions': {}, 'index': defaultdict(list)}
+        self.storage = {
+            'nodes': {},
+            'executions': {},
+            'index': defaultdict(list)
+        }
+
+        app.register_blueprint(blueprint)
+        app.extensions['sdsc-deployer'] = self
 
     def init_config(self, app):
         """Initialize configuration."""

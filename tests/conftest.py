@@ -19,8 +19,6 @@ import shutil
 import tempfile
 
 import pytest
-from flask import Flask
-from flask_babelex import Babel
 
 from sdsc_deployer.deployer import Deployer
 
@@ -41,7 +39,6 @@ def base_app(instance_path):
     app.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True, )
-    Babel(app)
     return app
 
 

@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Test example app."""
 
 import os
@@ -45,7 +43,9 @@ def example_app():
     # Start example app
     webapp = subprocess.Popen(
         'FLASK_APP=app.py flask run --debugger -p 5000',
-        stdout=subprocess.PIPE, preexec_fn=os.setsid, shell=True)
+        stdout=subprocess.PIPE,
+        preexec_fn=os.setsid,
+        shell=True)
     time.sleep(10)
     yield webapp
 

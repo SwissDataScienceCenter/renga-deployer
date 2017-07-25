@@ -99,8 +99,15 @@ paths:
         - deployer
       summary: List node execution environments.
       description: ''
+      operationId: sdsc_deployer.api.nodes.executions.search
       produces:
         - application/json
+      parameters:
+        - name: node_id
+          in: path
+          description: ID of node to launch
+          required: true
+          type: string
       responses:
         '200':
           description: successful operation
@@ -115,6 +122,7 @@ paths:
       tags:
         - deployer
       summary: Create a node execution
+      operationId: sdsc_deployer.api.nodes.executions.post
       produces:
         - application/json
       parameters:
@@ -144,6 +152,7 @@ paths:
         - deployer
       summary: Find execution by ID
       description: Returns a single execution
+      operationId: sdsc_deployer.api.nodes.executions.get
       produces:
         - application/json
       parameters:
@@ -189,12 +198,9 @@ definitions:
   Node:
     allOf:
       - $ref: "#/definitions/NewNode"
-      - schema:
-          type: "object"
-          properties:
-            identifier:
-              type: "string"
-            # TODO add URLs
+      - properties:
+          identifier:
+            type: "string"
 
   NewExecutionEnvironment:
     type: "object"
@@ -209,11 +215,9 @@ definitions:
   ExecutionEnvironment:
     allOf:
       - $ref: "#/definitions/NewExecutionEnvironment"
-      - schema:
-          type: "object"
-          properties:
-            identifier:
-              type: "string"
+      - properties:
+          identifier:
+            type: "string"
 
   Nodes:
     type: "object"
