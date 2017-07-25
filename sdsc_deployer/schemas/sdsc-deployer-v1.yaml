@@ -179,7 +179,7 @@ paths:
 securityDefinitions:
   sdsc_auth:
     type: "oauth2"
-    authorizationUrl: "https://testing.datascience.ch:8080"
+    authorizationUrl: "https://testing.datascience.ch:8080/auth"
     flow: "implicit"
     scopes:
       write:nodes: "modify nodes"
