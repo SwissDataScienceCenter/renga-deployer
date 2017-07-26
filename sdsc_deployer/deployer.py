@@ -20,16 +20,16 @@ import os
 from blinker import Namespace
 
 from . import engines
-from .nodes import ExecutionEnvironment, Node
+from .models import Context, Execution
 
 deployer_signals = Namespace()
 
-node_created = deployer_signals.signal('node-created')
+context_created = deployer_signals.signal('context-created')
 execution_created = deployer_signals.signal('execution-created')
 
 
 class Deployer(object):
-    """Handling the deployment of Nodes."""
+    """Handling the executions of contexts."""
 
     ENGINES = {'docker': engines.DockerEngine, 'k8s': engines.K8SEngine}
 
@@ -54,17 +54,17 @@ class Deployer(object):
 
         return cls(engines=engines)
 
-    def create(self, data):
-        """Create a Node for the engine indicated in data."""
-        node = Node.create(data)
-        node_created.send(node)
-        return node
+    def create(self, spec):
+        """Create a context with a given specification."""
+        context = Context.create(spec=spec)
+        context_created.send(context)
+        return context
 
-    def launch(self, node=None, engine=None, **kwargs):
-        """Create new execution environment for a given node."""
+    def launch(self, context=None, engine=None, **kwargs):
+        """Create new execution environment for a given context."""
         execution = self.ENGINES[engine](  # FIXME use configuration
         ).launch(
-            node, engine=engine, **kwargs)
+            context, engine=engine, **kwargs)
         execution_created.send(execution)
         return execution
 

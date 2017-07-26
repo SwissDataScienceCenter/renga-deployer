@@ -22,7 +22,7 @@ from flask import Flask
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.nodes import db
+from sdsc_deployer.models import Context, db
 
 
 def test_version():
@@ -54,14 +54,16 @@ def test_view(app):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_node_post(app, engine):
-    """Test docker node deployment."""
+def test_context_execution(app, engine):
+    """Test context execution."""
     with app.test_client() as client:
         # create a node
         data = {'image': 'hello-world'}
 
         resp = client.post(
-            'v1/nodes', data=json.dumps(data), content_type='application/json')
+            'v1/contexts',
+            data=json.dumps(data),
+            content_type='application/json')
 
         assert resp.status_code == 201
 
@@ -73,37 +75,39 @@ def test_node_post(app, engine):
 def test_node_get(app):
     """Test local node storage."""
     with app.test_client() as client:
-        listing = json.loads(client.get('v1/nodes').data)
+        listing = json.loads(client.get('v1/contexts').data)
         assert listing
 
 
 def test_storage_clear(app):
     """Test that storage gets cleared."""
-    from sdsc_deployer.nodes import Node
-
-    node = Node.create({'image': 'hello-world'})
+    node = Context.create(spec={'image': 'hello-world'})
     with app.test_client() as client:
-        listing = json.loads(client.get('v1/nodes').data)
-        assert listing['nodes']
+        listing = json.loads(client.get('v1/contexts').data)
+        assert listing['contexts']
 
-        Node.query.delete()
+        Context.query.delete()
         db.session.commit()
 
-        listing = json.loads(client.get('v1/nodes').data)
-        assert not listing['nodes']
+        listing = json.loads(client.get('v1/contexts').data)
+        assert not listing['contexts']
 
 
 def test_storage_append(app):
-    """Test that multiple nodes get added."""
+    """Test that multiple contexts get added."""
     with app.test_client() as client:
         data = {'image': 'hello-world'}
 
         client.post(
-            'v1/nodes', data=json.dumps(data), content_type='application/json')
-        listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing['nodes']) == 1
+            'v1/contexts',
+            data=json.dumps(data),
+            content_type='application/json')
+        listing = json.loads(client.get('v1/contexts').data)
+        assert len(listing['contexts']) == 1
 
         client.post(
-            'v1/nodes', data=json.dumps(data), content_type='application/json')
-        listing = json.loads(client.get('v1/nodes').data)
-        assert len(listing['nodes']) == 2
+            'v1/contexts',
+            data=json.dumps(data),
+            content_type='application/json')
+        listing = json.loads(client.get('v1/contexts').data)
+        assert len(listing['contexts']) == 2

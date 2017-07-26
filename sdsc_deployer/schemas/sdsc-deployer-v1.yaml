@@ -13,18 +13,18 @@ host: 127.0.0.1:5000
 basePath: /v1
 tags:
   - name: deployer
-    description: Everything about deployed nodes.
+    description: Everything about deployed contexts.
     externalDocs:
       description: Find out more
       url: 'http://datascience.ch/services/deployer'
 schemes:
   - https
 paths:
-  /nodes:
+  /contexts:
     get:
       tags:
         - deployer
-      summary: List deployed nodes.
+      summary: List defined contexts.
       description: ''
       produces:
         - application/json
@@ -32,16 +32,16 @@ paths:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/Nodes'
+            $ref: '#/definitions/Contexts'
         '405':
           description: Invalid input
       security:
         - sdsc_auth:
-            - 'read:nodes'
+            - 'read:contexts'
     post:
       tags:
         - deployer
-      summary: Create a new node.
+      summary: Create a new context.
       description: ''
       consumes:
         - application/json
@@ -49,116 +49,118 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: data
-          description: New node to be added.
+          name: spec
+          description: New context to be added.
           required: true
           schema:
-            $ref: '#/definitions/NewNode'
+            $ref: '#/definitions/Specification'
       responses:
         '201':
           description: create successful
           schema:
-            $ref: '#/definitions/Node'
+            $ref: '#/definitions/Context'
         '400':
           description: Invalid ID supplied
         '404':
-          description: Node not found
+          description: context not found
         '405':
           description: Validation exception
       security:
         - sdsc_auth:
-            - 'write:nodes'
-            - 'read:nodes'
+            - 'write:contexts'
+            - 'read:contexts'
 
-  /nodes/{node_id}:
+  /contexts/{context_id}:
     get:
       tags:
         - deployer
-      summary: Find node by ID
-      description: Returns a single node
+      summary: Find context by ID
+      description: Returns a single context
       produces:
         - application/json
       parameters:
-        - name: node_id
+        - name: context_id
           in: path
-          description: ID of node to return
+          description: ID of context to return
           required: true
           type: string
       responses:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/Node'
+            $ref: '#/definitions/Context'
         '400':
           description: Invalid ID supplied
         '404':
-          description: Node not found
-  /nodes/{node_id}/executions:
+          description: context not found
+
+  /contexts/{context_id}/executions:
     get:
       tags:
         - deployer
-      summary: List node execution environments.
+      summary: List context executions.
       description: ''
-      operationId: sdsc_deployer.api.nodes.executions.search
+      operationId: sdsc_deployer.api.contexts.executions.search
       produces:
         - application/json
       parameters:
-        - name: node_id
+        - name: context_id
           in: path
-          description: ID of node to launch
+          description: ID of context to launch
           required: true
           type: string
       responses:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/ExecutionEnvironments'
+            $ref: '#/definitions/Executions'
         '405':
           description: Invalid input
       security:
         - sdsc_auth:
-            - 'read:nodes'
+            - 'read:contexts'
     post:
       tags:
         - deployer
-      summary: Create a node execution
-      operationId: sdsc_deployer.api.nodes.executions.post
+      summary: Execute a context
+      operationId: sdsc_deployer.api.contexts.executions.post
       produces:
         - application/json
       parameters:
-        - name: node_id
+        - name: context_id
           in: path
-          description: ID of node to launch
+          description: ID of context to launch
           required: true
           type: string
         - in: body
           name: data
-          description: New execution of a node.
+          description: New execution of a context.
           required: true
           schema:
-            $ref: '#/definitions/NewExecutionEnvironment'
+            $ref: '#/definitions/NewExecution'
       responses:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/ExecutionEnvironment'
+            $ref: '#/definitions/Execution'
         '400':
           description: Invalid ID supplied
         '404':
-          description: Node not found
-  /nodes/{node_id}/executions/{execution_id}:
+          description: context not found
+
+  /contexts/{context_id}/executions/{execution_id}:
     get:
       tags:
         - deployer
       summary: Find execution by ID
       description: Returns a single execution
-      operationId: sdsc_deployer.api.nodes.executions.get
+      operationId: sdsc_deployer.api.contexts.executions.get
       produces:
         - application/json
       parameters:
-        - name: node_id
+        - name: context_id
           in: path
-          description: ID of execution node
+          description: ID of execution context
           required: true
           type: string
         - name: execution_id
@@ -170,11 +172,11 @@ paths:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/ExecutionEnvironment'
+            $ref: '#/definitions/Execution'
         '400':
           description: Invalid ID supplied
         '404':
-          description: Node not found
+          description: context not found
 
 securityDefinitions:
   sdsc_auth:
@@ -182,11 +184,11 @@ securityDefinitions:
     authorizationUrl: "https://testing.datascience.ch:8080/auth"
     flow: "implicit"
     scopes:
-      write:nodes: "modify nodes"
-      read:nodes: "read nodes"
+      write:contexts: "modify contexts"
+      read:contexts: "read contexts"
 
 definitions:
-  NewNode:
+  Specification:
     type: "object"
     properties:
       image:
@@ -195,14 +197,15 @@ definitions:
       ports:
         type: "object"
 
-  Node:
-    allOf:
-      - $ref: "#/definitions/NewNode"
-      - properties:
-          identifier:
-            type: "string"
+  Context:
+    type: "object"
+    properties:
+      identifier:
+        type: "string"
+      spec:
+        $ref: "#/definitions/Specification"
 
-  NewExecutionEnvironment:
+  NewExecution:
     type: "object"
     properties:
       engine:
@@ -212,25 +215,25 @@ definitions:
         type: "string"
         default: "default"
 
-  ExecutionEnvironment:
+  Execution:
     allOf:
-      - $ref: "#/definitions/NewExecutionEnvironment"
+      - $ref: "#/definitions/NewExecution"
       - properties:
           identifier:
             type: "string"
 
-  Nodes:
+  Contexts:
     type: "object"
     properties:
-      nodes:
+      contexts:
         type: "array"
         items:
-          $ref: '#/definitions/Node'
+          $ref: '#/definitions/Context'
 
-  ExecutionEnvironments:
+  Executions:
     type: "object"
     properties:
-      environments:
+      executions:
         type: "array"
         items:
-          $ref: '#/definitions/ExecutionEnvironment'
+          $ref: '#/definitions/Execution'

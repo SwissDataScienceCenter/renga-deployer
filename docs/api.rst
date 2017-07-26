@@ -29,16 +29,16 @@ Engines
 .. automodule:: sdsc_deployer.engines
    :members:
 
-Ext
----
+Extention
+---------
 
 .. automodule:: sdsc_deployer.ext
    :members:
 
-Nodes
------
+Models
+------
 
-.. automodule:: sdsc_deployer.nodes
+.. automodule:: sdsc_deployer.models
    :members:
 
 Utils

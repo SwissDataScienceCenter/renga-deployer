@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Nodes sub-module."""
+"""Contexts sub-module."""
 
 import uuid
 from collections import namedtuple
@@ -26,40 +26,40 @@ db = SQLAlchemy()
 """Core database object."""
 
 
-class Node(db.Model, Timestamp):
-    """Represent node metadata.
+class Context(db.Model, Timestamp):
+    """Execution specification.
 
     Additionally it constans two columns ``created`` and ``updated``
     with automatically managed timestamps.
     """
 
-    __tablename__ = 'nodes'
+    __tablename__ = 'contexts'
 
     id = db.Column(UUIDType, primary_key=True, default=uuid.uuid4)
-    """Node identifier."""
+    """Context identifier."""
 
-    data = db.Column(
+    spec = db.Column(
         db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'),
         index=True)
-    """Node definition."""
+    """Context specification."""
 
     @classmethod
-    def create(cls, data=None):
-        """Create a new node."""
-        node = cls(data=data)
-        db.session.add(node)
+    def create(cls, spec=None):
+        """Create a new context."""
+        context = cls(spec=spec)
+        db.session.add(context)
         db.session.commit()
-        return node
+        return context
 
 
-class ExecutionEnvironment(db.Model, Timestamp):
-    """Represent an execution environment.
+class Execution(db.Model, Timestamp):
+    """Represent an execution of a context.
 
     Additionally it constans two columns ``created`` and ``updated``
     with automatically managed timestamps.
     """
 
-    __tablename__ = 'execution_environments'
+    __tablename__ = 'executions'
 
     id = db.Column(UUIDType, primary_key=True, default=uuid.uuid4)
     """Execution identifier."""
@@ -73,19 +73,19 @@ class ExecutionEnvironment(db.Model, Timestamp):
     namespace = db.Column(db.String)
     """Namespace name."""
 
-    node_id = db.Column(UUIDType, db.ForeignKey(Node.id))
-    """Node identifier from which the execution started."""
+    context_id = db.Column(UUIDType, db.ForeignKey(Context.id))
+    """Context identifier from which the execution started."""
 
-    node = db.relationship(
-        Node,
+    context = db.relationship(
+        Context,
         backref=db.backref(
             'executions', lazy='dynamic', cascade='all, delete-orphan'),
         lazy='joined')
 
     @classmethod
-    def from_node(cls, node, **kwargs):
-        """Create a new execution for a given node."""
-        execution = cls(node_id=node.id, **kwargs)
+    def from_context(cls, context, **kwargs):
+        """Create a new execution for a given context."""
+        execution = cls(context_id=context.id, **kwargs)
         db.session.add(execution)
         db.session.commit()
         return execution

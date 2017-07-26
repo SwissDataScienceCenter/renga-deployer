@@ -22,7 +22,7 @@ from connexion.resolver import RestyResolver
 from flask_babelex import Babel
 
 from .ext import SDSCDeployer
-from .nodes import db
+from .models import db
 
 api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
 api.add_api(

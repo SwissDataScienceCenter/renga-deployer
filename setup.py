@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """SDSC Deployer Service."""
 
 import os
@@ -63,6 +61,7 @@ install_requires = [
     'blinker>=1.4',
     'connexion>=1.1.11',
     'jsonschema>=2.6.0',
+    'marshmallow>=2.13.5',
     'six>=1.10.0',
     'sqlalchemy-utils>=0.32.14',
 ]

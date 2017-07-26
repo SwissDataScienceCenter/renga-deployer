@@ -23,7 +23,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
 from sdsc_deployer.deployer import Deployer
-from sdsc_deployer.nodes import db
+from sdsc_deployer.models import db
 
 
 @pytest.yield_fixture()

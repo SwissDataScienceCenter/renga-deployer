@@ -20,20 +20,20 @@ import time
 
 from werkzeug.utils import cached_property
 
-from .nodes import ExecutionEnvironment
+from .models import Execution
 from .utils import decode_bytes, resource_available
 
 
 class Engine(object):
     """Base engine class."""
 
-    def launch(self, node, **kwargs):
-        """Create new execution environment for a given node."""
+    def launch(self, context, **kwargs):
+        """Create new execution environment for a given context."""
         raise NotImplemented
 
 
 class DockerEngine(Engine):
-    """Class for deploying nodes on docker."""
+    """Class for deploying contexts on docker."""
 
     @cached_property
     def client(self):
@@ -41,11 +41,12 @@ class DockerEngine(Engine):
         import docker
         return docker.from_env()
 
-    def launch(self, node, engine=None, **kwargs):
-        """Launch a docker container with the Node image."""
-        container = self.client.containers.run(node.data['image'], detach=True)
-        return ExecutionEnvironment.from_node(
-            node, engine=engine, engine_id=container.id)
+    def launch(self, context, engine=None, **kwargs):
+        """Launch a docker container with the context image."""
+        container = self.client.containers.run(
+            context.spec['image'], detach=True)
+        return Execution.from_context(
+            context, engine=engine, engine_id=container.id)
 
     def get_logs(self, execution):
         """Extract logs for a container."""
@@ -54,7 +55,7 @@ class DockerEngine(Engine):
 
 
 class K8SEngine(Engine):
-    """Class for deploying nodes on Kubernetes."""
+    """Class for deploying contexts on Kubernetes."""
 
     def __init__(self, config=None, timeout=60):
         """Create a K8SNode instance."""
@@ -73,19 +74,19 @@ class K8SEngine(Engine):
                 os.path.join(os.path.expanduser('~'), '.kube/config'))
         return pykube.HTTPClient(self.config)
 
-    def launch(self, node, engine=None, **kwargs):
-        """Launch a kubernetes Job with the Node attributes."""
+    def launch(self, context, engine=None, **kwargs):
+        """Launch a kubernetes Job with the context attributes."""
         import pykube
         job = pykube.Job(self.api,
                          self._k8s_job_template(
                              namespace=kwargs.get('namespace', 'default'),
-                             name=node.id,
-                             image=node.data['image']))
+                             name=context.id,
+                             image=context.spec['image']))
 
         # actually submit the job to k8s
         job.create()
-        return ExecutionEnvironment.from_node(
-            node, engine=engine, engine_id=job.obj['metadata']['uid'])
+        return Execution.from_context(
+            context, engine=engine, engine_id=job.obj['metadata']['uid'])
 
     @staticmethod
     def _k8s_job_template(namespace, name, image):
