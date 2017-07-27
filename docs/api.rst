@@ -29,7 +29,7 @@ Engines
 .. automodule:: sdsc_deployer.engines
    :members:
 
-Extention
+Extension
 ---------
 
 .. automodule:: sdsc_deployer.ext

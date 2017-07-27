@@ -27,9 +27,9 @@ db = SQLAlchemy()
 
 
 class Context(db.Model, Timestamp):
-    """Execution specification.
+    """Execution context.
 
-    Additionally it constans two columns ``created`` and ``updated``
+    Additionally it contains two columns ``created`` and ``updated``
     with automatically managed timestamps.
     """
 
@@ -55,7 +55,7 @@ class Context(db.Model, Timestamp):
 class Execution(db.Model, Timestamp):
     """Represent an execution of a context.
 
-    Additionally it constans two columns ``created`` and ``updated``
+    Additionally it contains two columns ``created`` and ``updated``
     with automatically managed timestamps.
     """
 
