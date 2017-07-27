@@ -183,7 +183,8 @@ securityDefinitions:
     type: "oauth2"
     authorizationUrl: "{{ DEPLOYER_AUTHORIZATION_URL }}"
     tokenUrl: "{{ DEPLOYER_TOKEN_URL }}"
-    x-tokenInfoUrl: "{{ DEPLOYER_TOKEN_INFO_URL }}"
+    # Use TOKENINFO_URL
+    # x-tokenInfoUrl: "{{ DEPLOYER_TOKEN_INFO_URL }}"
     flow: "accessCode"
     scopes:
       write:contexts: "modify contexts"

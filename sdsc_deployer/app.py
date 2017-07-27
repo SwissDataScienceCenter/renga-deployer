@@ -41,8 +41,8 @@ DEPLOYER_CONFIG = {
     ),
     # x-tokenInfoUrl: "https://testing.datascience.ch:8080/auth/realms/SDSC/"
     #                 "protocol/openid-connect/token/introspect"
-    'DEPLOYER_TOKEN_INFO_URL':
-    os.getenv('DEPLOYER_TOKEN_INFO_URL', 'http://localhost:5000/tokeninfo'),
+    # 'DEPLOYER_TOKEN_INFO_URL':
+    # os.getenv('DEPLOYER_TOKEN_INFO_URL', 'http://localhost:5000/tokeninfo'),
     'DEPLOYER_CLIENT_ID':
     os.getenv('DEPLOYER_CLIENT_ID', 'demo-client'),
     'DEPLOYER_CLIENT_SECRET':
