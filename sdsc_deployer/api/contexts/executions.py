@@ -25,9 +25,8 @@ executions_schema = ExecutionSchema(many=True)
 
 def search(context_id):
     """Return currently stored ``Executions`` of a given context."""
-    return executions_schema.dump(Execution.query.filter_by(
-        context_id=context_id
-    ).all()).data, 200
+    return executions_schema.dump(
+        Execution.query.filter_by(context_id=context_id).all()).data, 200
 
 
 def get(context_id, execution_id):
