@@ -1,0 +1,16 @@
+version: "3"
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+  deployer:
+    build: .
+    depends_on:
+      - db
+    environment:
+      SQLALCHEMY_DATABASE_URI: 'postgres+psycopg2://postgres:postgres@db'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 5000:5000

@@ -40,6 +40,9 @@ extras_require = {
     'tests': tests_require,
     'docker': ['docker>=2.4.2'],
     'k8s': ['pykube>=0.15.0'],
+    'postgresql': [
+        'psycopg2>=2.6.1',
+    ],
 }
 
 extras_require['all'] = []
@@ -67,7 +70,6 @@ install_requires = [
 ]
 
 packages = find_packages()
-
 
 # Get the version string. Cannot be done with import!
 g = {}
@@ -114,5 +116,4 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Development Status :: 1 - Planning',
-    ],
-)
+    ], )

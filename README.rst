@@ -39,9 +39,28 @@ SDSC Deployer Service.
 Further documentation is available on
 https://sdsc-deployer.readthedocs.io/
 
-Quick start:
+Start locally:
 
 ::
 
-   $ export FLASK_APP=examples/app.py
+   $ export FLASK_APP=sdsc_deployer/app.py
    $ flask run
+
+
+Or with docker:
+
+::
+
+   $ docker build --tag sdsc-deployer:latest .
+   $ docker run -p 5000:5000 -v /var/run/docker.sock:/var/run/docker.sock sdsc-deployer:latest
+
+For development, mount the code directly and enable flask debug mode:
+
+::
+
+   $ docker run -p 5000:5000 \
+         -e FLASK_DEBUG=1 \
+         -v `pwd`:/code \
+         -v /var/run/docker.sock:/var/run/docker.sock \
+         sdsc-deployer:latest
+
