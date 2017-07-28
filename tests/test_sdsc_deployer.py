@@ -57,7 +57,7 @@ def test_view(app):
 def test_context_execution(app, engine):
     """Test context execution."""
     with app.test_client() as client:
-        # create a node
+        # create a context
         data = {'image': 'hello-world'}
 
         resp = client.post(
@@ -67,21 +67,59 @@ def test_context_execution(app, engine):
 
         assert resp.status_code == 201
 
-        resp_data = json.loads(resp.data)
-        assert resp_data
-        assert 'identifier' in resp_data
+        context = json.loads(resp.data)
+        assert context
+        assert 'identifier' in context
+
+        resp = client.post(
+            'v1/contexts/{0}/executions'.format(context['identifier']),
+            data=json.dumps({
+                'engine': engine
+            }),
+            content_type='application/json')
+
+        assert resp.status_code == 201
+
+        execution = json.loads(resp.data)
+        assert execution
+        assert 'identifier' in execution
+
+        resp = client.get('v1/contexts/{0}/executions/{1}'.format(
+            context['identifier'], execution['identifier']))
+
+        assert resp.status_code == 200
+        assert execution == json.loads(resp.data)
+
+        listing = json.loads(
+            client.get('v1/contexts/{0}/executions'.format(
+                context['identifier'])).data)
+
+        assert execution in listing['executions']
 
 
-def test_node_get(app):
-    """Test local node storage."""
+def test_context_get(app):
+    """Test context storage."""
+    data = {'image': 'hello-world'}
+
     with app.test_client() as client:
+        context = json.loads(
+            client.post(
+                'v1/contexts',
+                data=json.dumps(data),
+                content_type='application/json').data)
+
         listing = json.loads(client.get('v1/contexts').data)
-        assert listing
+        assert context in listing['contexts']
+
+        resp = client.get('v1/contexts/{0}'.format(context['identifier']))
+        assert resp.status_code == 200
+        assert context == json.loads(resp.data)
 
 
 def test_storage_clear(app):
     """Test that storage gets cleared."""
-    node = Context.create(spec={'image': 'hello-world'})
+    Context.create(spec={'image': 'hello-world'})
+
     with app.test_client() as client:
         listing = json.loads(client.get('v1/contexts').data)
         assert listing['contexts']

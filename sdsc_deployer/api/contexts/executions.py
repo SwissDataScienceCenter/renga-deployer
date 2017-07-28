@@ -32,7 +32,7 @@ def search(context_id):
 def get(context_id, execution_id):
     """Return information about a specific ``Execution``."""
     execution = Execution.query.get_or_404(execution_id)
-    assert execution.context_id == context_id
+    assert str(execution.context_id) == context_id
     return execution_schema.dump(execution).data, 200
 
 
