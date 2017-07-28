@@ -17,6 +17,7 @@
 
 import requests
 
+from sdsc_deployer.deployer import context_created, execution_created
 from sdsc_deployer.models import Context, Execution, db
 
 
@@ -58,11 +59,13 @@ class KnowledgeGraphSync(object):
             'DEPLOYER_GRAPH_MUTATION_URL',
             'https://testing.datascience.ch:5000/api/mutation')
 
-        # TODO register signals here
+        context_created.connect(create_context)
+        execution_created.connect(create_execution)
+
         app.extensions['sdsc-knowledge-graph-sync'] = self
 
 
-def context_created(context, token=None):
+def create_context(context, token=None):
     """Create context node."""
     token = token or request.headers['Authentication']
     headers = {'Authentication': token}
@@ -76,7 +79,7 @@ def context_created(context, token=None):
     db.session.commit()
 
 
-def execution_created(execution, token=None):
+def create_execution(execution, token=None):
     """Create execution node and vertex connecting context."""
     token = token or request.headers['Authentication']
     headers = {'Authentication': token}
