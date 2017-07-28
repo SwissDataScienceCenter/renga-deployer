@@ -16,6 +16,7 @@
 """Engine sub-module."""
 
 import os
+import shlex
 import time
 
 from werkzeug.utils import cached_property
@@ -31,6 +32,14 @@ class Engine(object):
         """Create new execution environment for a given context."""
         raise NotImplemented
 
+    def get_logs(self, execution):
+        """Extract logs for a container."""
+        raise NotImplemented
+
+    def get_host_port(self, execution):
+        """Retrieve the host/port where the application can be reached."""
+        raise NotImplemented
+
 
 class DockerEngine(Engine):
     """Class for deploying contexts on docker."""
@@ -43,8 +52,17 @@ class DockerEngine(Engine):
 
     def launch(self, context, engine=None, **kwargs):
         """Launch a docker container with the context image."""
+        if context.spec.get('ports'):
+            ports = {port: None for port in context.spec.get('ports')}
+        else:
+            ports = None
+
         container = self.client.containers.run(
-            context.spec['image'], detach=True)
+            image=context.spec['image'],
+            ports=ports,
+            command=context.spec.get('command'),
+            detach=True)
+
         return Execution.from_context(
             context, engine=engine, engine_id=container.id)
 
@@ -53,87 +71,185 @@ class DockerEngine(Engine):
         return decode_bytes(
             self.client.containers.get(execution.engine_id).logs)()
 
+    def get_host_ports(self, execution):
+        """Returns host ip and port bindings for the running execution."""
+        container = self.client.containers.get(execution.engine_id)
+        port_bindings = container.attrs['NetworkSettings']['Ports']
+
+        host_ports = []
+
+        if port_bindings:
+            for container_port, host_specs in port_bindings.items():
+                # host_specs is a list
+                for host_spec in host_specs:
+                    hostip = host_spec.get('HostIp')
+                    if hostip == '0.0.0.0':
+                        hostip = 'localhost'
+
+                    host_ports.append((hostip, host_spec['HostPort']))
+        return host_ports
+
+    def stop(self, execution, remove=False):
+        """Stop a running container, optionally removing it."""
+        container = self.client.containers.get(execution.engine_id)
+        container.stop()
+        if remove:
+            container.remove()
+
 
 class K8SEngine(Engine):
     """Class for deploying contexts on Kubernetes."""
 
-    def __init__(self, config=None, timeout=60):
+    def __init__(self, config=None, timeout=10):
         """Create a K8SNode instance."""
         # FIXME add super
-        import pykube
-        self._pykube = pykube
-        self.config = config
+        import kubernetes
+        self._kubernetes = kubernetes
         self.timeout = timeout
+        self.config = config
 
-    @cached_property
-    def api(self):
-        """Create an k8s api interface instance from local config."""
-        import pykube  # TODO: Fix imports
         if self.config is None:
-            self.config = pykube.KubeConfig.from_file(
-                os.path.join(os.path.expanduser('~'), '.kube/config'))
-        return pykube.HTTPClient(self.config)
+            self.config = kubernetes.config.load_kube_config()
 
     def launch(self, context, engine=None, **kwargs):
-        """Launch a kubernetes Job with the context attributes."""
-        import pykube
-        job = pykube.Job(self.api,
-                         self._k8s_job_template(
-                             namespace=kwargs.get('namespace', 'default'),
-                             name=context.id,
-                             image=context.spec['image']))
+        """Launch a Kubernetes Job with the context spec."""
+        batch = self._kubernetes.client.BatchV1Api()
+        namespace = kwargs.get('namespace', 'default')
+        job_spec = self._k8s_job_template(namespace, context)
+        job = batch.create_namespaced_job(namespace, job_spec)
+        uid = job.metadata.labels['controller-uid']
 
-        # actually submit the job to k8s
-        job.create()
+        if context.spec.get('interactive'):
+            # To expose an interactive job, we need to start a service.
+            # We use the job controller-uid to link the service.
+            api = self._kubernetes.client.CoreV1Api()
+            service_spec = self._k8s_service_template(namespace, context, uid)
+            service = api.create_namespaced_service(namespace, service_spec)
+
         return Execution.from_context(
-            context, engine=engine, engine_id=job.obj['metadata']['uid'])
+            context, engine=engine, engine_id=uid, namespace=namespace)
+
+    def stop(self, execution, remove=False):
+        """Stop a running job."""
+        api = self._kubernetes.client.CoreV1Api()
+        batch = self._kubernetes.client.BatchV1Api()
+
+        if execution.context.spec.get('interactive'):
+            service = api.list_namespaced_service(
+                execution.namespace,
+                label_selector='job-uid={0}'.format(execution.engine_id))
+
+            api.delete_namespaced_service(
+                service.items[0].metadata.name,
+                execution.namespace, )
+
+        batch.delete_collection_namespaced_job(
+            execution.namespace,
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+        api.delete_collection_namespaced_pod(
+            execution.namespace,
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+        return execution
 
     @staticmethod
-    def _k8s_job_template(namespace, name, image):
+    def _k8s_job_template(namespace, context):
         """Return simple kubernetes job JSON."""
-        return {
+        # required spec
+        spec = {
+            "containers": [{
+                "name": "{0}".format(context.id),
+                "image": "{0}".format(context.spec['image'])
+            }],
+            "restartPolicy":
+            "Never"
+        }
+
+        # optional spec
+        if context.spec.get('ports'):
+            spec['containers'][0]['ports'] = [{
+                'containerPort': port
+            } for port in context.spec['ports']]
+
+        if context.spec.get('command'):
+            command = shlex.split(context.spec['command'])
+            spec['containers'][0]['command'] = [command[0]]
+            if len(command) > 1:
+                spec['containers'][0]['args'] = command[1:]
+
+        # finalize job template
+        template = {
             "kind": "Job",
             "metadata": {
                 "namespace": "{0}".format(namespace),
-                "generateName": "{0}-".format(name)
+                "generateName": "{0}-".format(context.id)
             },
             "spec": {
                 "template": {
-                    "spec": {
-                        "containers": [{
-                            "name": "{0}".format(name),
-                            "image": "{0}".format(image)
-                        }],
-                        "restartPolicy":
-                        "Never"
-                    }
+                    "spec": spec
                 }
             }
         }
 
-    def get_logs(self, execution, timeout=None):
+        return template
+
+    @staticmethod
+    def _k8s_service_template(namespace, context, uid):
+        """Return simple kubernetes job JSON."""
+        return {
+            'apiVersion': 'v1',
+            'kind': 'Service',
+            'metadata': {
+                'generateName': context.spec['image'],
+                'namespace': namespace,
+                'labels': {
+                    'job-uid': "{0}".format(uid)
+                }
+            },
+            'spec': {
+                'hostNetwork': 'true',
+                'ports': [{
+                    'port': port
+                } for port in context.spec['ports']],
+                'selector': {
+                    'controller-uid': "{0}".format(uid)
+                },
+                'type': 'NodePort'
+            }
+        }
+
+    def get_logs(self, execution, timeout=None, **kwargs):
         """Extract logs for the Job from the Pod.
 
         :params execution: Instance of ``ExecutionEnvironment``
         """
-        api = self.api
-        pykube = self._pykube
-        pod = pykube.objects.Pod.objects(api).filter(
-            namespace=pykube.all,
-            selector={'controller-uid': execution.engine_id}).get()
+        api = self._kubernetes.client.CoreV1Api()
+        namespace = execution.namespace
 
-        # wait for logs to be available
+        pod = api.list_namespaced_pod(
+            namespace,
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+
         timein = time.time()
-        while not resource_available(pod.logs)():
+
+        while not resource_available(api.read_namespaced_pod_log)(
+                pod.items[0].metadata.name, namespace):
             if time.time() - timein > (timeout or self.timeout):
                 raise RuntimeError("Timeout while fetching logs.")
 
-        return pod.logs()
+        return api.read_namespaced_pod_log(pod.items[0].metadata.name,
+                                           namespace)
 
-    @staticmethod
-    def get_job(uid, config=None):
-        """Retrieve a k8s Job instance given its ``uid``."""
-        import pykube
-        api = K8SNode.get_api(config)
-        job = pykube.Job.objects(api).filter(selector={'controller-uid':
-                                                       uid}).get()
+    def get_host_ports(self, execution):
+        """Returns host ip and port bindings for the running execution."""
+        api = self._kubernetes.client.CoreV1Api()
+        service = api.list_namespaced_service(
+            execution.namespace,
+            label_selector='job-uid={0}'.format(execution.engine_id))
+
+        pod = api.list_namespaced_pod(
+            execution.namespace,
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+
+        host = pod.items[0].status.host_ip
+        port = service.items[0].spec.ports[0].node_port
+        return [(host, port)]

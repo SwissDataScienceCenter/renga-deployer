@@ -199,7 +199,7 @@ def test_kg_serialization(kg_app, deployer, kg_requests):
     operation = vertex_operation(context, temp_id=0)
     assert len(operation['element']['properties']) == 2
 
-    context = deployer.create({'image': 'hello-world', 'ports': '5000'})
+    context = deployer.create({'image': 'hello-world', 'ports': {9999: 9999}})
     operation = vertex_operation(context, temp_id=0)
     assert len(operation['element']['properties']) == 3
 

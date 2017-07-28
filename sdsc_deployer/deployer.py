@@ -68,7 +68,15 @@ class Deployer(object):
         execution_created.send(execution)
         return execution
 
+    def stop(self, execution, remove=False):
+        """Stop a running execution, optionally removing it from engine."""
+        self.ENGINES[execution.engine]().stop(execution, remove=remove)
+
     def get_logs(self, execution):
         """Ask engine to extract logs."""
-        return self.ENGINES[execution.engine](  # FIXME use configuration
-        ).get_logs(execution)
+        # FIXME use configuration
+        return self.ENGINES[execution.engine]().get_logs(execution)
+
+    def get_host_ports(self, execution):
+        """Fetch hostname and ports for the running execution."""
+        return self.ENGINES[execution.engine]().get_host_ports(execution)

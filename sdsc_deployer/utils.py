@@ -48,7 +48,7 @@ def resource_available(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            return func()
+            return func(*args, **kwargs)
         except Exception as e:
             time.sleep(0.2)
             return False

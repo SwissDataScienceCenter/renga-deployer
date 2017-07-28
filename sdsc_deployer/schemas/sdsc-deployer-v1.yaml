@@ -177,6 +177,105 @@ paths:
           description: Invalid ID supplied
         '404':
           description: context not found
+    delete:
+      tags:
+        - deployer
+      summary: Remove an execution
+      description: Remove an execution from an engine
+      operationId: sdsc_deployer.api.contexts.executions.delete
+      produces:
+        - application/json
+      parameters:
+        - name: context_id
+          in: path
+          description: ID of execution context
+          required: true
+          type: string
+        - name: execution_id
+          in: path
+          description: ID of execution to remove
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Execution'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: context not found
+
+
+  /contexts/{context_id}/executions/{execution_id}/logs:
+    get:
+      tags:
+        - deployer
+      summary: Fetch the execution logs
+      description: Gets the logs from the engine
+      operationId: sdsc_deployer.api.contexts.executions.logs
+      produces:
+        - application/json
+      parameters:
+        - name: context_id
+          in: path
+          description: ID of execution context
+          required: true
+          type: string
+        - name: execution_id
+          in: path
+          description: ID of execution to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: "object"
+            properties:
+              logs:
+                type: "string"
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Context or execution not found
+
+  /contexts/{context_id}/executions/{execution_id}/hostports:
+    get:
+      tags:
+        - deployer
+      summary: Fetch the public host and exposed port of running job
+      description: Fetch the public host and exposed port of running job
+      operationId: sdsc_deployer.api.contexts.executions.host_port
+      produces:
+        - application/json
+      parameters:
+        - name: context_id
+          in: path
+          description: ID of execution context
+          required: true
+          type: string
+        - name: execution_id
+          in: path
+          description: ID of execution to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: "object"
+            properties:
+              host:
+                type: "string"
+              ports:
+                type: "array"
+                items:
+                  type: "string"
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Context or execution not found
 
 securityDefinitions:
   token_auth:
@@ -200,7 +299,9 @@ definitions:
         type: "string"
         default: "hello-world"
       ports:
-        type: "object"
+        type: "array"
+        items:
+          type: "string"
 
   Context:
     type: "object"
@@ -225,6 +326,8 @@ definitions:
       - $ref: "#/definitions/NewExecution"
       - properties:
           identifier:
+            type: "string"
+          engine_id:
             type: "string"
 
   Contexts:

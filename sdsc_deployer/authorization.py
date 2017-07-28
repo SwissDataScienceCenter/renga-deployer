@@ -24,10 +24,13 @@ from werkzeug.exceptions import Unauthorized
 from sdsc_deployer.ext import current_deployer
 
 
-def resource_manager_authorization(scope):
+def resource_manager_authorization(*scopes):
     """If configured, check authorization with the ResourceManager."""
-    if isinstance(scope, str):
-        scope = [scope]
+    method = None
+
+    if len(scopes) == 1 and callable(scopes[0]):
+        method = scopes[0]
+        scopes = tuple()
 
     def decorator(function):
         @wraps(function)
@@ -44,7 +47,7 @@ def resource_manager_authorization(scope):
 
                 # form the resource request and get the authorization token
                 resource_request = {
-                    'scope': scope,
+                    'scope': list(scopes),
                     'service_claims': {
                         'claims': claims
                     }
@@ -60,21 +63,18 @@ def resource_manager_authorization(scope):
                 # verify the token and create the context
                 auth = jwt.decode(
                     access_token,
+                    issuer='resource-manager',
                     key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
 
-                if auth['iss'] != 'resource-manager':
-                    raise Unauthorized(
-                        description='Could not verify authorization token.')
-
                 if not all(s in auth['https://rm.datascience.ch/scope']
-                           for s in scope):
+                           for s in scopes):
                     raise Unauthorized('Insufficient scope.')
 
             return function(*args, **kwargs)
 
         return wrapper
 
-    return decorator
+    return decorator(method) if method else decorator
 
 
 def check_token(function):

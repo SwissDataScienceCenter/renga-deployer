@@ -49,3 +49,30 @@ def post(context_id, data):
     context = Context.query.get_or_404(context_id)
     execution = current_deployer.deployer.launch(context=context, **data)
     return execution_schema.dump(execution).data, 201
+
+
+@check_token
+@resource_manager_authorization
+def logs(context_id, execution_id):
+    """Retrieve execution logs."""
+    execution = Execution.query.get_or_404(execution_id)
+    assert str(execution.context_id) == context_id
+    return current_deployer.deployer.get_logs(execution)
+
+
+@check_token
+@resource_manager_authorization
+def host_port(context_id, execution_id):
+    """Retrieve execution logs."""
+    execution = Execution.query.get_or_404(execution_id)
+    assert str(execution.context_id) == context_id
+    return current_deployer.deployer.get_host_ports(execution)
+
+
+@check_token
+@resource_manager_authorization
+def delete(context_id, execution_id):
+    """Retrieve execution logs."""
+    execution = Execution.query.get_or_404(execution_id)
+    assert str(execution.context_id) == context_id
+    return current_deployer.deployer.stop(execution, remove=True)

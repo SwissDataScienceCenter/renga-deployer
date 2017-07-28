@@ -39,7 +39,7 @@ extras_require = {
     ],
     'tests': tests_require,
     'docker': ['docker>=2.4.2'],
-    'k8s': ['pykube>=0.15.0'],
+    'k8s': ['kubernetes>=2.0.0'],
     'postgresql': [
         'psycopg2>=2.6.1',
     ],

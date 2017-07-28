@@ -19,6 +19,7 @@ import json
 
 import pytest
 from flask import Flask
+from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
@@ -124,6 +125,23 @@ def test_context_execution(app, engine, no_auth_connexion, auth_header):
                 headers=auth_header).data)
 
         assert execution in listing['executions']
+
+        # 5. get the logs of an execution
+        assert b'Hello from Docker!' in client.get(
+            'v1/contexts/{0}/executions/{1}/logs'.format(
+                context['identifier'], execution['identifier']),
+            headers=auth_header).data
+
+        # 6. remove the execution from the engine
+        client.delete(
+            'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
+                                                    execution['identifier']),
+            headers=auth_header)
+        if engine == 'docker':
+            import docker
+            client = docker.from_env()
+            assert not any(c.short_id in execution['engine_id']
+                           for c in client.containers.list())
 
 
 def test_context_get(app, auth_header):

@@ -15,6 +15,9 @@
 # limitations under the License.
 """Deployer sub-module tests."""
 
+import socket
+import time
+
 import pytest
 from flask import Flask
 
@@ -43,3 +46,39 @@ def test_node_launch(app, engine, deployer):
     assert execution.engine == engine
 
     assert 'Hello from Docker!' in deployer.get_logs(execution)
+    deployer.stop(execution, remove=True)
+
+
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_open_port(app, engine, deployer):
+    """Test that engines make a port available."""
+    from sdsc_deployer.utils import resource_available
+
+    context = deployer.create({
+        'image':
+        'alpine',
+        'command':
+        'sh -c "mkfifo /tmp/f; cat /tmp/f | nc -l -p 9999 > /tmp/f"',
+        'ports': [
+            9999,
+        ],
+        'interactive':
+        True
+    })
+    execution = deployer.launch(context, engine=engine)
+
+    # connect to the job and do send/receive
+    time.sleep(20)  # FIXME
+    host, port = deployer.get_host_ports(execution)[0]
+    timein = time.time()
+    s = socket.socket()
+    # while resource_available(s.connect)((host, int(port))) is False:
+    #     if time.time() - timein > 100:
+    #         raise RuntimeError("Timeout while connecting socket.")
+    s.connect((host, int(port)))
+    phrase = b'earth_calling'
+    s.send(phrase)
+    received = s.recv(100)
+    assert received == phrase
+    deployer.stop(execution, remove=True)
+    s.close()
