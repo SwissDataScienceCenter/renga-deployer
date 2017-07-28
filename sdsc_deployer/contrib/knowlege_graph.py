@@ -15,6 +15,8 @@
 # limitations under the License.
 """Send events to Graph Mutation Service."""
 
+import os
+
 import requests
 
 from sdsc_deployer.deployer import context_created, execution_created
@@ -57,7 +59,8 @@ class KnowledgeGraphSync(object):
         """Flask application initialization."""
         app.config.setdefault(
             'DEPLOYER_GRAPH_MUTATION_URL',
-            'https://testing.datascience.ch:5000/api/mutation')
+            os.getenv('DEPLOYER_GRAPH_MUTATION_URL',
+                      'https://testing.datascience.ch:5000/api/mutation'))
 
         context_created.connect(create_context)
         execution_created.connect(create_execution)
