@@ -62,6 +62,10 @@ Babel(api.app)
 db.init_app(api.app)
 SDSCDeployer(api.app)
 
+if os.getenv('DEPLOYER_GRAPH_MUTATION_URL'):
+    from .contrib.knowledge_graph import KnowledgeGraphSync
+    KnowledgeGraphSync(api.app)
+
 
 @api.app.route('/tokeninfo')
 def tokeninfo():
