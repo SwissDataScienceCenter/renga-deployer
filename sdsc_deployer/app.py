@@ -19,7 +19,9 @@ import os
 
 import connexion
 from connexion.resolver import RestyResolver
+from flask import jsonify, request
 from flask_babelex import Babel
+from jose import jwt
 
 from .ext import SDSCDeployer
 from .models import db
@@ -28,17 +30,13 @@ DEPLOYER_CONFIG = {
     'DEPLOYER_URL':
     os.getenv('DEPLOYER_URL', 'localhost:5000'),
     'DEPLOYER_AUTHORIZATION_URL':
-    os.getenv(
-        'DEPLOYER_AUTHORIZATION_URL',
-        'https://testing.datascience.ch:8080/auth/realms/SDSC/'
-        'protocol/openid-connect/auth'
-    ),
+    os.getenv('DEPLOYER_AUTHORIZATION_URL',
+              'https://testing.datascience.ch:8080/auth/realms/SDSC/'
+              'protocol/openid-connect/auth'),
     'DEPLOYER_TOKEN_URL':
-    os.getenv(
-        'DEPLOYER_TOKEN_URL',
-        'https://testing.datascience.ch:8080/auth/realms/SDSC/'
-        'protocol/openid-connect/token'
-    ),
+    os.getenv('DEPLOYER_TOKEN_URL',
+              'https://testing.datascience.ch:8080/auth/realms/SDSC/'
+              'protocol/openid-connect/token'),
     # x-tokenInfoUrl: "https://testing.datascience.ch:8080/auth/realms/SDSC/"
     #                 "protocol/openid-connect/token/introspect"
     # 'DEPLOYER_TOKEN_INFO_URL':
@@ -68,14 +66,18 @@ SDSCDeployer(api.app)
 @api.app.route('/tokeninfo')
 def tokeninfo():
     """Return token information."""
-    from flask import jsonify, request
+    token = jwt.decode(
+        request.args.get('access_token'),
+        api.app.config['DEPLOYER_CLIENT_SECRET'],
+        algorithms=['RS256'],
+        audience=api.app.config['DEPLOYER_CLIENT_ID'],
+        options={
+            'verify_signature': False,  # FIXME enable verification
+        }, )
 
-    accesss_token = request.args.get('access_token')
-    api.app.logger.info(request.args)
-    api.app.logger.info(request.headers)
-
-    # FIXME decode JWT
-    return jsonify(uid=1, scope=['write:contexts', 'read:contexts'])
+    # FIXME configure scopes
+    token.setdefault('scope', ['write:contexts', 'read:contexts'])
+    return jsonify(token)
 
 
 app = api.app

@@ -65,6 +65,7 @@ install_requires = [
     'connexion>=1.1.11',
     'jsonschema>=2.6.0',
     'marshmallow>=2.13.5',
+    'python-jose>=1.3.2',
     'six>=1.10.0',
     'sqlalchemy-utils>=0.32.14',
 ]
