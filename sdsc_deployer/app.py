@@ -15,7 +15,9 @@
 # limitations under the License.
 """SDSC Deployer application."""
 
+import logging
 import os
+import sys
 
 import connexion
 from connexion.resolver import RestyResolver
@@ -25,6 +27,8 @@ from jose import jwt
 
 from .ext import SDSCDeployer
 from .models import db
+
+logging.basicConfig(level=logging.DEBUG)
 
 DEPLOYER_CONFIG = {
     'DEPLOYER_URL':
@@ -37,18 +41,21 @@ DEPLOYER_CONFIG = {
     os.getenv('DEPLOYER_TOKEN_URL',
               'https://testing.datascience.ch:8080/auth/realms/SDSC/'
               'protocol/openid-connect/token'),
-    # x-tokenInfoUrl: "https://testing.datascience.ch:8080/auth/realms/SDSC/"
-    #                 "protocol/openid-connect/token/introspect"
-    # 'DEPLOYER_TOKEN_INFO_URL':
-    # os.getenv('DEPLOYER_TOKEN_INFO_URL', 'http://localhost:5000/tokeninfo'),
+    'DEPLOYER_TOKEN_INFO_URL':
+    os.getenv(
+        'DEPLOYER_TOKEN_INFO_URL',
+        'http://localhost:8080/auth/realms/SDSC/protocol/openid-connect/token/introspect'
+    ),
     'DEPLOYER_CLIENT_ID':
-    os.getenv('DEPLOYER_CLIENT_ID', 'demo-client'),
+    os.getenv('DEPLOYER_CLIENT_ID', None),
     'DEPLOYER_CLIENT_SECRET':
     os.getenv('DEPLOYER_CLIENT_SECRET', None),
     'DEPLOYER_APP_NAME':
     os.getenv('DEPLOYER_APP_NAME', 'demo-client'),
     'SQLALCHEMY_DATABASE_URI':
     os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db'),
+    'DEPLOYER_KEYCLOAK_KEY':
+    os.getenv('DEPLOYER_KEYCLOAK_KEY', None)
 }
 
 api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
@@ -65,23 +72,5 @@ SDSCDeployer(api.app)
 if os.getenv('DEPLOYER_GRAPH_MUTATION_URL'):
     from .contrib.knowledge_graph import KnowledgeGraphSync
     KnowledgeGraphSync(api.app)
-
-
-@api.app.route('/tokeninfo')
-def tokeninfo():
-    """Return token information."""
-    token = jwt.decode(
-        request.args.get('access_token'),
-        api.app.config['DEPLOYER_CLIENT_SECRET'],
-        algorithms=['RS256'],
-        audience=api.app.config['DEPLOYER_CLIENT_ID'],
-        options={
-            'verify_signature': False,  # FIXME enable verification
-        }, )
-
-    # FIXME configure scopes
-    token.setdefault('scope', ['write:contexts', 'read:contexts'])
-    return jsonify(token)
-
 
 app = api.app
