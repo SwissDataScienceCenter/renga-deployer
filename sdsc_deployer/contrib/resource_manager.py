@@ -39,7 +39,10 @@ class ResourceManager(object):
             os.getenv('RESOURCE_MANAGER_URL',
                       'http://localhost:9000/api/resource-manager/authorize'))
 
-        rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY', None)
+        rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY')
+
+        if rm_key is None:
+            raise RuntimeError('You must provide the RESOURCE_MANAGER_PUBLIC_KEY environment variable')
 
         if not rm_key.startswith('-----BEGIN PUBLIC KEY-----'):
             rm_key = """-----BEGIN PUBLIC KEY-----
@@ -47,6 +50,8 @@ class ResourceManager(object):
             -----END PUBLIC KEY-----""".format(key=rm_key)
 
         app.config.setdefault('RESOURCE_MANAGER_PUBLIC_KEY', rm_key)
+
+        app.extensions['sdsc-resource-manager'] = self
 
 
 def request_authorization_token(access_token, resource_request):

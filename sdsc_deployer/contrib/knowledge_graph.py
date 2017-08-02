@@ -16,11 +16,16 @@
 """Send events to Graph Mutation Service."""
 
 import os
-
 import requests
+import uuid
+
+from flask import request, current_app
+
+from sqlalchemy_utils.types import JSONType, UUIDType
 
 from sdsc_deployer.deployer import context_created, execution_created
 from sdsc_deployer.models import Context, Execution, db
+from sdsc_deployer.utils import _join_url
 
 
 class GraphContext(db.Model):
@@ -57,10 +62,9 @@ class KnowledgeGraphSync(object):
 
     def init_app(self, app):
         """Flask application initialization."""
-        app.config.setdefault(
-            'DEPLOYER_GRAPH_MUTATION_URL',
-            os.getenv('DEPLOYER_GRAPH_MUTATION_URL',
-                      'https://testing.datascience.ch:5000/api/mutation'))
+        app.config.setdefault('GRAPH_MUTATION_URL',
+                              os.getenv('GRAPH_MUTATION_URL',
+                                        'https://localhost:9000/api/mutation'))
 
         context_created.connect(create_context)
         execution_created.connect(create_execution)
@@ -70,29 +74,32 @@ class KnowledgeGraphSync(object):
 
 def create_context(context, token=None):
     """Create context node."""
-    token = token or request.headers['Authentication']
-    headers = {'Authentication': token}
+    token = token or request.headers['Authorization']
+    headers = {'Authorization': token}
 
     response = requests.post(
-        current_app.config['DEPLOYER_GRAPH_MUTATION_URL'],
-        context,  # TODO serialize
+        _join_url(current_app.config['GRAPH_MUTATION_URL'], '/mutation'),
+        json=create_vertex(context),
         headers=headers, )
 
-    db.session.add(GraphContext(id=response.json['id'], context=context))
+    # TODO: the uuid is *not* the ID we want... need to fix
+    db.session.add(GraphContext(id=response.json()['uuid'], context=context))
     db.session.commit()
 
 
 def create_execution(execution, token=None):
     """Create execution node and vertex connecting context."""
-    token = token or request.headers['Authentication']
-    headers = {'Authentication': token}
+    token = token or request.headers['Authorization']
+    headers = {'Authorization': token}
 
     response = requests.post(
-        current_app.config['DEPLOYER_GRAPH_MUTATION_URL'],
-        execution,  # TODO serialize
+        _join_url(current_app.config['GRAPH_MUTATION_URL'], '/mutation'),
+        json=create_vertex(execution),
         headers=headers, )
 
-    db.session.add(GraphExecution(id=response.json['id'], execution=execution))
+    # TODO: the uuid is *not* the ID we want... need to fix
+    db.session.add(
+        GraphExecution(id=response.json()['uuid'], execution=execution))
     db.session.commit()
 
     if execution.context.graph is None:
@@ -113,3 +120,70 @@ def sync(token=None):
     for execution in Execution.query.joined(Execution.graph).filter(
             GraphExecution.id.is_(None)):
         print(execution, 'needs to be pushed')
+
+
+def create_vertex(obj):
+    """
+    Serialize Context or Execution to KnowledgeGraph schema.
+
+    We iterate through the type definitions presented by the graph typesystem
+    to extract the pieces we need from the object.
+    """
+    named_type = named_types[obj.__class__]
+    properties = []
+    for t in requests.get('http://localhost:9000'
+                          '/api/types/management/named_type').json():
+        if t['name'] == named_type:
+            for prop in t['properties']:
+                names = prop['name'].split('_')
+
+                if len(names) == 2:
+                    value = getattr(obj, names[1])
+                elif len(names) == 3:
+                    value = getattr(obj, names[1])[names[2]]
+                else:
+                    raise RuntimeError('Bad format for named type')
+
+                # map to correct type
+                value = type_mapping[prop['data_type']](value)
+
+                # append the property
+                properties.append({
+                    'key':
+                    'deployer:{named_type}_{key}'.format(
+                        named_type=named_type, key='_'.join(names[1:])),
+                    'data_type':
+                    'string',
+                    'cardinality':
+                    'single',
+                    'values': [{
+                        'key':
+                        'deployer:{named_type}_{key}'.format(
+                            named_type=named_type, key='_'.join(names[1:])),
+                        'data_type':
+                        prop['data_type'],
+                        'value':
+                        value
+                    }]
+                })
+
+
+    mutation_schema = {
+        'operations': [{
+            'type': 'create_vertex',
+            'element': {
+                'temp_id':
+                0,
+                'types':
+                ['deployer:{named_type}'.format(named_type=named_type)],
+                'properties':
+                properties
+            }
+        }]
+    }
+
+    return mutation_schema
+
+
+named_types = {Context: 'context', Execution: 'execution'}
+type_mapping = {'string': str}

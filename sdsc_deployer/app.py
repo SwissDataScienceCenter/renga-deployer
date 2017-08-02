@@ -26,7 +26,6 @@ from flask_babelex import Babel
 from jose import jwt
 
 from .ext import SDSCDeployer
-from .contrib.resource_manager import ResourceManager
 from .models import db
 
 logging.basicConfig(level=logging.DEBUG)
@@ -52,9 +51,7 @@ DEPLOYER_CONFIG = {
     'DEPLOYER_APP_NAME':
     os.getenv('DEPLOYER_APP_NAME', 'demo-client'),
     'SQLALCHEMY_DATABASE_URI':
-    os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db'),
-    'DEPLOYER_KEYCLOAK_KEY':
-    os.getenv('DEPLOYER_KEYCLOAK_KEY', None)
+    os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db')
 }
 
 api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
@@ -67,9 +64,13 @@ api.add_api(
 Babel(api.app)
 db.init_app(api.app)
 SDSCDeployer(api.app)
-ResourceManager(api.app)
 
-if os.getenv('DEPLOYER_GRAPH_MUTATION_URL'):
+# add extensions
+if os.getenv('RESOURCE_MANAGER_URL'):
+    from .contrib.resource_manager import ResourceManager
+    ResourceManager(api.app)
+
+if os.getenv('GRAPH_MUTATION_URL'):
     from .contrib.knowledge_graph import KnowledgeGraphSync
     KnowledgeGraphSync(api.app)
 

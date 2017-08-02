@@ -18,9 +18,7 @@
 import json
 
 from flask import request, current_app
-from jose import jwt
 
-from sdsc_deployer.contrib.resource_manager import request_authorization_token
 from sdsc_deployer.ext import current_deployer
 from sdsc_deployer.models import Context
 from sdsc_deployer.serializers import ContextSchema
@@ -42,24 +40,28 @@ def get(context_id):
 
 def post(spec):
     """Create a new context."""
-    # form the resource request and get the authorization token
-    resource_request = {
-        'permission_holder_id': 0,
-        'scope': ['contexts:write'],
-        'extra_claims': {
-            'spec': spec
+    if current_app.extensions['sdsc-resource-manager']:
+        from jose import jwt
+        from sdsc_deployer.contrib.resource_manager import request_authorization_token
+
+        # form the resource request and get the authorization token
+        resource_request = {
+            'permission_holder_id': 0,
+            'scope': ['contexts:write'],
+            'extra_claims': {
+                'spec': spec
+            }
         }
-    }
-    _, token = request.headers.get('Authorization').split()
+        _, token = request.headers.get('Authorization').split()
 
-    access_token = request_authorization_token(token, resource_request)
+        access_token = request_authorization_token(token, resource_request)
 
-    # verify the token and create the context
-    auth = jwt.decode(
-        access_token, key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
+        # verify the token and create the context
+        auth = jwt.decode(
+            access_token, key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
 
-    assert auth['iss'] == 'resource-manager'
-    assert json.loads(auth['resource_extras'])['spec'] == spec
+        assert auth['iss'] == 'resource-manager'
+        assert json.loads(auth['resource_extras'])['spec'] == spec
 
     context = current_deployer.deployer.create(spec)
     return context_schema.dump(context).data, 201
