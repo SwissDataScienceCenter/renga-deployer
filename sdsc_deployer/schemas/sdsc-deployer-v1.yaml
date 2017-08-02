@@ -37,7 +37,7 @@ paths:
           description: Invalid input
       security:
         - token_auth:
-            - 'read:contexts'
+            - 'contexts:read'
     post:
       tags:
         - deployer
@@ -67,8 +67,8 @@ paths:
           description: Validation exception
       security:
         - token_auth:
-            - 'write:contexts'
-            - 'read:contexts'
+            - 'contexts:write'
+            - 'contexts:read'
 
   /contexts/{context_id}:
     get:
@@ -118,7 +118,7 @@ paths:
           description: Invalid input
       security:
         - token_auth:
-            - 'read:contexts'
+            - 'contexts:read'
     post:
       tags:
         - deployer
@@ -189,8 +189,8 @@ securityDefinitions:
     x-clientSecret: "{{ DEPLOYER_CLIENT_SECRET }}"
     flow: "implicit"
     scopes:
-      write:contexts: "modify contexts"
-      read:contexts: "read contexts"
+      contexts:write: "modify contexts"
+      contexts:read: "read contexts"
 
 definitions:
   Specification:

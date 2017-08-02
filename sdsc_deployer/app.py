@@ -26,6 +26,7 @@ from flask_babelex import Babel
 from jose import jwt
 
 from .ext import SDSCDeployer
+from .contrib.resource_manager import ResourceManager
 from .models import db
 
 logging.basicConfig(level=logging.DEBUG)
@@ -35,17 +36,15 @@ DEPLOYER_CONFIG = {
     os.getenv('DEPLOYER_URL', 'localhost:5000'),
     'DEPLOYER_AUTHORIZATION_URL':
     os.getenv('DEPLOYER_AUTHORIZATION_URL',
-              'https://testing.datascience.ch:8080/auth/realms/SDSC/'
+              'http://localhost:8080/auth/realms/SDSC/'
               'protocol/openid-connect/auth'),
     'DEPLOYER_TOKEN_URL':
-    os.getenv('DEPLOYER_TOKEN_URL',
-              'https://testing.datascience.ch:8080/auth/realms/SDSC/'
+    os.getenv('DEPLOYER_TOKEN_URL', 'http://localhost:8080/auth/realms/SDSC/'
               'protocol/openid-connect/token'),
     'DEPLOYER_TOKEN_INFO_URL':
-    os.getenv(
-        'DEPLOYER_TOKEN_INFO_URL',
-        'http://localhost:8080/auth/realms/SDSC/protocol/openid-connect/token/introspect'
-    ),
+    os.getenv('DEPLOYER_TOKEN_INFO_URL',
+              'http://localhost:8080/auth/realms/SDSC/'
+              'protocol/openid-connect/token/introspect'),
     'DEPLOYER_CLIENT_ID':
     os.getenv('DEPLOYER_CLIENT_ID', None),
     'DEPLOYER_CLIENT_SECRET':
@@ -68,6 +67,7 @@ api.add_api(
 Babel(api.app)
 db.init_app(api.app)
 SDSCDeployer(api.app)
+ResourceManager(api.app)
 
 if os.getenv('DEPLOYER_GRAPH_MUTATION_URL'):
     from .contrib.knowledge_graph import KnowledgeGraphSync

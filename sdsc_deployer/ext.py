@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import current_app, g, request
+from flask import current_app, request
 from werkzeug.local import LocalProxy
 
 from . import config
