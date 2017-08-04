@@ -118,4 +118,5 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Development Status :: 1 - Planning',
-    ], )
+    ],
+    dependency_links=['http://github.com/rokroskar/connextion/tarball/add_keycloak_introspect#egg=connexion-1.1.11'])

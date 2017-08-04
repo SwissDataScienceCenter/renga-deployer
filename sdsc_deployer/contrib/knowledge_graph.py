@@ -16,11 +16,10 @@
 """Send events to Graph Mutation Service."""
 
 import os
-import requests
 import uuid
 
-from flask import request, current_app
-
+import requests
+from flask import current_app, request
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 from sdsc_deployer.deployer import context_created, execution_created
@@ -167,17 +166,14 @@ def create_vertex(obj):
                     }]
                 })
 
-
     mutation_schema = {
         'operations': [{
             'type': 'create_vertex',
             'element': {
-                'temp_id':
-                0,
+                'temp_id': 0,
                 'types':
                 ['deployer:{named_type}'.format(named_type=named_type)],
-                'properties':
-                properties
+                'properties': properties
             }
         }]
     }

@@ -40,9 +40,10 @@ def get(context_id):
 
 def post(spec):
     """Create a new context."""
-    if current_app.extensions['sdsc-resource-manager']:
+    if 'sdsc-resource-manager' in current_app.extensions:
         from jose import jwt
-        from sdsc_deployer.contrib.resource_manager import request_authorization_token
+        from sdsc_deployer.contrib.resource_manager \
+            import request_authorization_token
 
         # form the resource request and get the authorization token
         resource_request = {
@@ -58,7 +59,8 @@ def post(spec):
 
         # verify the token and create the context
         auth = jwt.decode(
-            access_token, key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
+            access_token,
+            key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
 
         assert auth['iss'] == 'resource-manager'
         assert json.loads(auth['resource_extras'])['spec'] == spec

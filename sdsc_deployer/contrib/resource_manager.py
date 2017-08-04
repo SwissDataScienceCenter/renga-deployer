@@ -42,7 +42,9 @@ class ResourceManager(object):
         rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY')
 
         if rm_key is None:
-            raise RuntimeError('You must provide the RESOURCE_MANAGER_PUBLIC_KEY environment variable')
+            raise RuntimeError('You must provide the '
+                               'RESOURCE_MANAGER_PUBLIC_KEY '
+                               'environment variable')
 
         if not rm_key.startswith('-----BEGIN PUBLIC KEY-----'):
             rm_key = """-----BEGIN PUBLIC KEY-----
