@@ -20,6 +20,7 @@ import os
 import requests
 from flask import current_app, request
 from jose import jwt
+from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer.utils import join_url
 
@@ -75,4 +76,7 @@ def request_authorization_token(access_token, resource_request):
         headers=headers,
         json=resource_request)
 
-    return r.json()['access_token']
+    if r.status_code != 200:
+        raise Unauthorized('Could not obtain an authorization token.')
+    else:
+        return r.json()['access_token']
