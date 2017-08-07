@@ -72,6 +72,11 @@ class KnowledgeGraphSync(object):
 
         app.extensions['sdsc-knowledge-graph-sync'] = self
 
+    def disconnect(self):
+        """Remove signal handlers."""
+        context_created.disconnect(create_context)
+        execution_created.disconnect(create_execution)
+
 
 def create_context(context, token=None):
     """Create context node."""

@@ -19,6 +19,7 @@ import json
 
 import pytest
 from flask import Flask
+from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
@@ -53,18 +54,32 @@ def test_view(app):
         assert 'Welcome to SDSC-Deployer' in str(res.data)
 
 
+def test_token_check(app, auth_header):
+    """Test that token exists in header."""
+    with app.test_client() as client:
+        # should fail with 401 unauthorized
+        resp = client.get('v1/contexts')
+        assert resp.status_code == 401
+
+        # should pass
+        resp = client.get('v1/contexts', headers=auth_header)
+        assert resp.status_code == 200
+
+
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_context_execution(app, engine, no_auth_connexion):
+def test_context_execution(app, engine, no_auth_connexion, auth_header):
     """Test context execution."""
 
     with app.test_client() as client:
-        # create a context
+
+        # 1. create a context
         resp = client.post(
             'v1/contexts',
             data=json.dumps({
                 'image': 'hello-world'
             }),
-            content_type='application/json', )
+            content_type='application/json',
+            headers=auth_header)
 
         assert resp.status_code == 201
 
@@ -72,12 +87,14 @@ def test_context_execution(app, engine, no_auth_connexion):
         assert context
         assert 'identifier' in context
 
+        # 2. launch an execution of a context
         resp = client.post(
             'v1/contexts/{0}/executions'.format(context['identifier']),
             data=json.dumps({
                 'engine': engine
             }),
-            content_type='application/json', )
+            content_type='application/json',
+            headers=auth_header)
 
         assert resp.status_code == 201
 
@@ -85,22 +102,32 @@ def test_context_execution(app, engine, no_auth_connexion):
         assert execution
         assert 'identifier' in execution
 
+        # 3. get a listing of all executions of a context
+        resp = client.get(
+            'v1/contexts/{0}/executions'.format(context['identifier']),
+            headers=auth_header)
+
+        assert resp.status_code == 200
+        assert json.loads(resp.data)['executions']
+
+        # 4. get the details of an execution of a context
         resp = client.get(
             'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
-                                                    execution['identifier']), )
+                                                    execution['identifier']),
+            headers=auth_header)
 
         assert resp.status_code == 200
         assert execution == json.loads(resp.data)
 
         listing = json.loads(
             client.get(
-                'v1/contexts/{0}/executions'.format(context['identifier']), )
-            .data)
+                'v1/contexts/{0}/executions'.format(context['identifier']),
+                headers=auth_header).data)
 
         assert execution in listing['executions']
 
 
-def test_context_get(app):
+def test_context_get(app, auth_header):
     """Test context storage."""
     data = {'image': 'hello-world'}
 
@@ -109,49 +136,15 @@ def test_context_get(app):
             client.post(
                 'v1/contexts',
                 data=json.dumps(data),
-                content_type='application/json', ).data)
+                content_type='application/json',
+                headers=auth_header).data)
 
-        listing = json.loads(client.get('v1/contexts').data)
+        listing = json.loads(
+            client.get('v1/contexts', headers=auth_header).data)
         assert context in listing['contexts']
 
-        resp = client.get('v1/contexts/{0}'.format(context['identifier']))
+        resp = client.get(
+            'v1/contexts/{0}'.format(context['identifier']),
+            headers=auth_header)
         assert resp.status_code == 200
         assert context == json.loads(resp.data)
-
-
-def test_storage_clear(app):
-    """Test that storage gets cleared."""
-    Context.create(spec={'image': 'hello-world'})
-
-    with app.test_client() as client:
-        listing = json.loads(client.get('v1/contexts').data)
-        assert listing['contexts']
-
-        Context.query.delete()
-        db.session.commit()
-
-        listing = json.loads(client.get('v1/contexts').data)
-        assert not listing['contexts']
-
-
-def test_storage_append(app):
-    """Test that multiple contexts get added."""
-
-    with app.test_client() as client:
-        data = {'image': 'hello-world'}
-
-        resp = client.post(
-            'v1/contexts',
-            data=json.dumps(data),
-            content_type='application/json', )
-        assert resp.status_code == 201
-        listing = json.loads(client.get('v1/contexts').data)
-        assert len(listing['contexts']) == 1
-
-        resp = client.post(
-            'v1/contexts',
-            data=json.dumps(data),
-            content_type='application/json', )
-        assert resp.status_code == 201
-        listing = json.loads(client.get('v1/contexts').data)
-        assert len(listing['contexts']) == 2

@@ -61,6 +61,7 @@ def resource_manager_authorization(function):
 
             # TODO: validate request
         return function(*args, **kwargs)
+
     return wrapper
 
 
@@ -73,8 +74,7 @@ def check_token(function):
         # verify the token
         if 'Authorization' not in headers:
             raise Unauthorized('Authorization token not found in headers.')
-
-
-
+        if not headers['Authorization'].startswith(('Bearer', 'bearer')):
+            raise Unauthorized('Authorization token not found in headers.')
         return function(*args, **kwargs)
     return wrapper

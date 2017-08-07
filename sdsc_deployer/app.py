@@ -28,7 +28,7 @@ from jose import jwt
 from .ext import SDSCDeployer
 from .models import db
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 DEPLOYER_CONFIG = {
     'DEPLOYER_URL':
@@ -52,27 +52,36 @@ DEPLOYER_CONFIG = {
     'DEPLOYER_APP_NAME':
     os.getenv('DEPLOYER_APP_NAME', 'demo-client'),
     'SQLALCHEMY_DATABASE_URI':
-    os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db')
+    os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db'),
+    'SQLALCHEMY_TRACK_MODIFICATIONS':
+    False,
 }
 
-api = connexion.App(__name__, specification_dir='schemas/', swagger_ui=True)
-api.app.config.update(DEPLOYER_CONFIG)
-api.add_api(
-    'sdsc-deployer-v1.yaml',
-    arguments=DEPLOYER_CONFIG,
-    resolver=RestyResolver('sdsc_deployer.api'), )  # validate_responses=True)
 
-Babel(api.app)
-db.init_app(api.app)
-SDSCDeployer(api.app)
+def create_app():
+    """Create an instance of the flask app."""
+    api = connexion.App(
+        __name__, specification_dir='schemas/', swagger_ui=True)
+    api.app.config.update(DEPLOYER_CONFIG)
+    api.add_api(
+        'sdsc-deployer-v1.yaml',
+        arguments=DEPLOYER_CONFIG,
+        resolver=RestyResolver('sdsc_deployer.api'),
+    )  # validate_responses=True)
 
-# add extensions
-if os.getenv('PLATFORM_SERVICE_API'):
-    from .contrib.knowledge_graph import KnowledgeGraphSync
-    KnowledgeGraphSync(api.app)
+    Babel(api.app)
+    db.init_app(api.app)
+    SDSCDeployer(api.app)
 
-    if os.getenv('RESOURCE_MANAGER_PUBLIC_KEY'):
-        from .contrib.resource_manager import ResourceManager
-        ResourceManager(api.app)
+    # add extensions
+    if os.getenv('PLATFORM_SERVICE_API'):
+        from .contrib.knowledge_graph import KnowledgeGraphSync
+        KnowledgeGraphSync(api.app)
 
-app = api.app
+        if os.getenv('RESOURCE_MANAGER_PUBLIC_KEY'):
+            from .contrib.resource_manager import ResourceManager
+            ResourceManager(api.app)
+    return api.app
+
+
+app = create_app()

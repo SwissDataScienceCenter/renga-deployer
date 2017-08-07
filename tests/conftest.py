@@ -21,14 +21,16 @@ import tempfile
 
 import pytest
 import requests
+from jose import jwt
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
+from sdsc_deployer.app import create_app
 from sdsc_deployer.deployer import Deployer
 from sdsc_deployer.models import db
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
@@ -36,10 +38,10 @@ def instance_path():
     shutil.rmtree(path)
 
 
-@pytest.fixture()
-def base_app(instance_path):
+@pytest.fixture(scope='module')
+def base_app():
     """Flask application fixture."""
-    from sdsc_deployer.app import app
+    app = create_app()
     app.config.update(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         # SQLALCHEMY_DATABASE_URI='sqlite:///{0}/test.db'.format(instance_path),
@@ -48,7 +50,7 @@ def base_app(instance_path):
     yield app
 
 
-@pytest.yield_fixture()
+@pytest.fixture(scope='module')
 def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
@@ -58,12 +60,22 @@ def app(base_app):
         create_database(db.engine.url)
         db.create_all()
 
-    with base_app.app_context():
         yield base_app
 
-    with base_app.app_context():
         db.drop_all()
         drop_database(db.engine.url)
+
+
+@pytest.fixture(scope='module')
+def kg_app(app):
+    """Deployer app with Knowledge Graph extension."""
+    # from sdsc_deployer.app import app
+    from sdsc_deployer.contrib.knowledge_graph import KnowledgeGraphSync
+
+    with app.app_context():
+        KnowledgeGraphSync(app)
+        yield app
+        app.extensions['sdsc-knowledge-graph-sync'].disconnect()
 
 
 @pytest.fixture()
@@ -82,3 +94,22 @@ def no_auth_connexion(monkeypatch):
 
     monkeypatch.setattr(connexion.operation.SecureOperation,
                         'security_decorator', security_passthrough)
+
+
+@pytest.fixture()
+def key():
+    """Provide a key for token de/encription."""
+    return 'a1234'
+
+
+@pytest.fixture()
+def auth_header(key):
+    """Provide a header with a JWT bearer token."""
+    return {
+        'Authorization':
+        'Bearer {0}'.format(jwt.encode(
+            {
+                'typ': 'Bearer',
+                'name': 'John Doe'
+            }, key='a1234'))
+    }
