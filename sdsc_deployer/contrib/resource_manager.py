@@ -21,7 +21,7 @@ import requests
 from flask import current_app, request
 from jose import jwt
 
-from sdsc_deployer.utils import _join_url
+from sdsc_deployer.utils import join_url
 
 
 class ResourceManager(object):
@@ -34,10 +34,10 @@ class ResourceManager(object):
 
     def init_app(self, app):
         """Flask app initialization."""
-        app.config.setdefault(
-            'RESOURCE_MANAGER_URL',
-            os.getenv('RESOURCE_MANAGER_URL',
-                      'http://localhost:9000/api/resource-manager/authorize'))
+        app.config.setdefault('RESOURCE_MANAGER_URL',
+                              join_url(
+                                  os.getenv('PLATFORM_SERVICE_API'),
+                                  'resource-manager/authorize'))
 
         rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY')
 
@@ -46,6 +46,7 @@ class ResourceManager(object):
                                'RESOURCE_MANAGER_PUBLIC_KEY '
                                'environment variable')
 
+        # jose.jwt requires begin/end in the key
         if not rm_key.startswith('-----BEGIN PUBLIC KEY-----'):
             rm_key = """-----BEGIN PUBLIC KEY-----
             {key}

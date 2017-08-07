@@ -54,9 +54,8 @@ def test_view(app):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_context_execution(app, engine, access_token):
+def test_context_execution(app, engine, no_auth_connexion):
     """Test context execution."""
-    headers = [('Authorization', 'Bearer {token}'.format(token=access_token))]
 
     with app.test_client() as client:
         # create a context
@@ -65,8 +64,7 @@ def test_context_execution(app, engine, access_token):
             data=json.dumps({
                 'image': 'hello-world'
             }),
-            content_type='application/json',
-            headers=headers)
+            content_type='application/json', )
 
         assert resp.status_code == 201
 
@@ -79,8 +77,7 @@ def test_context_execution(app, engine, access_token):
             data=json.dumps({
                 'engine': engine
             }),
-            content_type='application/json',
-            headers=headers)
+            content_type='application/json', )
 
         assert resp.status_code == 201
 
@@ -90,77 +87,71 @@ def test_context_execution(app, engine, access_token):
 
         resp = client.get(
             'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
-                                                    execution['identifier']),
-            headers=headers)
+                                                    execution['identifier']), )
 
         assert resp.status_code == 200
         assert execution == json.loads(resp.data)
 
         listing = json.loads(
             client.get(
-                'v1/contexts/{0}/executions'.format(context['identifier']),
-                headers=headers).data)
+                'v1/contexts/{0}/executions'.format(context['identifier']), )
+            .data)
 
         assert execution in listing['executions']
 
 
-def test_context_get(app, access_token):
+def test_context_get(app):
     """Test context storage."""
     data = {'image': 'hello-world'}
-    headers = [('Authorization', 'Bearer {token}'.format(token=access_token))]
 
     with app.test_client() as client:
         context = json.loads(
             client.post(
                 'v1/contexts',
                 data=json.dumps(data),
-                content_type='application/json',
-                headers=headers).data)
+                content_type='application/json', ).data)
 
-        listing = json.loads(client.get('v1/contexts', headers=headers).data)
+        listing = json.loads(client.get('v1/contexts').data)
         assert context in listing['contexts']
 
-        resp = client.get(
-            'v1/contexts/{0}'.format(context['identifier']), headers=headers)
+        resp = client.get('v1/contexts/{0}'.format(context['identifier']))
         assert resp.status_code == 200
         assert context == json.loads(resp.data)
 
 
-def test_storage_clear(app, access_token):
+def test_storage_clear(app):
     """Test that storage gets cleared."""
     Context.create(spec={'image': 'hello-world'})
-    headers = [('Authorization', 'Bearer {token}'.format(token=access_token))]
 
     with app.test_client() as client:
-        listing = json.loads(client.get('v1/contexts', headers=headers).data)
+        listing = json.loads(client.get('v1/contexts').data)
         assert listing['contexts']
 
         Context.query.delete()
         db.session.commit()
 
-        listing = json.loads(client.get('v1/contexts', headers=headers).data)
+        listing = json.loads(client.get('v1/contexts').data)
         assert not listing['contexts']
 
 
-def test_storage_append(app, access_token):
+def test_storage_append(app):
     """Test that multiple contexts get added."""
-    headers = [('Authorization', 'Bearer {token}'.format(token=access_token))]
 
     with app.test_client() as client:
         data = {'image': 'hello-world'}
 
-        client.post(
+        resp = client.post(
             'v1/contexts',
             data=json.dumps(data),
-            content_type='application/json',
-            headers=headers)
-        listing = json.loads(client.get('v1/contexts', headers=headers).data)
+            content_type='application/json', )
+        assert resp.status_code == 201
+        listing = json.loads(client.get('v1/contexts').data)
         assert len(listing['contexts']) == 1
 
-        client.post(
+        resp = client.post(
             'v1/contexts',
             data=json.dumps(data),
-            content_type='application/json',
-            headers=headers)
-        listing = json.loads(client.get('v1/contexts', headers=headers).data)
+            content_type='application/json', )
+        assert resp.status_code == 201
+        listing = json.loads(client.get('v1/contexts').data)
         assert len(listing['contexts']) == 2

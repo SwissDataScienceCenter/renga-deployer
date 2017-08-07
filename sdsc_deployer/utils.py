@@ -56,6 +56,6 @@ def resource_available(func):
     return wrapper
 
 
-def _join_url(*args):
+def join_url(*args):
     """Join together url strings."""
     return '/'.join(s.strip('/') for s in args)

@@ -19,6 +19,8 @@ from sdsc_deployer.ext import current_deployer
 from sdsc_deployer.models import Context, Execution
 from sdsc_deployer.serializers import ExecutionSchema
 
+from .. import deployment_authorization
+
 execution_schema = ExecutionSchema()
 executions_schema = ExecutionSchema(many=True)
 
@@ -36,6 +38,7 @@ def get(context_id, execution_id):
     return execution_schema.dump(execution).data, 200
 
 
+@deployment_authorization
 def post(context_id, data):
     """Create a new ``Execution`` for a given context."""
     context = Context.query.get_or_404(context_id)

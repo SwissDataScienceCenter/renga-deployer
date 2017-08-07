@@ -40,14 +40,15 @@ DEPLOYER_CONFIG = {
     'DEPLOYER_TOKEN_URL':
     os.getenv('DEPLOYER_TOKEN_URL', 'http://localhost:8080/auth/realms/SDSC/'
               'protocol/openid-connect/token'),
-    'DEPLOYER_TOKEN_INFO_URL':
-    os.getenv('DEPLOYER_TOKEN_INFO_URL',
-              'http://localhost:8080/auth/realms/SDSC/'
-              'protocol/openid-connect/token/introspect'),
+    # 'DEPLOYER_TOKEN_INFO_URL':
+    # os.getenv('DEPLOYER_TOKEN_INFO_URL',
+    #           'http://localhost:8080/auth/realms/SDSC/'
+    #           'protocol/openid-connect/token/introspect'),
     'DEPLOYER_CLIENT_ID':
-    os.getenv('DEPLOYER_CLIENT_ID', None),
+    os.getenv('DEPLOYER_CLIENT_ID', 'demo-client'),
     'DEPLOYER_CLIENT_SECRET':
-    os.getenv('DEPLOYER_CLIENT_SECRET', None),
+    os.getenv('DEPLOYER_CLIENT_SECRET',
+              '5294a18e-e784-4e39-a927-ce816c91c83e'),
     'DEPLOYER_APP_NAME':
     os.getenv('DEPLOYER_APP_NAME', 'demo-client'),
     'SQLALCHEMY_DATABASE_URI':
@@ -66,12 +67,12 @@ db.init_app(api.app)
 SDSCDeployer(api.app)
 
 # add extensions
-if os.getenv('RESOURCE_MANAGER_URL'):
-    from .contrib.resource_manager import ResourceManager
-    ResourceManager(api.app)
-
-if os.getenv('GRAPH_MUTATION_URL'):
+if os.getenv('PLATFORM_SERVICE_API'):
     from .contrib.knowledge_graph import KnowledgeGraphSync
     KnowledgeGraphSync(api.app)
+
+    if os.getenv('RESOURCE_MANAGER_PUBLIC_KEY'):
+        from .contrib.resource_manager import ResourceManager
+        ResourceManager(api.app)
 
 app = api.app

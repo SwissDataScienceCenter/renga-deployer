@@ -16,21 +16,23 @@
 """Send events to Graph Mutation Service."""
 
 import os
+import time
 import uuid
 
 import requests
 from flask import current_app, request
+from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 from sdsc_deployer.deployer import context_created, execution_created
 from sdsc_deployer.models import Context, Execution, db
-from sdsc_deployer.utils import _join_url
+from sdsc_deployer.utils import join_url
 
 
 class GraphContext(db.Model):
     """Represent a graph context node."""
 
-    id = db.Column(UUIDType, primary_key=True, default=uuid.uuid4)
+    id = db.Column(Integer, primary_key=True, default=uuid.uuid4)
     """Graph identifier."""
 
     context_id = db.Column(UUIDType, db.ForeignKey(Context.id))
@@ -42,7 +44,7 @@ class GraphContext(db.Model):
 class GraphExecution(db.Model):
     """Represent a graph execution node."""
 
-    id = db.Column(UUIDType, primary_key=True, default=uuid.uuid4)
+    id = db.Column(Integer, primary_key=True, default=uuid.uuid4)
     """Graph identifier."""
 
     execution_id = db.Column(UUIDType, db.ForeignKey(Execution.id))
@@ -61,9 +63,9 @@ class KnowledgeGraphSync(object):
 
     def init_app(self, app):
         """Flask application initialization."""
-        app.config.setdefault('GRAPH_MUTATION_URL',
-                              os.getenv('GRAPH_MUTATION_URL',
-                                        'https://localhost:9000/api/mutation'))
+        app.config.setdefault('PLATFORM_SERVICE_API',
+                              os.getenv('PLATFORM_SERVICE_API',
+                                        'https://localhost:9000/api/'))
 
         context_created.connect(create_context)
         execution_created.connect(create_execution)
@@ -74,38 +76,53 @@ class KnowledgeGraphSync(object):
 def create_context(context, token=None):
     """Create context node."""
     token = token or request.headers['Authorization']
-    headers = {'Authorization': token}
 
-    response = requests.post(
-        _join_url(current_app.config['GRAPH_MUTATION_URL'], '/mutation'),
-        json=create_vertex(context),
-        headers=headers, )
+    response = mutation(
+        [vertex_operation(context, temp_id=0)],
+        wait_for_response=True,
+        token=token)
 
-    # TODO: the uuid is *not* the ID we want... need to fix
-    db.session.add(GraphContext(id=response.json()['uuid'], context=context))
+    if response['response']['event']['status'] == 'success':
+        vertex_id = response['response']['event']['results'][0]['id']
+    else:
+        print(response)
+        raise RuntimeError('Adding vertex failed')
+
+    db.session.add(GraphContext(id=vertex_id, context=context))
     db.session.commit()
 
 
 def create_execution(execution, token=None):
     """Create execution node and vertex connecting context."""
     token = token or request.headers['Authorization']
-    headers = {'Authorization': token}
 
-    response = requests.post(
-        _join_url(current_app.config['GRAPH_MUTATION_URL'], '/mutation'),
-        json=create_vertex(execution),
-        headers=headers, )
+    operations = [
+        vertex_operation(execution, temp_id=0), {
+            'type': 'create_edge',
+            'element': {
+                'label': 'deployer:launch',
+                'from': {
+                    'type': 'persisted_vertex',
+                    'id': execution.context.graph[0].id,
+                },
+                'to': {
+                    'type': 'new_vertex',
+                    'id': 0
+                }
+            }
+        }
+    ]
 
-    # TODO: the uuid is *not* the ID we want... need to fix
-    db.session.add(
-        GraphExecution(id=response.json()['uuid'], execution=execution))
+    response = mutation(operations, wait_for_response=True, token=token)
+
+    if response['response']['event']['status'] == 'success':
+        vertex_id = response['response']['event']['results'][0]['id']
+    else:
+        print(response)
+        raise RuntimeError('Adding vertex and/or edge failed')
+
+    db.session.add(GraphExecution(id=vertex_id, execution=execution))
     db.session.commit()
-
-    if execution.context.graph is None:
-        context_created(execution.context, token=token)
-
-    # TODO create edge
-    # execution.graph.id -> execution.context.graph.id
 
 
 def sync(token=None):
@@ -121,7 +138,7 @@ def sync(token=None):
         print(execution, 'needs to be pushed')
 
 
-def create_vertex(obj):
+def vertex_operation(obj, temp_id):
     """
     Serialize Context or Execution to KnowledgeGraph schema.
 
@@ -129,17 +146,22 @@ def create_vertex(obj):
     to extract the pieces we need from the object.
     """
     named_type = named_types[obj.__class__]
-    properties = []
-    for t in requests.get('http://localhost:9000'
-                          '/api/types/management/named_type').json():
-        if t['name'] == named_type:
-            for prop in t['properties']:
-                names = prop['name'].split('_')
 
-                if len(names) == 2:
-                    value = getattr(obj, names[1])
-                elif len(names) == 3:
-                    value = getattr(obj, names[1])[names[2]]
+    # named_types are in format `namespace:name`
+    name = named_type.split(':')[1]
+
+    properties = []
+    for t in requests.get(
+            join_url(current_app.config['PLATFORM_SERVICE_API'],
+                     'types/management/named_type')).json():
+        if t['name'] == name:
+            for prop in t['properties']:
+                prop_names = prop['name'].split('_')
+
+                if len(prop_names) == 2:
+                    value = getattr(obj, prop_names[1])
+                elif len(prop_names) == 3:
+                    value = getattr(obj, prop_names[1])[prop_names[2]]
                 else:
                     raise RuntimeError('Bad format for named type')
 
@@ -149,16 +171,17 @@ def create_vertex(obj):
                 # append the property
                 properties.append({
                     'key':
-                    'deployer:{named_type}_{key}'.format(
-                        named_type=named_type, key='_'.join(names[1:])),
+                    '{named_type}_{key}'.format(
+                        named_type=named_type, key='_'.join(prop_names[1:])),
                     'data_type':
                     'string',
                     'cardinality':
                     'single',
                     'values': [{
                         'key':
-                        'deployer:{named_type}_{key}'.format(
-                            named_type=named_type, key='_'.join(names[1:])),
+                        '{named_type}_{key}'.format(
+                            named_type=named_type,
+                            key='_'.join(prop_names[1:])),
                         'data_type':
                         prop['data_type'],
                         'value':
@@ -166,20 +189,50 @@ def create_vertex(obj):
                     }]
                 })
 
-    mutation_schema = {
-        'operations': [{
-            'type': 'create_vertex',
-            'element': {
-                'temp_id': 0,
-                'types':
-                ['deployer:{named_type}'.format(named_type=named_type)],
-                'properties': properties
-            }
-        }]
+    operation = {
+        'type': 'create_vertex',
+        'element': {
+            'temp_id': temp_id,
+            'types': ['{named_type}'.format(named_type=named_type)],
+            'properties': properties
+        }
     }
 
-    return mutation_schema
+    return operation
 
 
-named_types = {Context: 'context', Execution: 'execution'}
+def mutation(operations, wait_for_response=False, token=None):
+    """
+    Submit a mutation to the graph.
+
+    If ``wait_for_response == True`` the return value is the reponse JSON,
+    otherwise the mutation UUID is returned.
+    """
+    headers = {'Authorization': token}
+
+    response = requests.post(
+        join_url(current_app.config['PLATFORM_SERVICE_API'],
+                 '/mutation/mutation'),
+        json={'operations': operations},
+        headers=headers, )
+
+    uuid = response.json()['uuid']
+
+    if wait_for_response:
+        completed = False
+        while not completed:
+            response = requests.get(
+                join_url(
+                    os.getenv('PLATFORM_SERVICE_API'),
+                    '/mutation/mutation/{uuid}'.format(uuid=uuid))).json()
+            completed = response['status'] == 'completed'
+            # sleep for 200 miliseconds
+            time.sleep(0.2)
+
+        return response
+
+    return response.json()['uuid']
+
+
+named_types = {Context: 'deployer:context', Execution: 'deployer:execution'}
 type_mapping = {'string': str}
