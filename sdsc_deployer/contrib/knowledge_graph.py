@@ -32,7 +32,7 @@ from sdsc_deployer.utils import join_url
 class GraphContext(db.Model):
     """Represent a graph context node."""
 
-    id = db.Column(Integer, primary_key=True, default=uuid.uuid4)
+    id = db.Column(Integer, primary_key=True, default=0)
     """Graph identifier."""
 
     context_id = db.Column(UUIDType, db.ForeignKey(Context.id))
@@ -44,7 +44,7 @@ class GraphContext(db.Model):
 class GraphExecution(db.Model):
     """Represent a graph execution node."""
 
-    id = db.Column(Integer, primary_key=True, default=uuid.uuid4)
+    id = db.Column(Integer, primary_key=True, default=0)
     """Graph identifier."""
 
     execution_id = db.Column(UUIDType, db.ForeignKey(Execution.id))
@@ -60,6 +60,7 @@ class KnowledgeGraphSync(object):
         """Extension initialization."""
         if app:
             self.init_app(app)
+        self._named_types = None
 
     def init_app(self, app):
         """Flask application initialization."""
@@ -76,6 +77,15 @@ class KnowledgeGraphSync(object):
         """Remove signal handlers."""
         context_created.disconnect(create_context)
         execution_created.disconnect(create_execution)
+
+    @property
+    def named_types(self):
+        """Fetch named types from types service."""
+        if self._named_types is None:
+            self._named_types = requests.get(
+                join_url(current_app.config['PLATFORM_SERVICE_API'],
+                         'types/management/named_type')).json()
+        return self._named_types
 
 
 def create_context(context, token=None):
@@ -132,7 +142,7 @@ def create_execution(execution, token=None):
 
 def sync(token=None):
     """Sync all nodes with graph service."""
-    raise NotImplemented()
+    raise NotImplementedError()
 
     for context in Context.query.joined(Context.graph).filter(
             GraphContext.id.is_(None)):
@@ -149,26 +159,33 @@ def vertex_operation(obj, temp_id):
 
     We iterate through the type definitions presented by the graph typesystem
     to extract the pieces we need from the object.
+
+    TODO: use marshmallow or similar to serialize
     """
-    named_type = named_types[obj.__class__]
+    try:
+        named_type = named_types_mapping[obj.__class__]
+    except KeyError:
+        raise NotImplementedError(
+            'No support for serializing {0}'.format(obj.__class__))
 
     # named_types are in format `namespace:name`
     name = named_type.split(':')[1]
 
     properties = []
-    for t in requests.get(
-            join_url(current_app.config['PLATFORM_SERVICE_API'],
-                     'types/management/named_type')).json():
+    for t in current_app.extensions['sdsc-knowledge-graph-sync'].named_types:
         if t['name'] == name:
             for prop in t['properties']:
                 prop_names = prop['name'].split('_')
-
-                if len(prop_names) == 2:
-                    value = getattr(obj, prop_names[1])
-                elif len(prop_names) == 3:
-                    value = getattr(obj, prop_names[1])[prop_names[2]]
-                else:
-                    raise RuntimeError('Bad format for named type')
+                try:
+                    if len(prop_names) == 2:
+                        value = getattr(obj, prop_names[1])
+                    elif len(prop_names) == 3:
+                        value = getattr(obj, prop_names[1])[prop_names[2]]
+                    else:
+                        raise RuntimeError('Bad format for named type')
+                except (KeyError, AttributeError):
+                    # the property was not found in obj, go to the next one
+                    continue
 
                 # map to correct type
                 value = type_mapping[prop['data_type']](value)
@@ -179,9 +196,9 @@ def vertex_operation(obj, temp_id):
                     '{named_type}_{key}'.format(
                         named_type=named_type, key='_'.join(prop_names[1:])),
                     'data_type':
-                    'string',
+                    prop['data_type'],
                     'cardinality':
-                    'single',
+                    prop['cardinality'],
                     'values': [{
                         'key':
                         '{named_type}_{key}'.format(
@@ -213,11 +230,11 @@ def mutation(operations, wait_for_response=False, token=None):
     If ``wait_for_response == True`` the return value is the reponse JSON,
     otherwise the mutation UUID is returned.
     """
+    platform_url = current_app.config['PLATFORM_SERVICE_API']
     headers = {'Authorization': token}
 
     response = requests.post(
-        join_url(current_app.config['PLATFORM_SERVICE_API'],
-                 '/mutation/mutation'),
+        join_url(platform_url, '/mutation/mutation'),
         json={'operations': operations},
         headers=headers, )
 
@@ -228,7 +245,7 @@ def mutation(operations, wait_for_response=False, token=None):
         while not completed:
             response = requests.get(
                 join_url(
-                    os.getenv('PLATFORM_SERVICE_API'),
+                    platform_url,
                     '/mutation/mutation/{uuid}'.format(uuid=uuid))).json()
             completed = response['status'] == 'completed'
             # sleep for 200 miliseconds
@@ -239,5 +256,8 @@ def mutation(operations, wait_for_response=False, token=None):
     return response.json()['uuid']
 
 
-named_types = {Context: 'deployer:context', Execution: 'deployer:execution'}
+named_types_mapping = {
+    Context: 'deployer:context',
+    Execution: 'deployer:execution'
+}
 type_mapping = {'string': str}

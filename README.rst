@@ -90,8 +90,10 @@ These are the environment variables used by the deployer service:
     DEPLOYER_APP_NAME: application name
     SQLALCHEMY_DATABASE_URI: the URI of the database to be used for preserving internal state
     PLATFORM_SERVICE_API: base URL for the platform services
+    DEPLOYER_KG_PUSH: push contexts and executions to the KnowledgeGraph
+    DEPLOYER_RM_AUTHORIZE: obtain and validate ResourceManager authorization tokens
     RESOURCE_MANAGER_PUBLIC_KEY: public key used to verify ResourceManager tokens
-
+    
 
 
 

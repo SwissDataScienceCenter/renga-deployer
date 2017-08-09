@@ -46,9 +46,13 @@ def resource_manager_authorization(function):
                     'claims': claims
                 }
             }
-            _, token = request.headers.get('Authorization').split()
 
-            access_token = request_authorization_token(token, resource_request)
+            access_token = request_authorization_token(request.headers,
+                                                       resource_request)
+
+            if access_token is None:
+                raise Unauthorized('Could not retrieve an '
+                                   'authorization token')
 
             # verify the token and create the context
             auth = jwt.decode(
@@ -77,4 +81,5 @@ def check_token(function):
         if not headers['Authorization'].startswith(('Bearer', 'bearer')):
             raise Unauthorized('Authorization token not found in headers.')
         return function(*args, **kwargs)
+
     return wrapper

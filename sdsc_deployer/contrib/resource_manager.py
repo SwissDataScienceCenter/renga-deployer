@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Send events to Graph Mutation Service."""
+"""Retrieve authorization from the Resource Manager service."""
 
 import os
 
@@ -26,7 +26,7 @@ from sdsc_deployer.utils import join_url
 
 
 class ResourceManager(object):
-    """Resource Manager requests exension."""
+    """Resource Manager requests extension."""
 
     def __init__(self, app=None):
         """Extension initialization."""
@@ -37,12 +37,12 @@ class ResourceManager(object):
         """Flask app initialization."""
         app.config.setdefault('RESOURCE_MANAGER_URL',
                               join_url(
-                                  os.getenv('PLATFORM_SERVICE_API'),
+                                  app.config['PLATFORM_SERVICE_API'],
                                   'resource-manager/authorize'))
 
-        rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY')
+        rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY', '')
 
-        if rm_key is None:
+        if rm_key is '':
             raise RuntimeError('You must provide the '
                                'RESOURCE_MANAGER_PUBLIC_KEY '
                                'environment variable')
@@ -58,25 +58,20 @@ class ResourceManager(object):
         app.extensions['sdsc-resource-manager'] = self
 
 
-def request_authorization_token(access_token, resource_request):
+def request_authorization_token(headers, resource_request):
     """
     Request resource access token from the ResourceManager.
 
-    :param token: access token
+    :param headers: request headers; must include access token
 
     :param resource_request: dict specifying the resource request
     """
-    headers = {
-        'Authorization': 'Bearer {token}'.format(token=access_token),
-        'Content-type': 'application/json'
-    }
-
     r = requests.post(
         current_app.config['RESOURCE_MANAGER_URL'],
         headers=headers,
         json=resource_request)
 
     if r.status_code != 200:
-        raise Unauthorized('Could not obtain an authorization token.')
+        return None
     else:
         return r.json()['access_token']

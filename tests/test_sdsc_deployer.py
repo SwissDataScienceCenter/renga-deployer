@@ -19,7 +19,6 @@ import json
 
 import pytest
 from flask import Flask
-from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
@@ -52,6 +51,14 @@ def test_view(app):
         res = client.get("/")
         assert res.status_code == 200
         assert 'Welcome to SDSC-Deployer' in str(res.data)
+
+
+def test_str_to_bool():
+    from sdsc_deployer.app import to_bool
+    assert all(to_bool(x) for x in [1, 1.0, '1', '1.0', 'True'])
+    assert not any(to_bool(x) for x in [0, 0.0, '0', '0.0', 'False'])
+    with pytest.raises(ValueError):
+        to_bool('woop!')
 
 
 def test_token_check(app, auth_header):

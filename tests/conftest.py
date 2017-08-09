@@ -20,7 +20,6 @@ import shutil
 import tempfile
 
 import pytest
-import requests
 from jose import jwt
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
@@ -38,25 +37,25 @@ def instance_path():
     shutil.rmtree(path)
 
 
-@pytest.fixture(scope='module')
-def base_app():
+@pytest.fixture()
+def base_app(instance_path):
     """Flask application fixture."""
     app = create_app()
     app.config.update(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        # SQLALCHEMY_DATABASE_URI='sqlite:///{0}/test.db'.format(instance_path),
+        SQLALCHEMY_DATABASE_URI='sqlite:///{0}/test.db'.format(instance_path),
         SECRET_KEY='SECRET_KEY',
         TESTING=True, )
     yield app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         if database_exists(db.engine.url):
-            drop_database(db.engine.url)
-            # raise RuntimeError('Database exists')
+            # drop_database(db.engine.url)
+            raise RuntimeError('Database exists')
         create_database(db.engine.url)
         db.create_all()
 
@@ -64,18 +63,6 @@ def app(base_app):
 
         db.drop_all()
         drop_database(db.engine.url)
-
-
-@pytest.fixture(scope='module')
-def kg_app(app):
-    """Deployer app with Knowledge Graph extension."""
-    # from sdsc_deployer.app import app
-    from sdsc_deployer.contrib.knowledge_graph import KnowledgeGraphSync
-
-    with app.app_context():
-        KnowledgeGraphSync(app)
-        yield app
-        app.extensions['sdsc-knowledge-graph-sync'].disconnect()
 
 
 @pytest.fixture()
@@ -97,19 +84,22 @@ def no_auth_connexion(monkeypatch):
 
 
 @pytest.fixture()
-def key():
-    """Provide a key for token de/encription."""
-    return 'a1234'
+def keypair():
+    """Provide a keypair for token de/encription."""
+    from Crypto.PublicKey import RSA
+    new_key = RSA.generate(1024, e=65537)
+    public_key = new_key.publickey().exportKey("PEM").decode()
+    private_key = new_key.exportKey("PEM").decode()
+    return private_key, public_key
 
 
 @pytest.fixture()
-def auth_header(key):
+def auth_header(keypair):
     """Provide a header with a JWT bearer token."""
-    return {
-        'Authorization':
-        'Bearer {0}'.format(jwt.encode(
-            {
-                'typ': 'Bearer',
-                'name': 'John Doe'
-            }, key='a1234'))
-    }
+    private, public = keypair
+    token = jwt.encode(
+        {
+            'typ': 'Bearer',
+            'name': 'John Doe'
+        }, key=private, algorithm='RS256')
+    return {'Authorization': 'Bearer {0}'.format(token)}

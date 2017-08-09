@@ -40,6 +40,11 @@ class ContextSchema(Schema):
             return {'contexts': data}
         return data
 
+    @post_load
+    def make_context(self, data):
+        """Create a context."""
+        return Context(**data)
+
 
 class ExecutionSchema(Schema):
     """Execution schema for use with REST API."""
@@ -54,3 +59,8 @@ class ExecutionSchema(Schema):
         if many:
             return {'executions': data}
         return data
+
+    @post_load
+    def make_execution(self, data):
+        """Create a context."""
+        return Execution(**data)

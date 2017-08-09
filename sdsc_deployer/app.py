@@ -24,11 +24,35 @@ from connexion.resolver import RestyResolver
 from flask import jsonify, request
 from flask_babelex import Babel
 from jose import jwt
+from sqlalchemy_utils import functions
 
 from .ext import SDSCDeployer
 from .models import db
 
 logging.basicConfig(level=logging.INFO)
+
+
+def to_bool(e):
+    """Convert string to boolean value if possible."""
+    if isinstance(e, bool):
+        return e
+    elif isinstance(e, (int, float)):
+        return bool(e)
+    elif isinstance(e, str):
+        try:
+            if '.' in e:
+                return bool(float(e))
+            else:
+                return bool(int(e))
+        except ValueError:
+            if e.lower() == 'true':
+                return True
+            elif e.lower() == 'false':
+                return False
+            else:
+                raise ValueError(
+                    'Could not decipher boolean from {0}'.format(e))
+
 
 DEPLOYER_CONFIG = {
     'DEPLOYER_URL':
@@ -55,6 +79,12 @@ DEPLOYER_CONFIG = {
     os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///deployer.db'),
     'SQLALCHEMY_TRACK_MODIFICATIONS':
     False,
+    'DEPLOYER_KG_PUSH':
+    to_bool(os.getenv('DEPLOYER_KG_PUSH', False)),
+    'DEPLOYER_RM_AUTHORIZE':
+    to_bool(os.getenv('DEPLOYER_RM_AUTHORIZE', False)),
+    'PLATFORM_SERVICE_API':
+    os.getenv('PLATFORM_SERVICE_API', 'http://localhost:9000/api'),
 }
 
 
@@ -74,13 +104,21 @@ def create_app():
     SDSCDeployer(api.app)
 
     # add extensions
-    if os.getenv('PLATFORM_SERVICE_API'):
+    if os.getenv('DEPLOYER_KG_PUSH'):
         from .contrib.knowledge_graph import KnowledgeGraphSync
         KnowledgeGraphSync(api.app)
 
-        if os.getenv('RESOURCE_MANAGER_PUBLIC_KEY'):
-            from .contrib.resource_manager import ResourceManager
-            ResourceManager(api.app)
+    if os.getenv('DEPLOYER_RM_AUTHORIZE'):
+        from .contrib.resource_manager import ResourceManager
+        ResourceManager(api.app)
+
+    # create database and tables
+    with api.app.app_context():
+        if not functions.database_exists(db.engine.url):
+            functions.create_database(db.engine.url)
+
+        db.create_all()
+
     return api.app
 
 
