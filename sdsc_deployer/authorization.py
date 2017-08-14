@@ -24,49 +24,57 @@ from werkzeug.exceptions import Unauthorized
 from sdsc_deployer.ext import current_deployer
 
 
-def resource_manager_authorization(function):
+def resource_manager_authorization(scope):
     """If configured, check authorization with the ResourceManager."""
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        if 'sdsc-resource-manager' in current_app.extensions:
-            from jose import jwt
-            from sdsc_deployer.contrib.resource_manager \
-                import request_authorization_token
+    if isinstance(scope, str):
+        scope = [scope]
 
-            if 'data' in kwargs:
-                claims = kwargs['data']
-            else:
-                claims = args
+    def decorator(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            if 'sdsc-resource-manager' in current_app.extensions:
+                from jose import jwt
+                from sdsc_deployer.contrib.resource_manager \
+                    import request_authorization_token
 
-            # form the resource request and get the authorization token
-            resource_request = {
-                'resource_id': 0,
-                'scope': ['contexts:write'],
-                'service_claims': {
-                    'claims': claims
+                if 'data' in kwargs:
+                    claims = kwargs['data']
+                else:
+                    claims = args
+
+                # form the resource request and get the authorization token
+                resource_request = {
+                    'scope': scope,
+                    'service_claims': {
+                        'claims': claims
+                    }
                 }
-            }
 
-            access_token = request_authorization_token(request.headers,
-                                                       resource_request)
+                access_token = request_authorization_token(
+                    request.headers, resource_request)
 
-            if access_token is None:
-                raise Unauthorized('Could not retrieve an '
-                                   'authorization token')
+                if access_token is None:
+                    raise Unauthorized('Could not retrieve an '
+                                       'authorization token')
 
-            # verify the token and create the context
-            auth = jwt.decode(
-                access_token,
-                key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
+                # verify the token and create the context
+                auth = jwt.decode(
+                    access_token,
+                    key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
 
-            if auth['iss'] != 'resource-manager':
-                raise Unauthorized(
-                    description='Could not verify authorization token.')
+                if auth['iss'] != 'resource-manager':
+                    raise Unauthorized(
+                        description='Could not verify authorization token.')
 
-            # TODO: validate request
-        return function(*args, **kwargs)
+                if not all(s in auth['https://rm.datascience.ch/scope']
+                           for s in scope):
+                    raise Unauthorized('Insufficient scope.')
 
-    return wrapper
+            return function(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def check_token(function):

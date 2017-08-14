@@ -146,9 +146,14 @@ def rm_app(app, keypair, monkeypatch):
     private, public = keypair
     token = jwt.encode(
         {
-            'typ': 'Bearer',
-            'name': 'John Doe',
-            'iss': 'resource-manager'
+            'name':
+            'John Doe',
+            'iss':
+            'resource-manager',
+            'https://rm.datascience.ch/scope': [
+                'contexts:write', 'contexts:read', 'executions:write',
+                'executions:read'
+            ]
         },
         key=private,
         algorithm='RS256')
@@ -174,55 +179,13 @@ def rm_app(app, keypair, monkeypatch):
 
 
 #
-# KnowledgeGraph tests
+# Extension tests
 #
 
 
 def test_kg_extension(kg_app):
     """Test that the extension is added."""
     assert 'sdsc-knowledge-graph-sync' in kg_app.extensions
-
-
-def test_rm_extension(app, keypair, monkeypatch):
-    """Test that the extension is added."""
-    from sdsc_deployer.contrib.resource_manager import ResourceManager
-    private, public = keypair
-
-    with pytest.raises(RuntimeError):
-        ResourceManager(app)
-
-    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
-    ResourceManager(app)
-
-    assert 'sdsc-resource-manager' in app.extensions
-    assert app.config['RESOURCE_MANAGER_PUBLIC_KEY'] == public
-
-
-def test_rm_authorization(rm_app, auth_header):
-    """Test fetching ResourceManager tokens."""
-    from sdsc_deployer.contrib import resource_manager
-    access_token = resource_manager.request_authorization_token(
-        auth_header, {'payload': '1234'})
-
-    assert access_token
-
-    access_token = resource_manager.request_authorization_token(
-        {}, {'payload': '1234'})
-
-    assert access_token is None
-
-
-def test_rm_decorator(rm_app, auth_header):
-    """Test the functioning of resource_manager_authorization decorator."""
-    with rm_app.test_client() as client:
-        # context creation should succeed
-        resp = client.post(
-            'v1/contexts',
-            data=json.dumps({
-                'image': 'hello-world'
-            }),
-            content_type='application/json',
-            headers=auth_header)
 
 
 def test_kg_serialization(kg_app, deployer, kg_requests):
@@ -266,6 +229,48 @@ def test_kg_handlers(kg_app, auth_header, kg_requests):
             'v1/contexts/{0}/executions'.format(context['identifier']),
             data=json.dumps({
                 'engine': 'docker'
+            }),
+            content_type='application/json',
+            headers=auth_header)
+
+
+def test_rm_extension(app, keypair, monkeypatch):
+    """Test that the extension is added."""
+    from sdsc_deployer.contrib.resource_manager import ResourceManager
+    private, public = keypair
+
+    with pytest.raises(RuntimeError):
+        ResourceManager(app)
+
+    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
+    ResourceManager(app)
+
+    assert 'sdsc-resource-manager' in app.extensions
+    assert app.config['RESOURCE_MANAGER_PUBLIC_KEY'] == public
+
+
+def test_rm_authorization(rm_app, auth_header):
+    """Test fetching ResourceManager tokens."""
+    from sdsc_deployer.contrib import resource_manager
+    access_token = resource_manager.request_authorization_token(
+        auth_header, {'payload': '1234'})
+
+    assert access_token
+
+    access_token = resource_manager.request_authorization_token(
+        {}, {'payload': '1234'})
+
+    assert access_token is None
+
+
+def test_rm_decorator(rm_app, auth_header):
+    """Test the functioning of resource_manager_authorization decorator."""
+    with rm_app.test_client() as client:
+        # context creation should succeed
+        resp = client.post(
+            'v1/contexts',
+            data=json.dumps({
+                'image': 'hello-world'
             }),
             content_type='application/json',
             headers=auth_header)

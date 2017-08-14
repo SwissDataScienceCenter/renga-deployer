@@ -36,9 +36,10 @@ class ResourceManager(object):
     def init_app(self, app):
         """Flask app initialization."""
         app.config.setdefault('RESOURCE_MANAGER_URL',
-                              join_url(
-                                  app.config['PLATFORM_SERVICE_API'],
-                                  'resource-manager/authorize'))
+                              os.getenv(
+                                  'RESOURCE_MANAGER_URL',
+                                  join_url(app.config['PLATFORM_SERVICE_API'],
+                                           'resource-manager/authorize')))
 
         rm_key = app.config['RESOURCE_MANAGER_PUBLIC_KEY']
 

@@ -30,12 +30,14 @@ contexts_schema = ContextSchema(many=True)
 
 
 @check_token
+@resource_manager_authorization('contexts:read')
 def search():
     """Return a listing of currently known contexts."""
     return contexts_schema.dump(Context.query.all()).data, 200
 
 
 @check_token
+@resource_manager_authorization('contexts:read')
 def get(context_id):
     """Return information about a specific context."""
     context = Context.query.get_or_404(context_id)
@@ -43,7 +45,7 @@ def get(context_id):
 
 
 @check_token
-@resource_manager_authorization
+@resource_manager_authorization(['contexts:read', 'contexts:write'])
 def post(spec):
     """Create a new context."""
     context = current_deployer.deployer.create(spec)
