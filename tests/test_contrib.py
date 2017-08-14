@@ -166,7 +166,7 @@ def rm_app(app, keypair, monkeypatch):
             return r_post(*args, **kwargs)
 
     monkeypatch.setattr(requests, 'post', rm_post)
-    monkeypatch.setenv('RESOURCE_MANAGER_PUBLIC_KEY', public)
+    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
 
     with app.app_context():
         ResourceManager(app)
@@ -191,7 +191,7 @@ def test_rm_extension(app, keypair, monkeypatch):
     with pytest.raises(RuntimeError):
         ResourceManager(app)
 
-    monkeypatch.setenv('RESOURCE_MANAGER_PUBLIC_KEY', public)
+    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
     ResourceManager(app)
 
     assert 'sdsc-resource-manager' in app.extensions

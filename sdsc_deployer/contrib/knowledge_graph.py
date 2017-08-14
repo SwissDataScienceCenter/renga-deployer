@@ -32,6 +32,8 @@ from sdsc_deployer.utils import join_url
 class GraphContext(db.Model):
     """Represent a graph context node."""
 
+    __tablename__ = 'graph_context'
+
     id = db.Column(Integer, primary_key=True, default=0)
     """Graph identifier."""
 
@@ -43,6 +45,8 @@ class GraphContext(db.Model):
 
 class GraphExecution(db.Model):
     """Represent a graph execution node."""
+
+    __tablename__ = 'graph_execution'
 
     id = db.Column(Integer, primary_key=True, default=0)
     """Graph identifier."""
@@ -64,10 +68,6 @@ class KnowledgeGraphSync(object):
 
     def init_app(self, app):
         """Flask application initialization."""
-        app.config.setdefault('PLATFORM_SERVICE_API',
-                              os.getenv('PLATFORM_SERVICE_API',
-                                        'https://localhost:9000/api/'))
-
         context_created.connect(create_context)
         execution_created.connect(create_execution)
 

@@ -53,14 +53,6 @@ def test_view(app):
         assert 'Welcome to SDSC-Deployer' in str(res.data)
 
 
-def test_str_to_bool():
-    from sdsc_deployer.app import to_bool
-    assert all(to_bool(x) for x in [1, 1.0, '1', '1.0', 'True'])
-    assert not any(to_bool(x) for x in [0, 0.0, '0', '0.0', 'False'])
-    with pytest.raises(ValueError):
-        to_bool('woop!')
-
-
 def test_token_check(app, auth_header):
     """Test that token exists in header."""
     with app.test_client() as client:

@@ -13,13 +13,73 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer Service."""
+"""Configuration options can be also provided as environmental variables."""
 
-# TODO: This is an example file. Remove it if your package does not use any
-# extra configuration variables.
+import ast
+import os
 
 DEPLOYER_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
+DEPLOYER_URL = 'localhost:5000'
+"""Basre URL for the service."""
+
+DEPLOYER_AUTHORIZATION_URL = ('http://localhost:8080/auth/realms/SDSC/'
+                              'protocol/openid-connect/auth')
+"""OpenID-Connect authorization endpoint."""
+
+DEPLOYER_TOKEN_URL = ('http://localhost:8080/auth/realms/SDSC/'
+                      'protocol/openid-connect/token')
+"""OpenID-Connect token endpoint."""
+
+# FIXME
+# DEPLOYER_TOKEN_INFO_URL = ('http://localhost:8080/auth/realms/SDSC/'
+#                            'protocol/openid-connect/token/introspect')
+
+DEPLOYER_CLIENT_ID = 'demo-client'
+"""Client identifier used for OIDC authentication."""
+
+DEPLOYER_CLIENT_SECRET = None
+"""Client credentials used for OIDC authentication."""
+
+DEPLOYER_APP_NAME = 'demo-client'
+"""Application name."""
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
+"""The URI of the database to be used for preserving internal state."""
+
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+"""Should Flask-SQLAlchemy will track modifications of objects."""
+
+DEPLOYER_KG_PUSH = False
+"""Push contexts and executions to the KnowledgeGraph."""
+
+DEPLOYER_RM_AUTHORIZE = False
+"""Obtain and validate ResourceManager authorization tokens."""
+
+RESOURCE_MANAGER_PUBLIC_KEY = None
+"""Public key used to verify ResourceManager tokens."""
+
+PLATFORM_SERVICE_API = 'http://localhost:9000/api'
+"""Base URL for the platform services."""
+
 DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
 """Default base template for the demo page."""
+
+
+def from_env(config):
+    """Load configuration options from environment variables."""
+    result = {}
+    for name, value in os.environ.items():
+        if not hasattr(config, name) and name.isupper():
+            continue
+
+        # Evaluate value
+        try:
+            value = ast.literal_eval(value)
+        except (SyntaxError, ValueError):
+            pass
+
+        result[name] = value
+
+    return result

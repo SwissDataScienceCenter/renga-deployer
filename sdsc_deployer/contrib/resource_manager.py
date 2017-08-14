@@ -40,21 +40,19 @@ class ResourceManager(object):
                                   app.config['PLATFORM_SERVICE_API'],
                                   'resource-manager/authorize'))
 
-        rm_key = os.getenv('RESOURCE_MANAGER_PUBLIC_KEY', '')
+        rm_key = app.config['RESOURCE_MANAGER_PUBLIC_KEY']
 
-        if rm_key is '':
+        if not rm_key:
             raise RuntimeError('You must provide the '
-                               'RESOURCE_MANAGER_PUBLIC_KEY '
-                               'environment variable')
+                               'RESOURCE_MANAGER_PUBLIC_KEY')
 
         # jose.jwt requires begin/end in the key
         if not rm_key.startswith('-----BEGIN PUBLIC KEY-----'):
-            rm_key = """-----BEGIN PUBLIC KEY-----
-            {key}
-            -----END PUBLIC KEY-----""".format(key=rm_key)
+            rm_key = ("-----BEGIN PUBLIC KEY-----\n"
+                      "{key}\n"
+                      "-----END PUBLIC KEY-----").format(key=rm_key)
 
-        app.config.setdefault('RESOURCE_MANAGER_PUBLIC_KEY', rm_key)
-
+        app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = rm_key
         app.extensions['sdsc-resource-manager'] = self
 
 

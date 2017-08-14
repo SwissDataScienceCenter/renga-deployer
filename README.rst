@@ -76,32 +76,12 @@ For development, mount the code directly and enable flask debug mode:
 You can test the API by pointing your browser to http://localhost:5000/v1/ui
 
 
-Configuration
--------------
-
-These are the environment variables used by the deployer service:
-
-::
-
-    DEPLOYER_URL: base URL for the service
-    DEPLOYER_AUTHORIZATION_URL: openid-connect authorization endpoint
-    DEPLOYER_TOKEN_URL: openid-connect token endpoint
-    DEPLOYER_CLIENT_ID/_SECRET: client credentials used for OIDC authentication
-    DEPLOYER_APP_NAME: application name
-    SQLALCHEMY_DATABASE_URI: the URI of the database to be used for preserving internal state
-    PLATFORM_SERVICE_API: base URL for the platform services
-    DEPLOYER_KG_PUSH: push contexts and executions to the KnowledgeGraph
-    DEPLOYER_RM_AUTHORIZE: obtain and validate ResourceManager authorization tokens
-    RESOURCE_MANAGER_PUBLIC_KEY: public key used to verify ResourceManager tokens
-    
-
-
-
-
 Platform integration
 --------------------
 
-The deployer can optionally integrate with other SDSC Platform services. To enable integration,
-set the ``PLATFORM_SERVICE_API`` environment variable to point to the api URL, e.g.
-``http://localhost:9000/api``. Deployment contexts and executions will automatically be added to
-the knowledge graph. To use the resource manager, you will need to additionally set the ``RESOURCE_MANAGER_PUBLIC_KEY``.
+The deployer can optionally integrate with other SDSC Platform services.
+To enable integration, set the ``PLATFORM_SERVICE_API`` environment
+variable to point to the api URL, e.g.  ``http://localhost:9000/api``.
+Deployment contexts and executions will automatically be added to the
+knowledge graph. To use the resource manager, you will need to
+additionally set the ``RESOURCE_MANAGER_PUBLIC_KEY``.
