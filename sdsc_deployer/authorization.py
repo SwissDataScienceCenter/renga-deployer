@@ -40,9 +40,9 @@ def resource_manager_authorization(function):
 
             # form the resource request and get the authorization token
             resource_request = {
-                'permission_holder_id': 0,
+                'resource_id': 0,
                 'scope': ['contexts:write'],
-                'extra_claims': {
+                'service_claims': {
                     'claims': claims
                 }
             }
