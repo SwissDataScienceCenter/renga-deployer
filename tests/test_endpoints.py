@@ -23,7 +23,7 @@ from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer import SDSCDeployer
 from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.models import Context, db
+from sdsc_deployer.models import Context, Execution, db
 
 
 def test_version():
@@ -140,7 +140,8 @@ def test_context_execution(app, engine, no_auth_connexion, auth_header):
         if engine == 'docker':
             import docker
             client = docker.from_env()
-            assert not any(c.short_id in execution['engine_id']
+            engine_id = Execution.query.get(execution['identifier']).engine_id
+            assert not any(c.short_id in engine_id
                            for c in client.containers.list())
 
 

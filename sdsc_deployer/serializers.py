@@ -52,7 +52,7 @@ class ExecutionSchema(Schema):
     identifier = fields.UUID(attribute='id', dump_only=True)
     engine = fields.String(required=True)
     namespace = fields.String(default='default')
-    engine_id = fields.String()
+    engine_id = fields.String(load_only=True)
 
     @post_dump(pass_many=True)
     def add_envelope(self, data, many):

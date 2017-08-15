@@ -69,13 +69,10 @@ def test_open_port(app, engine, deployer):
 
     # connect to the job and do send/receive
     time.sleep(20)  # FIXME
-    host, port = deployer.get_host_ports(execution)[0]
+    binding = deployer.get_host_ports(execution)['ports'][0]
     timein = time.time()
     s = socket.socket()
-    # while resource_available(s.connect)((host, int(port))) is False:
-    #     if time.time() - timein > 100:
-    #         raise RuntimeError("Timeout while connecting socket.")
-    s.connect((host, int(port)))
+    s.connect((binding['host'], int(binding['exposed'])))
     phrase = b'earth_calling'
     s.send(phrase)
     received = s.recv(100)

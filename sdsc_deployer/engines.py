@@ -74,20 +74,17 @@ class DockerEngine(Engine):
     def get_host_ports(self, execution):
         """Returns host ip and port bindings for the running execution."""
         container = self.client.containers.get(execution.engine_id)
-        port_bindings = container.attrs['NetworkSettings']['Ports']
-
-        host_ports = []
-
-        if port_bindings:
-            for container_port, host_specs in port_bindings.items():
-                # host_specs is a list
-                for host_spec in host_specs:
-                    hostip = host_spec.get('HostIp')
-                    if hostip == '0.0.0.0':
-                        hostip = 'localhost'
-
-                    host_ports.append((hostip, host_spec['HostPort']))
-        return host_ports
+        port_bindings = container.attrs['NetworkSettings'].get('Ports', {})
+        return {
+            'ports': [{
+                'specified': container_port.split('/')[0],
+                'protocol': container_port.split('/')[1].upper(),
+                'host': host_spec['HostIp'],
+                'exposed': host_spec['HostPort'],
+            }
+                      for container_port, host_specs in port_bindings.items()
+                      for host_spec in host_specs],
+        }
 
     def stop(self, execution, remove=False):
         """Stop a running container, optionally removing it."""
@@ -250,6 +247,11 @@ class K8SEngine(Engine):
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        host = pod.items[0].status.host_ip
-        port = service.items[0].spec.ports[0].node_port
-        return [(host, port)]
+        return {
+            'ports': [{
+                'specified': port.port,
+                'host': pod.items[0].status.host_ip,
+                'exposed': port.node_port,
+                'protocol': port.protocol,
+            } for port in service.items[0].spec.ports]
+        }

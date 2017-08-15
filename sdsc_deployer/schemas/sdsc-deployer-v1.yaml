@@ -240,13 +240,13 @@ paths:
         '404':
           description: Context or execution not found
 
-  /contexts/{context_id}/executions/{execution_id}/hostports:
+  /contexts/{context_id}/executions/{execution_id}/ports:
     get:
       tags:
         - deployer
       summary: Fetch the public host and exposed port of running job
       description: Fetch the public host and exposed port of running job
-      operationId: sdsc_deployer.api.contexts.executions.host_port
+      operationId: sdsc_deployer.api.contexts.executions.ports
       produces:
         - application/json
       parameters:
@@ -266,12 +266,19 @@ paths:
           schema:
             type: "object"
             properties:
-              host:
-                type: "string"
               ports:
                 type: "array"
                 items:
-                  type: "string"
+                  type: "object"
+                  properties:
+                    specified:
+                      type: "string"
+                    host:
+                      type: "string"
+                    protocol:
+                      type: "string"
+                    exposed:
+                      type: "string"
         '400':
           description: Invalid ID supplied
         '404':
@@ -326,8 +333,6 @@ definitions:
       - $ref: "#/definitions/NewExecution"
       - properties:
           identifier:
-            type: "string"
-          engine_id:
             type: "string"
 
   Contexts:

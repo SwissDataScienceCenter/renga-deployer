@@ -62,7 +62,7 @@ def logs(context_id, execution_id):
 
 @check_token
 @resource_manager_authorization
-def host_port(context_id, execution_id):
+def ports(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)
     assert str(execution.context_id) == context_id
