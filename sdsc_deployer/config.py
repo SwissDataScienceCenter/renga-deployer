@@ -45,26 +45,23 @@ DEPLOYER_CLIENT_SECRET = None
 DEPLOYER_APP_NAME = 'demo-client'
 """Application name."""
 
+DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
+"""Default base template for the demo page."""
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
 """The URI of the database to be used for preserving internal state."""
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 """Should Flask-SQLAlchemy will track modifications of objects."""
 
-DEPLOYER_KG_PUSH = False
+KNOWLEDGE_GRAPH_URL = None
 """Push contexts and executions to the KnowledgeGraph."""
 
-DEPLOYER_RM_AUTHORIZE = False
+RESOURCE_MANAGER_URL = None
 """Obtain and validate ResourceManager authorization tokens."""
 
 RESOURCE_MANAGER_PUBLIC_KEY = None
 """Public key used to verify ResourceManager tokens."""
-
-PLATFORM_SERVICE_API = 'http://localhost:9000/api'
-"""Base URL for the platform services."""
-
-DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
-"""Default base template for the demo page."""
 
 
 def from_env(config):

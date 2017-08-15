@@ -68,10 +68,13 @@ class KnowledgeGraphSync(object):
 
     def init_app(self, app):
         """Flask application initialization."""
+        if not app.config.get('KNOWLEDGE_GRAPH_URL'):
+            RuntimeError('You must provide a KNOWLEDGE_GRAPH_URL')
+        app.extensions['sdsc-knowledge-graph-sync'] = self
+
+        # connect signal handlers
         context_created.connect(create_context)
         execution_created.connect(create_execution)
-
-        app.extensions['sdsc-knowledge-graph-sync'] = self
 
     def disconnect(self):
         """Remove signal handlers."""
@@ -83,7 +86,7 @@ class KnowledgeGraphSync(object):
         """Fetch named types from types service."""
         if self._named_types is None:
             self._named_types = requests.get(
-                join_url(current_app.config['PLATFORM_SERVICE_API'],
+                join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                          'types/management/named_type')).json()
         return self._named_types
 
@@ -230,11 +233,11 @@ def mutation(operations, wait_for_response=False, token=None):
     If ``wait_for_response == True`` the return value is the reponse JSON,
     otherwise the mutation UUID is returned.
     """
-    platform_url = current_app.config['PLATFORM_SERVICE_API']
+    knowledge_graph_url = current_app.config['KNOWLEDGE_GRAPH_URL']
     headers = {'Authorization': token}
 
     response = requests.post(
-        join_url(platform_url, '/mutation/mutation'),
+        join_url(knowledge_graph_url, '/mutation/mutation'),
         json={'operations': operations},
         headers=headers, )
 
@@ -245,7 +248,7 @@ def mutation(operations, wait_for_response=False, token=None):
         while not completed:
             response = requests.get(
                 join_url(
-                    platform_url,
+                    knowledge_graph_url,
                     '/mutation/mutation/{uuid}'.format(uuid=uuid))).json()
             completed = response['status'] == 'completed'
             # sleep for 200 miliseconds

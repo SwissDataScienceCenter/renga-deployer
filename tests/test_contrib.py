@@ -52,6 +52,7 @@ def kg_app(app):
     """Deployer app with KnowledgeGraph extension."""
     from sdsc_deployer.contrib.knowledge_graph import KnowledgeGraphSync
 
+    app.config['KNOWLEDGE_GRAPH_URL'] = 'http://localhost:9000/api'
     with app.app_context():
         KnowledgeGraphSync(app)
         yield app
@@ -61,9 +62,9 @@ def kg_app(app):
 @pytest.fixture()
 def kg_requests(monkeypatch):
     """Monkeypatch requests to immitate the KnowledgeGraph."""
-    mutation_url = join_url(current_app.config['PLATFORM_SERVICE_API'],
+    mutation_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                             '/mutation/mutation')
-    named_type_url = join_url(current_app.config['PLATFORM_SERVICE_API'],
+    named_type_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                               '/types/management/named_type')
 
     def kg_post(*args, **kwargs):
@@ -158,10 +159,12 @@ def rm_app(app, keypair, monkeypatch):
         key=private,
         algorithm='RS256')
 
+    app.config['RESOURCE_MANAGER_URL'] = 'http://localhost:9000/api'
+    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
+
     def rm_post(*args, **kwargs):
         """Override post request to the ResourceManager."""
-        if join_url(current_app.config['PLATFORM_SERVICE_API'],
-                    '/resource-manager/authorize') == args[0]:
+        if current_app.config['RESOURCE_MANAGER_URL'] == args[0]:
             headers = kwargs.get('headers')
             if headers is None or 'Authorization' not in headers:
                 return Response({}, 401)
@@ -171,7 +174,6 @@ def rm_app(app, keypair, monkeypatch):
             return r_post(*args, **kwargs)
 
     monkeypatch.setattr(requests, 'post', rm_post)
-    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
 
     with app.app_context():
         ResourceManager(app)
@@ -239,6 +241,7 @@ def test_rm_extension(app, keypair, monkeypatch):
     from sdsc_deployer.contrib.resource_manager import ResourceManager
     private, public = keypair
 
+    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = None
     with pytest.raises(RuntimeError):
         ResourceManager(app)
 

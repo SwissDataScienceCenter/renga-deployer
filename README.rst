@@ -80,8 +80,9 @@ Platform integration
 --------------------
 
 The deployer can optionally integrate with other SDSC Platform services.
-To enable integration, set the ``PLATFORM_SERVICE_API`` environment
-variable to point to the api URL, e.g.  ``http://localhost:9000/api``.
-Deployment contexts and executions will automatically be added to the
-knowledge graph. To use the resource manager, you will need to
-additionally set the ``RESOURCE_MANAGER_PUBLIC_KEY``.
+To enable integration, set the appropriate environment variables in the
+form of ``<SERVICE_NAME_URL>`` to point to the api URL. For example,
+setting ``KNOWLEDGE_GRAPH_URL`` will ensure that deployment contexts and
+executions are automatically added to the knowledge graph. Note that to
+use the resource manager, you will need to additionally set the
+``RESOURCE_MANAGER_PUBLIC_KEY``.

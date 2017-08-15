@@ -52,11 +52,11 @@ def create_app(**kwargs):
     SDSCDeployer(api.app)
 
     # add extensions
-    if api.app.config['DEPLOYER_KG_PUSH']:
+    if api.app.config['KNOWLEDGE_GRAPH_URL']:
         from .contrib.knowledge_graph import KnowledgeGraphSync
         KnowledgeGraphSync(api.app)
 
-    if api.app.config['DEPLOYER_RM_AUTHORIZE']:
+    if api.app.config['RESOURCE_MANAGER_URL']:
         from .contrib.resource_manager import ResourceManager
         ResourceManager(api.app)
 
