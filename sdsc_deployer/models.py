@@ -18,12 +18,19 @@
 import uuid
 from collections import namedtuple
 
+from flask import g, has_request_context
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 db = SQLAlchemy()
 """Core database object."""
+
+
+def load_jwt():
+    """Load JWT from a context."""
+    if has_request_context():
+        return g.jwt
 
 
 class Context(db.Model, Timestamp):
@@ -41,6 +48,11 @@ class Context(db.Model, Timestamp):
     spec = db.Column(
         db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'))
     """Context specification."""
+
+    jwt = db.Column(
+        db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'),
+        default=load_jwt)
+    """JWT with which the context has been created."""
 
     @classmethod
     def create(cls, spec=None):
@@ -80,6 +92,11 @@ class Execution(db.Model, Timestamp):
         backref=db.backref(
             'executions', lazy='dynamic', cascade='all, delete-orphan'),
         lazy='joined')
+
+    jwt = db.Column(
+        db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'),
+        default=load_jwt)
+    """JWT with which the execution has been created."""
 
     @classmethod
     def from_context(cls, context, **kwargs):

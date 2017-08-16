@@ -94,13 +94,18 @@ def keypair():
 
 
 @pytest.fixture()
-def auth_header(keypair):
+def auth_data():
+    """Provide JWT token data."""
+    return {
+        'typ': 'Bearer',
+        'name': 'John Doe',
+        'iss': 'http://localhost:8080/auth/realms/SDSC',
+    }
+
+
+@pytest.fixture()
+def auth_header(keypair, auth_data):
     """Provide a header with a JWT bearer token."""
     private, public = keypair
-    token = jwt.encode(
-        {
-            'typ': 'Bearer',
-            'name': 'John Doe',
-            'iss': 'http://localhost:8080/auth/realms/SDSC',
-        }, key=private, algorithm='RS256')
+    token = jwt.encode(auth_data, key=private, algorithm='RS256')
     return {'Authorization': 'Bearer {0}'.format(token)}

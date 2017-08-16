@@ -64,7 +64,7 @@ class DockerEngine(Engine):
             detach=True)
 
         return Execution.from_context(
-            context, engine=engine, engine_id=container.id)
+            context, engine=engine, engine_id=container.id, **kwargs)
 
     def get_logs(self, execution):
         """Extract logs for a container."""
@@ -111,7 +111,7 @@ class K8SEngine(Engine):
     def launch(self, context, engine=None, **kwargs):
         """Launch a Kubernetes Job with the context spec."""
         batch = self._kubernetes.client.BatchV1Api()
-        namespace = kwargs.get('namespace', 'default')
+        namespace = kwargs.pop('namespace', 'default')
         job_spec = self._k8s_job_template(namespace, context)
         job = batch.create_namespaced_job(namespace, job_spec)
         uid = job.metadata.labels['controller-uid']
@@ -124,7 +124,11 @@ class K8SEngine(Engine):
             service = api.create_namespaced_service(namespace, service_spec)
 
         return Execution.from_context(
-            context, engine=engine, engine_id=uid, namespace=namespace)
+            context,
+            engine=engine,
+            engine_id=uid,
+            namespace=namespace,
+            **kwargs)
 
     def stop(self, execution, remove=False):
         """Stop a running job."""

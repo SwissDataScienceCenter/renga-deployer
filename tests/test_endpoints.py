@@ -67,7 +67,8 @@ def test_token_check(app, auth_header):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_context_execution(app, engine, no_auth_connexion, auth_header):
+def test_context_execution(app, engine, no_auth_connexion, auth_data,
+                           auth_header):
     """Test context execution."""
 
     with app.test_client() as client:
@@ -140,9 +141,12 @@ def test_context_execution(app, engine, no_auth_connexion, auth_header):
         if engine == 'docker':
             import docker
             client = docker.from_env()
-            engine_id = Execution.query.get(execution['identifier']).engine_id
+            execution = Execution.query.get(execution['identifier'])
+            engine_id = execution.engine_id
             assert not any(c.short_id in engine_id
                            for c in client.containers.list())
+            assert execution.jwt == auth_data
+            assert execution.context.jwt == auth_data
 
 
 def test_context_get(app, auth_header):
