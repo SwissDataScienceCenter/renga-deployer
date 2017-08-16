@@ -17,15 +17,15 @@
 
 from functools import wraps
 
-from flask import current_app, request
+from flask import current_app, g, request
 from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
 from sdsc_deployer.ext import current_deployer
 
 
-def resource_manager_authorization(*scopes):
-    """If configured, check authorization with the ResourceManager."""
+def check_token(*scopes):
+    """Check that the request includes an authorization token."""
     method = None
 
     if len(scopes) == 1 and callable(scopes[0]):
@@ -33,61 +33,40 @@ def resource_manager_authorization(*scopes):
         scopes = tuple()
 
     def decorator(function):
+        """Store scopes on view function."""
+        setattr(function, '_oauth_scopes', scopes)
+
         @wraps(function)
         def wrapper(*args, **kwargs):
-            if 'sdsc-resource-manager' in current_app.extensions:
-                from jose import jwt
-                from sdsc_deployer.contrib.resource_manager \
-                    import request_authorization_token
+            """Check JWT and scopes."""
+            access_token = request.headers.get('Authorization')
 
-                if 'data' in kwargs:
-                    claims = kwargs['data']
-                else:
-                    claims = args
+            # verify the token
+            if not access_token or not access_token.lower().startswith(
+                    'bearer '):
+                raise Unauthorized('Authorization token not found in headers.')
 
-                # form the resource request and get the authorization token
-                resource_request = {
-                    'scope': list(scopes),
-                    'service_claims': {
-                        'claims': claims
-                    }
-                }
+            access_token = access_token[len('bearer '):]
 
-                access_token = request_authorization_token(
-                    request.headers, resource_request)
+            # verify the token and create the context
+            key = current_app.config['DEPLOYER_JWT_KEY']
+            options = {
+                'verify_signature': key is not None,
+            }
 
-                if access_token is None:
-                    raise Unauthorized('Could not retrieve an '
-                                       'authorization token')
+            g.jwt = auth = jwt.decode(
+                access_token,
+                issuer=current_app.config['DEPLOYER_JWT_ISSUER'],
+                key=key,
+                options=options, )
 
-                # verify the token and create the context
-                auth = jwt.decode(
-                    access_token,
-                    issuer='resource-manager',
-                    key=current_app.config['RESOURCE_MANAGER_PUBLIC_KEY'])
-
-                if not all(s in auth['https://rm.datascience.ch/scope']
-                           for s in scopes):
-                    raise Unauthorized('Insufficient scope.')
+            scope_key = current_app.config['DEPLOYER_TOKEN_SCOPE_KEY']
+            if scope_key and not all(
+                    s in auth.get(scope_key, []) for s in scopes):
+                raise Unauthorized('Insufficient scope.')
 
             return function(*args, **kwargs)
 
         return wrapper
 
     return decorator(method) if method else decorator
-
-
-def check_token(function):
-    """Check that the request includes an authorization token."""
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        headers = request.headers
-
-        # verify the token
-        if 'Authorization' not in headers:
-            raise Unauthorized('Authorization token not found in headers.')
-        if not headers['Authorization'].startswith(('Bearer', 'bearer')):
-            raise Unauthorized('Authorization token not found in headers.')
-        return function(*args, **kwargs)
-
-    return wrapper

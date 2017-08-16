@@ -160,7 +160,8 @@ def rm_app(app, keypair, monkeypatch):
         algorithm='RS256')
 
     app.config['RESOURCE_MANAGER_URL'] = 'http://localhost:9000/api'
-    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
+    app.config['DEPLOYER_JWT_KEY'] = public
+    app.config['DEPLOYER_JWT_ISSUER'] = 'resource-manager'
 
     def rm_post(*args, **kwargs):
         """Override post request to the ResourceManager."""
@@ -241,15 +242,15 @@ def test_rm_extension(app, keypair, monkeypatch):
     from sdsc_deployer.contrib.resource_manager import ResourceManager
     private, public = keypair
 
-    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = None
+    app.config['DEPLOYER_JWT_KEY'] = None
     with pytest.raises(RuntimeError):
         ResourceManager(app)
 
-    app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = public
+    app.config['DEPLOYER_JWT_KEY'] = public
     ResourceManager(app)
 
     assert 'sdsc-resource-manager' in app.extensions
-    assert app.config['RESOURCE_MANAGER_PUBLIC_KEY'] == public
+    assert app.config['DEPLOYER_JWT_KEY'] == public
 
 
 def test_rm_authorization(rm_app, auth_header):

@@ -15,8 +15,7 @@
 # limitations under the License.
 """Implement ``/contexts/{context_id}/executions/{execution_id}`` endpoint."""
 
-from sdsc_deployer.authorization import check_token, \
-    resource_manager_authorization
+from sdsc_deployer.authorization import check_token
 from sdsc_deployer.ext import current_deployer
 from sdsc_deployer.models import Context, Execution
 from sdsc_deployer.serializers import ExecutionSchema
@@ -25,16 +24,14 @@ execution_schema = ExecutionSchema()
 executions_schema = ExecutionSchema(many=True)
 
 
-@check_token
-@resource_manager_authorization(['contexts:read', 'executions:read'])
+@check_token('contexts:read', 'executions:read')
 def search(context_id):
     """Return currently stored ``Executions`` of a given context."""
     return executions_schema.dump(
         Execution.query.filter_by(context_id=context_id).all()).data, 200
 
 
-@check_token
-@resource_manager_authorization(['contexts:read', 'executions:read'])
+@check_token('contexts:read', 'executions:read')
 def get(context_id, execution_id):
     """Return information about a specific ``Execution``."""
     execution = Execution.query.get_or_404(execution_id)
@@ -42,8 +39,7 @@ def get(context_id, execution_id):
     return execution_schema.dump(execution).data, 200
 
 
-@check_token
-@resource_manager_authorization(['contexts:read', 'executions:write'])
+@check_token('contexts:read', 'executions:write')
 def post(context_id, data):
     """Create a new ``Execution`` for a given context."""
     context = Context.query.get_or_404(context_id)
@@ -52,7 +48,6 @@ def post(context_id, data):
 
 
 @check_token
-@resource_manager_authorization
 def logs(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)
@@ -61,7 +56,6 @@ def logs(context_id, execution_id):
 
 
 @check_token
-@resource_manager_authorization
 def ports(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)
@@ -70,7 +64,6 @@ def ports(context_id, execution_id):
 
 
 @check_token
-@resource_manager_authorization
 def delete(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)

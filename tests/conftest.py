@@ -100,6 +100,7 @@ def auth_header(keypair):
     token = jwt.encode(
         {
             'typ': 'Bearer',
-            'name': 'John Doe'
+            'name': 'John Doe',
+            'iss': 'http://localhost:8080/auth/realms/SDSC',
         }, key=private, algorithm='RS256')
     return {'Authorization': 'Bearer {0}'.format(token)}

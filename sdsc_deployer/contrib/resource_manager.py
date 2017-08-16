@@ -38,20 +38,34 @@ class ResourceManager(object):
         if not app.config.get('RESOURCE_MANAGER_URL'):
             RuntimeError('You must provide a RESOURCE_MANAGER_URL')
 
-        rm_key = app.config['RESOURCE_MANAGER_PUBLIC_KEY']
+        jwt_key = app.config['DEPLOYER_JWT_KEY']
 
-        if not rm_key:
-            raise RuntimeError('You must provide the '
-                               'RESOURCE_MANAGER_PUBLIC_KEY')
+        if not jwt_key:
+            raise RuntimeError('You must provide the DEPLOYER_JWT_KEY')
 
-        # jose.jwt requires begin/end in the key
-        if not rm_key.startswith('-----BEGIN PUBLIC KEY-----'):
-            rm_key = ("-----BEGIN PUBLIC KEY-----\n"
-                      "{key}\n"
-                      "-----END PUBLIC KEY-----").format(key=rm_key)
-
-        app.config['RESOURCE_MANAGER_PUBLIC_KEY'] = rm_key
+        app.before_request(exchange_token)
         app.extensions['sdsc-resource-manager'] = self
+
+
+def exchange_token():
+    """Request new token from resource manager."""
+    resource_request = {'service_claims': {'claims': request.view_args}}
+
+    if request.endpoint in current_app.view_functions:
+        view_func = current_app.view_functions[request.endpoint]
+        resource_request['scopes'] = list(
+            getattr(view_func, '_oauth_scopes', tuple()))
+
+    access_token = request_authorization_token(request.headers,
+                                               resource_request)
+
+    if access_token is None:
+        raise Unauthorized('Could not retrieve an ' 'authorization token')
+
+    header_token = 'Bearer {0}'.format(access_token)
+    # This is very dirty workaround to immutable request headers.
+    request.headers.environ['HTTP_AUTHORIZATION'] = header_token
+    assert request.headers['Authorization'] == header_token
 
 
 def request_authorization_token(headers, resource_request):

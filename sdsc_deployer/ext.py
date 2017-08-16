@@ -50,8 +50,17 @@ class SDSCDeployer(object):
     def init_config(self, app):
         """Initialize configuration."""
         for k in dir(config):
-            if k.startswith('DEPLOYER_'):
+            if k.isupper():
                 app.config.setdefault(k, getattr(config, k))
+
+        jwt_key = app.config['DEPLOYER_JWT_KEY']
+        # jose.jwt requires begin/end in the key
+        if jwt_key and not jwt_key.startswith('-----BEGIN PUBLIC KEY-----'):
+            jwt_key = ("-----BEGIN PUBLIC KEY-----\n"
+                       "{key}\n"
+                       "-----END PUBLIC KEY-----").format(key=jwt_key)
+
+        app.config['DEPLOYER_JWT_KEY'] = jwt_key
 
     @property
     def deployer(self):

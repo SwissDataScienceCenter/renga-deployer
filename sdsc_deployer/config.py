@@ -45,6 +45,18 @@ DEPLOYER_CLIENT_SECRET = None
 DEPLOYER_APP_NAME = 'demo-client'
 """Application name."""
 
+DEPLOYER_JWT_ISSUER = 'http://localhost:8080/auth/realms/SDSC'
+"""JWT issuer used for token verification."""
+
+DEPLOYER_JWT_KEY = None
+"""Public key used to verify JWT tokens."""
+
+DEPLOYER_TOKEN_SCOPE_KEY = None
+"""Key inside JWT containing scopes.
+
+Use 'https://rm.datascience.ch/scope' in combination with resource manager.
+"""
+
 DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
 """Default base template for the demo page."""
 
@@ -59,9 +71,6 @@ KNOWLEDGE_GRAPH_URL = None
 
 RESOURCE_MANAGER_URL = None
 """Obtain and validate ResourceManager authorization tokens."""
-
-RESOURCE_MANAGER_PUBLIC_KEY = None
-"""Public key used to verify ResourceManager tokens."""
 
 
 def from_env(config):

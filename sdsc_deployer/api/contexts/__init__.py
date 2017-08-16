@@ -19,8 +19,7 @@ import json
 
 from flask import current_app, request
 
-from sdsc_deployer.authorization import check_token, \
-    resource_manager_authorization
+from sdsc_deployer.authorization import check_token
 from sdsc_deployer.ext import current_deployer
 from sdsc_deployer.models import Context
 from sdsc_deployer.serializers import ContextSchema
@@ -29,23 +28,20 @@ context_schema = ContextSchema()
 contexts_schema = ContextSchema(many=True)
 
 
-@check_token
-@resource_manager_authorization('contexts:read')
+@check_token('contexts:read')
 def search():
     """Return a listing of currently known contexts."""
     return contexts_schema.dump(Context.query.all()).data, 200
 
 
-@check_token
-@resource_manager_authorization('contexts:read')
+@check_token('contexts:read')
 def get(context_id):
     """Return information about a specific context."""
     context = Context.query.get_or_404(context_id)
     return context_schema.dump(context).data, 200
 
 
-@check_token
-@resource_manager_authorization(['contexts:read', 'contexts:write'])
+@check_token('contexts:read', 'contexts:write')
 def post(spec):
     """Create a new context."""
     context = current_deployer.deployer.create(spec)
