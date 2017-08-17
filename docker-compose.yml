@@ -9,8 +9,10 @@ services:
     depends_on:
       - db
     environment:
-      SQLALCHEMY_DATABASE_URI: 'postgres+psycopg2://postgres:postgres@db'
+      SQLALCHEMY_DATABASE_URI: "postgres+psycopg2://postgres:postgres@db/deployer"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - .:/code
     ports:
       - 5000:5000
+    restart: on-failure

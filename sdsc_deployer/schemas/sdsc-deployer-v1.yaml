@@ -10,7 +10,7 @@ info:
     name: 'Apache License 2.0'
     url: 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html'
 host: {{ DEPLOYER_URL }}
-basePath: /v1
+basePath: {{ DEPLOYER_BASE_PATH }}
 tags:
   - name: deployer
     description: Everything about deployed contexts.
@@ -37,7 +37,7 @@ paths:
           description: Invalid input
       security:
         - token_auth:
-            - 'contexts:read'
+            - 'deployer:contexts_read'
     post:
       tags:
         - deployer
@@ -67,8 +67,8 @@ paths:
           description: Validation exception
       security:
         - token_auth:
-            - 'contexts:write'
-            - 'contexts:read'
+            - 'deployer:contexts_write'
+            - 'deployer:contexts_read'
 
   /contexts/{context_id}:
     get:
@@ -118,7 +118,7 @@ paths:
           description: Invalid input
       security:
         - token_auth:
-            - 'contexts:read'
+            - 'deployer:contexts_read'
     post:
       tags:
         - deployer
@@ -290,8 +290,8 @@ securityDefinitions:
     authorizationUrl: "{{ DEPLOYER_AUTHORIZATION_URL }}"
     flow: "implicit"
     scopes:
-      contexts:write: "modify contexts"
-      contexts:read: "read contexts"
+      deployer:contexts_write: "modify contexts"
+      deployer:contexts_read: "read contexts"
 
 definitions:
   Specification:

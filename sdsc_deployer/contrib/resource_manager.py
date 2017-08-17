@@ -53,7 +53,9 @@ def exchange_token():
 
     if request.endpoint in current_app.view_functions:
         view_func = current_app.view_functions[request.endpoint]
-        resource_request['scopes'] = list(
+        if not hasattr(view_func, '_oauth_scopes'):
+            return
+        resource_request['scope'] = list(
             getattr(view_func, '_oauth_scopes', tuple()))
 
     access_token = request_authorization_token(request.headers,

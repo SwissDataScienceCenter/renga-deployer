@@ -152,8 +152,8 @@ def rm_app(app, keypair, monkeypatch):
             'iss':
             'resource-manager',
             'https://rm.datascience.ch/scope': [
-                'contexts:write', 'contexts:read', 'executions:write',
-                'executions:read'
+                'deployer:contexts_write', 'deployer:contexts_read',
+                'deployer:executions_write', 'deployer:executions_read'
             ]
         },
         key=private,

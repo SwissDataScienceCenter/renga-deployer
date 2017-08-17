@@ -11,6 +11,8 @@ RUN pip install -e .[all]
 # Set up our flask app
 ENV FLASK_APP=/code/sdsc_deployer/app.py
 
-ENTRYPOINT ["./run_app.sh"]
+ENTRYPOINT ["flask"]
+
+CMD ["run", "-h", "0.0.0.0"]
 
 EXPOSE 5000

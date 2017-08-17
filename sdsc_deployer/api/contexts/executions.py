@@ -24,14 +24,14 @@ execution_schema = ExecutionSchema()
 executions_schema = ExecutionSchema(many=True)
 
 
-@check_token('contexts:read', 'executions:read')
+@check_token('deployer:contexts_read', 'deployer:executions_read')
 def search(context_id):
     """Return currently stored ``Executions`` of a given context."""
     return executions_schema.dump(
         Execution.query.filter_by(context_id=context_id).all()).data, 200
 
 
-@check_token('contexts:read', 'executions:read')
+@check_token('deployer:contexts_read', 'deployer:executions_read')
 def get(context_id, execution_id):
     """Return information about a specific ``Execution``."""
     execution = Execution.query.get_or_404(execution_id)
@@ -39,7 +39,7 @@ def get(context_id, execution_id):
     return execution_schema.dump(execution).data, 200
 
 
-@check_token('contexts:read', 'executions:write')
+@check_token('deployer:contexts_read', 'deployer:executions_write')
 def post(context_id, data):
     """Create a new ``Execution`` for a given context."""
     context = Context.query.get_or_404(context_id)

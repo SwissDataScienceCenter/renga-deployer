@@ -24,6 +24,9 @@ DEPLOYER_DEFAULT_VALUE = 'foobar'
 DEPLOYER_URL = 'localhost:5000'
 """Basre URL for the service."""
 
+DEPLOYER_BASE_PATH = '/v1'
+"""Base path for the API."""
+
 DEPLOYER_AUTHORIZATION_URL = ('http://localhost:8080/auth/realms/SDSC/'
                               'protocol/openid-connect/auth')
 """OpenID-Connect authorization endpoint."""

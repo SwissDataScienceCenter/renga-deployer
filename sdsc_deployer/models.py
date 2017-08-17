@@ -39,8 +39,7 @@ class Context(db.Model, Timestamp):
     """Context identifier."""
 
     spec = db.Column(
-        db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'),
-        index=True)
+        db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'))
     """Context specification."""
 
     @classmethod

@@ -28,20 +28,20 @@ context_schema = ContextSchema()
 contexts_schema = ContextSchema(many=True)
 
 
-@check_token('contexts:read')
+@check_token('deployer:contexts_read')
 def search():
     """Return a listing of currently known contexts."""
     return contexts_schema.dump(Context.query.all()).data, 200
 
 
-@check_token('contexts:read')
+@check_token('deployer:contexts_read')
 def get(context_id):
     """Return information about a specific context."""
     context = Context.query.get_or_404(context_id)
     return context_schema.dump(context).data, 200
 
 
-@check_token('contexts:read', 'contexts:write')
+@check_token('deployer:contexts_read', 'deployer:contexts_write')
 def post(spec):
     """Create a new context."""
     context = current_deployer.deployer.create(spec)
