@@ -20,12 +20,13 @@ import os
 from blinker import Namespace
 
 from . import engines
-from .models import Context, Execution
+from .models import Context, Execution, db
 
 deployer_signals = Namespace()
 
 context_created = deployer_signals.signal('context-created')
 execution_created = deployer_signals.signal('execution-created')
+execution_launched = deployer_signals.signal('execution-launched')
 
 
 class Deployer(object):
@@ -62,10 +63,12 @@ class Deployer(object):
 
     def launch(self, context=None, engine=None, **kwargs):
         """Create new execution environment for a given context."""
-        execution = self.ENGINES[engine](  # FIXME use configuration
-        ).launch(
-            context, engine=engine, **kwargs)
+        execution = Execution.from_context(context, engine=engine, **kwargs)
         execution_created.send(execution)
+
+        execution = self.ENGINES[engine]().launch(execution)
+        execution_launched.send(execution)
+
         return execution
 
     def stop(self, execution, remove=False):

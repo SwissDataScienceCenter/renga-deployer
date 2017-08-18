@@ -50,8 +50,10 @@ class DockerEngine(Engine):
         import docker
         return docker.from_env()
 
-    def launch(self, context, engine=None, **kwargs):
+    def launch(self, execution, **kwargs):
         """Launch a docker container with the context image."""
+        context = execution.context
+
         if context.spec.get('ports'):
             ports = {port: None for port in context.spec.get('ports')}
         else:
@@ -61,10 +63,12 @@ class DockerEngine(Engine):
             image=context.spec['image'],
             ports=ports,
             command=context.spec.get('command'),
-            detach=True)
+            detach=True,
+            environment=execution.environment or None)
 
-        return Execution.from_context(
-            context, engine=engine, engine_id=container.id, **kwargs)
+        execution.engine_id = container.id
+
+        return execution
 
     def get_logs(self, execution):
         """Extract logs for a container."""

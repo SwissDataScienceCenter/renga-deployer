@@ -24,7 +24,7 @@ from flask import current_app, request
 from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
 
-from sdsc_deployer.deployer import context_created, execution_created
+from sdsc_deployer.deployer import context_created, execution_created, execution_launched
 from sdsc_deployer.models import Context, Execution, db
 from sdsc_deployer.utils import join_url
 
@@ -75,6 +75,7 @@ class KnowledgeGraphSync(object):
         # connect signal handlers
         context_created.connect(create_context)
         execution_created.connect(create_execution)
+        execution_launched.connect(launch_execution)
 
     def disconnect(self):
         """Remove signal handlers."""
@@ -107,7 +108,7 @@ def create_context(context, token=None):
         raise RuntimeError('Adding vertex failed')
 
     db.session.add(GraphContext(id=vertex_id, context=context))
-    db.session.commit()
+    current_app.logger.debug(context.graph[0].id)
 
 
 def create_execution(execution, token=None):
@@ -115,21 +116,22 @@ def create_execution(execution, token=None):
     token = token or request.headers['Authorization']
 
     operations = [
-        vertex_operation(execution, temp_id=0), {
-            'type': 'create_edge',
-            'element': {
-                'label': 'deployer:launch',
-                'from': {
-                    'type': 'persisted_vertex',
-                    'id': execution.context.graph[0].id,
-                },
-                'to': {
-                    'type': 'new_vertex',
-                    'id': 0
-                }
+        vertex_operation(execution, temp_id=0),
+    ]
+    operations.append({
+        'type': 'create_edge',
+        'element': {
+            'label': 'deployer:launch',
+            'from': {
+                'type': 'persisted_vertex',
+                'id': execution.context.graph[0].id,
+            },
+            'to': {
+                'type': 'new_vertex',
+                'id': 0
             }
         }
-    ]
+    })
 
     response = mutation(operations, wait_for_response=True, token=token)
 
@@ -140,7 +142,20 @@ def create_execution(execution, token=None):
         raise RuntimeError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))
-    db.session.commit()
+
+    execution.environment.update({
+        'SDSC_VERTEX_ID':
+        vertex_id,
+        'SDSC_ACCESS_TOKEN':
+        token.split('Bearer')[1],
+        'SDSC_PLATFORM_URL':
+        current_app.config['SDSC_PLATFORM_URL']
+    })
+
+
+def launch_execution(execution, token=None):
+    """Update the execution with launch info."""
+    pass
 
 
 def sync(token=None):

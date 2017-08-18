@@ -75,6 +75,9 @@ KNOWLEDGE_GRAPH_URL = None
 RESOURCE_MANAGER_URL = None
 """Obtain and validate ResourceManager authorization tokens."""
 
+SDSC_PLATFORM_URL = 'http://localhost:9000/api'
+"""URL for other platform services."""
+
 
 def from_env(config):
     """Load configuration options from environment variables."""

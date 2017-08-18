@@ -84,6 +84,10 @@ class Execution(db.Model, Timestamp):
     namespace = db.Column(db.String)
     """Namespace name."""
 
+    environment = db.Column(
+        db.JSON(none_as_null=True).with_variant(JSONType, 'sqlite'),
+        default=dict)
+
     context_id = db.Column(UUIDType, db.ForeignKey(Context.id))
     """Context identifier from which the execution started."""
 
