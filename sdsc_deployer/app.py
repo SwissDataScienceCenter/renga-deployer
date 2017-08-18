@@ -68,6 +68,3 @@ def create_app(**kwargs):
         db.create_all()
 
     return api.app
-
-
-app = create_app()

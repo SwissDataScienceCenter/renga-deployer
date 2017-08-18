@@ -43,6 +43,9 @@ extras_require = {
     'postgresql': [
         'psycopg2>=2.6.1',
     ],
+    'wsgi': [
+        'uwsgi>=2.0.15',
+    ],
 }
 
 extras_require['all'] = []

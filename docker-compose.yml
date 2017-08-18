@@ -6,6 +6,7 @@ services:
       POSTGRES_PASSWORD: postgres
   deployer:
     build: .
+    command: uwsgi /code/uwsgi.ini
     depends_on:
       - db
     environment:

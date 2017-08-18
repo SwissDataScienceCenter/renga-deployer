@@ -9,10 +9,10 @@ WORKDIR /code
 RUN pip install -e .[all]
 
 # Set up our flask app
-ENV FLASK_APP=/code/sdsc_deployer/app.py
+ENV FLASK_APP=sdsc_deployer.app:create_app
 
-ENTRYPOINT ["flask"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
-CMD ["run", "-h", "0.0.0.0"]
+CMD ["flask", "run", "-h", "0.0.0.0"]
 
 EXPOSE 5000

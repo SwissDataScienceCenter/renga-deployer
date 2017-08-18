@@ -51,4 +51,6 @@ To reset the example application run:
 SPHINX-END
 """
 
-from sdsc_deployer.app import app
+from sdsc_deployer.app import create_app
+
+app = create_app()
