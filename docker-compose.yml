@@ -14,12 +14,18 @@ services:
       - ./docker/nginx/test.crt:/etc/ssl/certs/test.crt
       - /tmp/cache:/data/nginx/cache
     ports:
-      - 81:80
-      - 444:443
+      - 80
     depends_on:
       - deployer
     links:
       - deployer
+    labels:
+      - "traefik.backend=nginx"
+      - "traefik.enable=true"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.frontend.rule=Host:localhost"
+      - "traefik.port=80"
   deployer:
     build: .
     command: uwsgi /code/docker/uwsgi/uwsgi.ini
@@ -31,5 +37,22 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/code
     ports:
-      - 5000:5000
+      - 5000
     restart: on-failure
+  traefik:
+    image: traefik
+    command: --web --docker --docker.watch --docker.domain=localhost \
+      --debug --logLevel=DEBUG \
+      --defaultentrypoints=http,https \
+      --entrypoints='Name:http Address::80 Redirect.EntryPoint:https' \
+      --entrypoints='Name:https Address::443 TLS:/ssl/test.crt,/ssl/test.key' \
+      --docker.exposedbydefault=false
+    ports:
+        - 80:80
+        - 443:443
+        - 8080:8080
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /dev/null:/traefik.toml
+        - ./docker/nginx/test.key:/ssl/test.key
+        - ./docker/nginx/test.crt:/ssl/test.crt
