@@ -9,7 +9,7 @@ WORKDIR /code
 RUN pip install -e .[all]
 
 # Set up our flask app
-ENV FLASK_APP=sdsc_deployer.app:create_app
+ENV FLASK_APP=sdsc_deployer.wsgi:application
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 

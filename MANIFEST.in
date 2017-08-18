@@ -33,6 +33,7 @@ include babel.ini
 include docker-compose.yml
 include pytest.ini
 include uwsgi.ini
+recursive-include docker *
 recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst

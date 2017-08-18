@@ -4,9 +4,25 @@ services:
     image: postgres
     environment:
       POSTGRES_PASSWORD: postgres
+  frontend:
+    build: ./docker/nginx/
+    restart: always
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/test.key:/etc/ssl/private/test.key
+      - ./docker/nginx/test.crt:/etc/ssl/certs/test.crt
+      - /tmp/cache:/data/nginx/cache
+    ports:
+      - 81:80
+      - 444:443
+    depends_on:
+      - deployer
+    links:
+      - deployer
   deployer:
     build: .
-    command: uwsgi /code/uwsgi.ini
+    command: uwsgi /code/docker/uwsgi/uwsgi.ini
     depends_on:
       - db
     environment:
