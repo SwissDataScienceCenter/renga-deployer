@@ -24,7 +24,8 @@ from flask import current_app, request
 from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
 
-from sdsc_deployer.deployer import context_created, execution_created, execution_launched
+from sdsc_deployer.deployer import context_created, execution_created, \
+    execution_launched
 from sdsc_deployer.models import Context, Execution, db
 from sdsc_deployer.utils import join_url
 
@@ -108,7 +109,7 @@ def create_context(context, token=None):
         raise RuntimeError('Adding vertex failed')
 
     db.session.add(GraphContext(id=vertex_id, context=context))
-    current_app.logger.debug(context.graph[0].id)
+    db.session.commit()
 
 
 def create_execution(execution, token=None):
@@ -152,6 +153,7 @@ def create_execution(execution, token=None):
         current_app.config['SDSC_PLATFORM_URL']
     })
 
+    db.session.commit()
 
 def launch_execution(execution, token=None):
     """Update the execution with launch info."""

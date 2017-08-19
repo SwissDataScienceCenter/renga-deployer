@@ -36,7 +36,7 @@ def test_deployer_env_create(monkeypatch):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_node_launch(app, engine, deployer):
+def test_execution_launch(app, engine, deployer):
     """Test node launching."""
     context = deployer.create({'image': 'hello-world'})
     execution = deployer.launch(context, engine=engine)

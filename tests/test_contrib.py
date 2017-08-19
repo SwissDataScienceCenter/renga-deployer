@@ -23,6 +23,7 @@ from flask import current_app
 from jose import jwt
 
 from sdsc_deployer import contrib
+from sdsc_deployer.models import Execution
 from sdsc_deployer.utils import join_url
 
 r_get = requests.get
@@ -216,6 +217,8 @@ def test_kg_serialization(kg_app, deployer, kg_requests):
 
 def test_kg_handlers(kg_app, auth_header, kg_requests):
     """Test Context and Execution creation handlers."""
+    import docker
+
     with kg_app.test_client() as client:
         # 1. test context creation
         resp = client.post(
@@ -235,6 +238,13 @@ def test_kg_handlers(kg_app, auth_header, kg_requests):
             }),
             content_type='application/json',
             headers=auth_header)
+        execution = json.loads(resp.data)
+
+    client = docker.from_env()
+
+    execution = Execution.query.get(execution['identifier'])
+    container = client.containers.get(execution.engine_id)
+    assert any('SDSC_VERTEX_ID' in s for s in container.attrs['Config']['Env'])
 
 
 def test_rm_extension(app, keypair, monkeypatch):

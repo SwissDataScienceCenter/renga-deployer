@@ -112,8 +112,10 @@ class K8SEngine(Engine):
         if self.config is None:
             self.config = kubernetes.config.load_kube_config()
 
-    def launch(self, context, engine=None, **kwargs):
+    def launch(self, execution, engine=None, **kwargs):
         """Launch a Kubernetes Job with the context spec."""
+        context = execution.context
+
         batch = self._kubernetes.client.BatchV1Api()
         namespace = kwargs.pop('namespace', 'default')
         job_spec = self._k8s_job_template(namespace, context)
@@ -127,12 +129,9 @@ class K8SEngine(Engine):
             service_spec = self._k8s_service_template(namespace, context, uid)
             service = api.create_namespaced_service(namespace, service_spec)
 
-        return Execution.from_context(
-            context,
-            engine=engine,
-            engine_id=uid,
-            namespace=namespace,
-            **kwargs)
+        execution.engine_id = uid
+        execution.namespace = namespace
+        return execution
 
     def stop(self, execution, remove=False):
         """Stop a running job."""
