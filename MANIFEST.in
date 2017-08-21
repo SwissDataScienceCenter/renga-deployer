@@ -25,12 +25,12 @@ recursive-include sdsc_deployer *.po *.pot *.mo
 include *.rst
 include *.sh
 include *.txt
+include *.yml
 include Dockerfile
 include LICENSE
 include Makefile
 include NOTICE
 include babel.ini
-include docker-compose.yml
 include pytest.ini
 include uwsgi.ini
 recursive-include docker *
