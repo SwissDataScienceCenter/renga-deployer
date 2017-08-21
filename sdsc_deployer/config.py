@@ -60,6 +60,9 @@ DEPLOYER_TOKEN_SCOPE_KEY = None
 Use 'https://rm.datascience.ch/scope' in combination with resource manager.
 """
 
+DEPLOYER_SWAGGER_UI = False
+"""Enable Swagger UI."""
+
 DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
 """Default base template for the demo page."""
 

@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO)
 def create_app(**kwargs):
     """Create an instance of the flask app."""
     api = connexion.App(
-        __name__, specification_dir='schemas/', swagger_ui=True)
+        __name__, specification_dir='schemas/')
     api.app.config.from_object(config)
     api.app.config.update(**config.from_env(config))
     api.app.config.update(**kwargs)
@@ -45,6 +45,7 @@ def create_app(**kwargs):
         'sdsc-deployer-v1.yaml',
         arguments=api.app.config,
         resolver=RestyResolver('sdsc_deployer.api'),
+        swagger_ui=api.app.config['DEPLOYER_SWAGGER_UI'],
     )  # validate_responses=True)
 
     Babel(api.app)
