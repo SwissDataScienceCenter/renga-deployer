@@ -69,6 +69,8 @@ class Deployer(object):
         execution = self.ENGINES[engine]().launch(execution)
         execution_launched.send(execution)
 
+        db.session.add(execution)
+        db.session.commit()
         return execution
 
     def stop(self, execution, remove=False):

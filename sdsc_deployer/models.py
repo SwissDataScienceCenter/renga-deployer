@@ -105,7 +105,5 @@ class Execution(db.Model, Timestamp):
     @classmethod
     def from_context(cls, context, **kwargs):
         """Create a new execution for a given context."""
-        execution = cls(context_id=context.id, **kwargs)
-        db.session.add(execution)
-        db.session.commit()
+        execution = cls(context=context, **kwargs)
         return execution
