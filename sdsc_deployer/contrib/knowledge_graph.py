@@ -143,6 +143,7 @@ def create_execution(execution, token=None):
         raise RuntimeError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))
+    db.session.commit()
 
     execution.environment.update({
         'SDSC_VERTEX_ID':
@@ -153,7 +154,6 @@ def create_execution(execution, token=None):
         current_app.config['SDSC_PLATFORM_URL']
     })
 
-    db.session.commit()
 
 def launch_execution(execution, token=None):
     """Update the execution with launch info."""
