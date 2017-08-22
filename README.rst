@@ -45,7 +45,8 @@ Local
    $ export FLASK_APP=sdsc_deployer/app.py
    $ flask run
 
-The first time you run the app locally, you may need to build the database tables:
+The first time you run the app locally, you may need to build the database
+tables:
 
 ::
 
@@ -74,6 +75,34 @@ For development, mount the code directly and enable flask debug mode:
 
 
 You can test the API by pointing your browser to http://localhost:5000/v1/ui
+
+
+Orchestration with postgres and load-balancing
+----------------------------------------------
+
+The packages includes two simple orchestration setup files:
+``docker-compose.yml`` and ``docker-compose.full.yml``.
+
+The first includes only the deployer container linked to a postgres database.
+To use the deployer with postgres:
+
+::
+
+    $ docker-compose up
+
+As before, the service is available on port 5000.
+
+The second can be used as a template to define your own production deployment
+environment including the `Traefik <http://traefik.io>`_ load balancer and
+(self-signed) SSL certificates.
+
+::
+
+    $ docker-compose -f docker-compose.full.yml up
+
+The service is available on ``http://localhost/api/deployer``. You can access the
+traefik dashboard on http://localhost:8080/.
+
 
 
 Platform integration
