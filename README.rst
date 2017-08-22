@@ -17,7 +17,7 @@
  Renga-Deployer
 ================
 
-.. image:: https://travis-ci.com/SwissDataScienceCenter/renga-deployer.svg?token=AuxHLdYP4GzNgGQfyxXT&branch=master
+.. image:: https://travis-ci.com/SwissDataScienceCenter/renga-deployer.svg?token=mxu4owK3eZsAmMTeJPg1&branch=master
     :target: https://travis-ci.com/SwissDataScienceCenter/renga-deployer
 
 .. .. image:: https://img.shields.io/coveralls/SwissDataScienceCenter/renga-deployer.svg
