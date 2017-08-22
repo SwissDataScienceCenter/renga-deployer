@@ -19,7 +19,7 @@ include .dockerignore
 include .editorconfig
 include .tx/config
 prune docs/_build
-recursive-include sdsc_deployer *.po *.pot *.mo
+recursive-include renga_deployer *.po *.pot *.mo
 
 # added by check_manifest.py
 include *.rst
@@ -41,14 +41,14 @@ recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include examples *.py
 recursive-include examples *.sh
-recursive-include sdsc_deployer *.css
-recursive-include sdsc_deployer *.gif
-recursive-include sdsc_deployer *.html
-recursive-include sdsc_deployer *.ico
-recursive-include sdsc_deployer *.js
-recursive-include sdsc_deployer *.json
-recursive-include sdsc_deployer *.map
-recursive-include sdsc_deployer *.png
-recursive-include sdsc_deployer *.ttf
-recursive-include sdsc_deployer *.yaml
+recursive-include renga_deployer *.css
+recursive-include renga_deployer *.gif
+recursive-include renga_deployer *.html
+recursive-include renga_deployer *.ico
+recursive-include renga_deployer *.js
+recursive-include renga_deployer *.json
+recursive-include renga_deployer *.map
+recursive-include renga_deployer *.png
+recursive-include renga_deployer *.ttf
+recursive-include renga_deployer *.yaml
 recursive-include tests *.py

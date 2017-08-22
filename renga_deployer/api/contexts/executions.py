@@ -15,10 +15,10 @@
 # limitations under the License.
 """Implement ``/contexts/{context_id}/executions/{execution_id}`` endpoint."""
 
-from sdsc_deployer.authorization import check_token
-from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.models import Context, Execution
-from sdsc_deployer.serializers import ExecutionSchema
+from renga_deployer.authorization import check_token
+from renga_deployer.ext import current_deployer
+from renga_deployer.models import Context, Execution
+from renga_deployer.serializers import ExecutionSchema
 
 execution_schema = ExecutionSchema()
 executions_schema = ExecutionSchema(many=True)

@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer Service."""
+"""Renga Deployer Service."""
 
 from __future__ import absolute_import, print_function
 
@@ -29,11 +29,11 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-current_deployer = LocalProxy(lambda: current_app.extensions['sdsc-deployer'])
+current_deployer = LocalProxy(lambda: current_app.extensions['renga-deployer'])
 
 
-class SDSCDeployer(object):
-    """SDSC-Deployer extension."""
+class RengaDeployer(object):
+    """Renga-Deployer extension."""
 
     def __init__(self, app=None):
         """Extension initialization."""
@@ -45,7 +45,7 @@ class SDSCDeployer(object):
         self.init_config(app)
 
         app.register_blueprint(blueprint)
-        app.extensions['sdsc-deployer'] = self
+        app.extensions['renga-deployer'] = self
 
     def init_config(self, app):
         """Initialize configuration."""
@@ -64,10 +64,10 @@ class SDSCDeployer(object):
 
     @property
     def deployer(self):
-        """Returns a local app :class:`~sdsc_deployer.deployer.Deployer`."""
+        """Returns a local app :class:`~renga_deployer.deployer.Deployer`."""
         ctx = stack.top
         if ctx is not None:
-            if not hasattr(ctx, 'sdsc_deployer'):
-                ctx.sdsc_deployer = Deployer(
+            if not hasattr(ctx, 'renga_deployer'):
+                ctx.renga_deployer = Deployer(
                     engines={'docker', 'docker:///var/lib/docker.sock'})
-            return ctx.sdsc_deployer
+            return ctx.renga_deployer

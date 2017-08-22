@@ -20,7 +20,7 @@ User's Guide
 ------------
 
 This part of the documentation will show you how to get started in using
-SDSC-Deployer.
+Renga-Deployer.
 
 .. toctree::
    :maxdepth: 2

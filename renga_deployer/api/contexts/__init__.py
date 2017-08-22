@@ -19,10 +19,10 @@ import json
 
 from flask import current_app, request
 
-from sdsc_deployer.authorization import check_token
-from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.models import Context
-from sdsc_deployer.serializers import ContextSchema
+from renga_deployer.authorization import check_token
+from renga_deployer.ext import current_deployer
+from renga_deployer.models import Context
+from renga_deployer.serializers import ContextSchema
 
 context_schema = ContextSchema()
 contexts_schema = ContextSchema(many=True)

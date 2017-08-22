@@ -13,25 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer Service."""
+"""Renga Deployer Service."""
 
-# TODO: This is an example file. Remove it if you do not need it, including
-# the templates and static folders as well as the test case.
+from flask import Flask
 
-from __future__ import absolute_import, print_function
+from .deployer import Deployer
+from .ext import RengaDeployer
+from .version import __version__
 
-from flask import Blueprint, render_template
-from flask_babelex import gettext as _
+from_env = Deployer.from_env
 
-blueprint = Blueprint(
-    'sdsc_deployer',
-    __name__,
-    template_folder='templates',
-    static_folder='static', )
-
-
-@blueprint.route("/")
-def index():
-    """Basic view."""
-    return render_template(
-        "sdsc_deployer/index.html", module_name=_('SDSC-Deployer'))
+__all__ = ('__version__', 'RengaDeployer', 'from_env')

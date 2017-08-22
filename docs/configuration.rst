@@ -17,5 +17,5 @@
 Configuration
 =============
 
-.. automodule:: sdsc_deployer.config
+.. automodule:: renga_deployer.config
    :members:

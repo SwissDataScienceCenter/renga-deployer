@@ -19,7 +19,7 @@
 
 SPHINX-START
 
-First install SDSC-Deployer, setup the application and load
+First install Renga-Deployer, setup the application and load
 fixture data by running:
 
 .. code-block:: console
@@ -51,6 +51,6 @@ To reset the example application run:
 SPHINX-END
 """
 
-from sdsc_deployer.app import create_app
+from renga_deployer.app import create_app
 
 app = create_app()

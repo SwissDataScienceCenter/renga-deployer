@@ -16,6 +16,6 @@
 Authors
 =======
 
-SDSC Deployer Service.
+Renga Deployer Service.
 
 - Swiss Data Science Center <contact@datascience.ch>

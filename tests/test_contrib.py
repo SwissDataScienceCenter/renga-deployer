@@ -22,9 +22,9 @@ import requests
 from flask import current_app
 from jose import jwt
 
-from sdsc_deployer import contrib
-from sdsc_deployer.models import Execution
-from sdsc_deployer.utils import join_url
+from renga_deployer import contrib
+from renga_deployer.models import Execution
+from renga_deployer.utils import join_url
 
 r_get = requests.get
 r_post = requests.post
@@ -51,13 +51,13 @@ class Response(object):
 @pytest.fixture()
 def kg_app(app):
     """Deployer app with KnowledgeGraph extension."""
-    from sdsc_deployer.contrib.knowledge_graph import KnowledgeGraphSync
+    from renga_deployer.contrib.knowledge_graph import KnowledgeGraphSync
 
     app.config['KNOWLEDGE_GRAPH_URL'] = 'http://localhost:9000/api'
     with app.app_context():
         KnowledgeGraphSync(app)
         yield app
-        app.extensions['sdsc-knowledge-graph-sync'].disconnect()
+        app.extensions['renga-knowledge-graph-sync'].disconnect()
 
 
 @pytest.fixture()
@@ -142,8 +142,8 @@ def kg_requests(monkeypatch):
 @pytest.fixture()
 def rm_app(app, keypair, monkeypatch):
     """Deployer app with ResourceManager extension."""
-    # from sdsc_deployer.app import app
-    from sdsc_deployer.contrib.resource_manager import ResourceManager
+    # from renga_deployer.app import app
+    from renga_deployer.contrib.resource_manager import ResourceManager
 
     private, public = keypair
     token = jwt.encode(
@@ -189,15 +189,15 @@ def rm_app(app, keypair, monkeypatch):
 
 def test_kg_extension(kg_app):
     """Test that the extension is added."""
-    assert 'sdsc-knowledge-graph-sync' in kg_app.extensions
+    assert 'renga-knowledge-graph-sync' in kg_app.extensions
 
 
 def test_kg_serialization(kg_app, deployer, kg_requests):
     """Test serialization of a context."""
-    from sdsc_deployer.contrib.knowledge_graph import vertex_operation
+    from renga_deployer.contrib.knowledge_graph import vertex_operation
 
     # disconnect the signal handlers
-    kg_app.extensions['sdsc-knowledge-graph-sync'].disconnect()
+    kg_app.extensions['renga-knowledge-graph-sync'].disconnect()
 
     context = deployer.create({'image': 'hello-world'})
     operation = vertex_operation(context, temp_id=0)
@@ -240,14 +240,14 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
             headers=auth_header)
         execution = Execution.query.get(json.loads(resp.data)['identifier'])
 
-        assert 'SDSC_VERTEX_ID' in current_app.extensions[
-            'sdsc-deployer'].deployer.ENGINES[
+        assert 'RENGA_VERTEX_ID' in current_app.extensions[
+            'renga-deployer'].deployer.ENGINES[
                 engine]().get_execution_environment(execution)
 
 
 def test_rm_extension(app, keypair, monkeypatch):
     """Test that the extension is added."""
-    from sdsc_deployer.contrib.resource_manager import ResourceManager
+    from renga_deployer.contrib.resource_manager import ResourceManager
     private, public = keypair
 
     app.config['DEPLOYER_JWT_KEY'] = None
@@ -257,13 +257,13 @@ def test_rm_extension(app, keypair, monkeypatch):
     app.config['DEPLOYER_JWT_KEY'] = public
     ResourceManager(app)
 
-    assert 'sdsc-resource-manager' in app.extensions
+    assert 'renga-resource-manager' in app.extensions
     assert app.config['DEPLOYER_JWT_KEY'] == public
 
 
 def test_rm_authorization(rm_app, auth_header):
     """Test fetching ResourceManager tokens."""
-    from sdsc_deployer.contrib import resource_manager
+    from renga_deployer.contrib import resource_manager
     access_token = resource_manager.request_authorization_token(
         auth_header, {'payload': '1234'})
 

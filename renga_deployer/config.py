@@ -27,16 +27,16 @@ DEPLOYER_URL = 'localhost:5000'
 DEPLOYER_BASE_PATH = '/v1'
 """Base path for the API."""
 
-DEPLOYER_AUTHORIZATION_URL = ('http://localhost:8080/auth/realms/SDSC/'
+DEPLOYER_AUTHORIZATION_URL = ('http://localhost:8080/auth/realms/Renga/'
                               'protocol/openid-connect/auth')
 """OpenID-Connect authorization endpoint."""
 
-DEPLOYER_TOKEN_URL = ('http://localhost:8080/auth/realms/SDSC/'
+DEPLOYER_TOKEN_URL = ('http://localhost:8080/auth/realms/Renga/'
                       'protocol/openid-connect/token')
 """OpenID-Connect token endpoint."""
 
 # FIXME
-# DEPLOYER_TOKEN_INFO_URL = ('http://localhost:8080/auth/realms/SDSC/'
+# DEPLOYER_TOKEN_INFO_URL = ('http://localhost:8080/auth/realms/Renga/'
 #                            'protocol/openid-connect/token/introspect')
 
 DEPLOYER_CLIENT_ID = 'demo-client'
@@ -48,7 +48,7 @@ DEPLOYER_CLIENT_SECRET = None
 DEPLOYER_APP_NAME = 'demo-client'
 """Application name."""
 
-DEPLOYER_JWT_ISSUER = 'http://localhost:8080/auth/realms/SDSC'
+DEPLOYER_JWT_ISSUER = 'http://localhost:8080/auth/realms/Renga'
 """JWT issuer used for token verification."""
 
 DEPLOYER_JWT_KEY = None
@@ -63,7 +63,7 @@ Use 'https://rm.datascience.ch/scope' in combination with resource manager.
 DEPLOYER_SWAGGER_UI = False
 """Enable Swagger UI."""
 
-DEPLOYER_BASE_TEMPLATE = 'sdsc_deployer/base.html'
+DEPLOYER_BASE_TEMPLATE = 'renga_deployer/base.html'
 """Default base template for the demo page."""
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
@@ -78,7 +78,7 @@ KNOWLEDGE_GRAPH_URL = None
 RESOURCE_MANAGER_URL = None
 """Obtain and validate ResourceManager authorization tokens."""
 
-SDSC_PLATFORM_URL = 'http://localhost/api'
+RENGA_PLATFORM_URL = 'http://localhost/api'
 """URL for other platform services."""
 
 WSGI_NUM_PROXIES = None

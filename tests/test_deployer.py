@@ -21,8 +21,8 @@ import time
 import pytest
 from flask import Flask
 
-from sdsc_deployer.deployer import Deployer
-from sdsc_deployer.models import Context, Execution
+from renga_deployer.deployer import Deployer
+from renga_deployer.models import Context, Execution
 
 
 def test_deployer_env_create(monkeypatch):
@@ -52,7 +52,7 @@ def test_execution_launch(app, engine, deployer):
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
 def test_open_port(app, engine, deployer):
     """Test that engines make a port available."""
-    from sdsc_deployer.utils import resource_available
+    from renga_deployer.utils import resource_available
 
     context = deployer.create({
         'image':

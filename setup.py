@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer Service."""
+"""Renga Deployer Service."""
 
 import os
 
@@ -78,20 +78,20 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join('sdsc_deployer', 'version.py'), 'rt') as fp:
+with open(os.path.join('renga_deployer', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
 setup(
-    name='sdsc-deployer',
+    name='renga-deployer',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='SDSC deployer',
+    keywords='Renga deployer',
     license='Apache License 2.0',
     author='Swiss Data Science Center',
     author_email='contact@datascience.ch',
-    url='https://github.com/SwissDataScienceCenter/sdsc-deployer',
+    url='https://github.com/SwissDataScienceCenter/renga-deployer',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
@@ -100,10 +100,10 @@ setup(
         # TODO once the platform layout is more complete
         #
         # 'invenio_base.apps': [
-        #     'sdsc_deployer = sdsc_deployer:SDSCDeployer',
+        #     'renga_deployer = renga_deployer:RengaDeployer',
         # ],
         # 'invenio_i18n.translations': [
-        #     'messages = sdsc_deployer',
+        #     'messages = renga_deployer',
         # ],
     },
     extras_require=extras_require,

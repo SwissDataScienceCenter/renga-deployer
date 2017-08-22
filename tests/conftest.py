@@ -24,9 +24,9 @@ from jose import jwt
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
-from sdsc_deployer.app import create_app
-from sdsc_deployer.deployer import Deployer
-from sdsc_deployer.models import db
+from renga_deployer.app import create_app
+from renga_deployer.deployer import Deployer
+from renga_deployer.models import db
 
 
 @pytest.fixture()
@@ -99,7 +99,7 @@ def auth_data():
     return {
         'typ': 'Bearer',
         'name': 'John Doe',
-        'iss': 'http://localhost:8080/auth/realms/SDSC',
+        'iss': 'http://localhost:8080/auth/realms/Renga',
     }
 
 

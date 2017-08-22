@@ -10,7 +10,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/SwissDataScienceCenter/sdsc-deployer/issues.
+Report bugs at https://github.com/SwissDataScienceCenter/renga-deployer/issues.
 
 If you are reporting a bug, please include:
 
@@ -33,15 +33,15 @@ is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-SDSC-Deployer could always use more documentation, whether as part of the
-official SDSC-Deployer docs, in docstrings, or even on the web in blog posts,
+Renga-Deployer could always use more documentation, whether as part of the
+official Renga-Deployer docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
 The best way to send feedback is to file an issue at
-https://github.com/SwissDataScienceCenter/sdsc-deployer/issues.
+https://github.com/SwissDataScienceCenter/renga-deployer/issues.
 
 If you are proposing a feature:
 
@@ -53,14 +53,14 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `sdsc-deployer` for local development.
+Ready to contribute? Here's how to set up `renga-deployer` for local development.
 
-1. Fork the `SwissDataScienceCenter/sdsc-deployer` repo on GitHub.
+1. Fork the `SwissDataScienceCenter/renga-deployer` repo on GitHub.
 2. Clone your fork locally:
 
    .. code-block:: console
 
-      $ git clone git@github.com:your_name_here/sdsc-deployer.git
+      $ git clone git@github.com:your_name_here/renga-deployer.git
 
 3. Install your local copy into a virtualenv. Assuming you have
    virtualenvwrapper installed, this is how you set up your fork for local
@@ -68,8 +68,8 @@ Ready to contribute? Here's how to set up `sdsc-deployer` for local development.
 
    .. code-block:: console
 
-      $ mkvirtualenv sdsc-deployer
-      $ cd sdsc-deployer/
+      $ mkvirtualenv renga-deployer
+      $ cd renga-deployer/
       $ pip install -e .[all]
 
 4. Create a branch for local development:
@@ -114,5 +114,5 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring.
 3. The pull request should work for Python 2.7, 3.3, 3.4 and 3.5. Check
-   https://travis-ci.org/SwissDataScienceCenter/sdsc-deployer/pull_requests
+   https://travis-ci.org/SwissDataScienceCenter/renga-deployer/pull_requests
    and make sure that the tests pass for all supported Python versions.

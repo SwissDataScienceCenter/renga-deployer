@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SDSC Deployer application."""
+"""Renga Deployer application."""
 
 import logging
 import os
@@ -27,7 +27,7 @@ from jose import jwt
 from sqlalchemy_utils import functions
 
 from . import config
-from .ext import SDSCDeployer
+from .ext import RengaDeployer
 from .models import db
 
 logging.basicConfig(level=logging.INFO)
@@ -41,15 +41,15 @@ def create_app(**kwargs):
     api.app.config.update(**kwargs)
 
     api.add_api(
-        'sdsc-deployer-v1.yaml',
+        'renga-deployer-v1.yaml',
         arguments=api.app.config,
-        resolver=RestyResolver('sdsc_deployer.api'),
+        resolver=RestyResolver('renga_deployer.api'),
         swagger_ui=api.app.config['DEPLOYER_SWAGGER_UI'],
     )  # validate_responses=True)
 
     Babel(api.app)
     db.init_app(api.app)
-    SDSCDeployer(api.app)
+    RengaDeployer(api.app)
 
     # add extensions
     if api.app.config['KNOWLEDGE_GRAPH_URL']:

@@ -20,36 +20,36 @@ API Docs
 Deployer
 --------
 
-.. automodule:: sdsc_deployer.deployer
+.. automodule:: renga_deployer.deployer
    :members:
 
 Engines
 -------
 
-.. automodule:: sdsc_deployer.engines
+.. automodule:: renga_deployer.engines
    :members:
 
 Extension
 ---------
 
-.. automodule:: sdsc_deployer.ext
+.. automodule:: renga_deployer.ext
    :members:
 
 Models
 ------
 
-.. automodule:: sdsc_deployer.models
+.. automodule:: renga_deployer.models
    :members:
 
 Utils
 -----
 
-.. automodule:: sdsc_deployer.utils
+.. automodule:: renga_deployer.utils
    :members:
 
 
 Views
 -----
 
-.. automodule:: sdsc_deployer.views
+.. automodule:: renga_deployer.views
    :members:

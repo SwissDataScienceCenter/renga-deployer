@@ -61,7 +61,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'SDSC-Deployer'
+project = u'Renga-Deployer'
 copyright = u'2017, Swiss Data Science Center'
 author = u'Swiss Data Science Center'
 
@@ -74,7 +74,7 @@ author = u'Swiss Data Science Center'
 # Get the version string. Cannot be done with import!
 g = {}
 with open(os.path.join(os.path.dirname(__file__), '..',
-                       'sdsc_deployer', 'version.py'),
+                       'renga_deployer', 'version.py'),
           'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
@@ -131,15 +131,15 @@ todo_include_todos = False
 html_theme = 'alabaster'
 
 html_theme_options = {
-    'description': 'SDSC Deployer Service.',
+    'description': 'Renga Deployer Service.',
     'github_user': 'SwissDataScienceCenter',
-    'github_repo': 'sdsc-deployer',
+    'github_repo': 'renga-deployer',
     'github_button': False,
     'github_banner': True,
     'show_powered_by': False,
     'extra_nav_links': {
-        'sdsc-deployer@GitHub': 'https://github.com/SwissDataScienceCenter/sdsc-deployer',
-        'sdsc-deployer@PyPI': 'https://pypi.python.org/pypi/sdsc-deployer/',
+        'renga-deployer@GitHub': 'https://github.com/SwissDataScienceCenter/renga-deployer',
+        'renga-deployer@PyPI': 'https://pypi.python.org/pypi/renga-deployer/',
     }
 }
 
@@ -244,7 +244,7 @@ html_sidebars = {
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'sdsc-deployer_namedoc'
+htmlhelp_basename = 'renga-deployer_namedoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -266,7 +266,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'sdsc-deployer.tex', u'sdsc-deployer Documentation',
+  (master_doc, 'renga-deployer.tex', u'renga-deployer Documentation',
    u'Swiss Data Science Center', 'manual'),
 ]
 
@@ -296,7 +296,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'sdsc-deployer', u'sdsc-deployer Documentation',
+    (master_doc, 'renga-deployer', u'renga-deployer Documentation',
      [author], 1)
 ]
 
@@ -310,8 +310,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'sdsc-deployer', u'SDSC-Deployer Documentation',
-   author, 'sdsc-deployer', 'SDSC Deployer Service.',
+  (master_doc, 'renga-deployer', u'Renga-Deployer Documentation',
+   author, 'renga-deployer', 'Renga Deployer Service.',
    'Miscellaneous'),
 ]
 

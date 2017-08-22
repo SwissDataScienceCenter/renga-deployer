@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-pydocstyle sdsc_deployer tests docs && \
+pydocstyle renga_deployer tests docs && \
 isort -rc -c -df && \
 check-manifest --ignore ".travis-*" && \
 sphinx-build -qnNW docs docs/_build/html && \

@@ -24,10 +24,10 @@ from flask import current_app, request
 from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
 
-from sdsc_deployer.deployer import context_created, execution_created, \
+from renga_deployer.deployer import context_created, execution_created, \
     execution_launched
-from sdsc_deployer.models import Context, Execution, db
-from sdsc_deployer.utils import join_url
+from renga_deployer.models import Context, Execution, db
+from renga_deployer.utils import join_url
 
 
 class GraphContext(db.Model):
@@ -71,7 +71,7 @@ class KnowledgeGraphSync(object):
         """Flask application initialization."""
         if not app.config.get('KNOWLEDGE_GRAPH_URL'):
             RuntimeError('You must provide a KNOWLEDGE_GRAPH_URL')
-        app.extensions['sdsc-knowledge-graph-sync'] = self
+        app.extensions['renga-knowledge-graph-sync'] = self
 
         # connect signal handlers
         context_created.connect(create_context)
@@ -146,12 +146,12 @@ def create_execution(execution, token=None):
     db.session.commit()
 
     execution.environment.update({
-        'SDSC_VERTEX_ID':
+        'RENGA_VERTEX_ID':
         vertex_id,
-        'SDSC_ACCESS_TOKEN':
+        'RENGA_ACCESS_TOKEN':
         token.split('Bearer')[1],
-        'SDSC_PLATFORM_URL':
-        current_app.config['SDSC_PLATFORM_URL']
+        'RENGA_PLATFORM_URL':
+        current_app.config['RENGA_PLATFORM_URL']
     })
 
 
@@ -192,7 +192,7 @@ def vertex_operation(obj, temp_id):
     name = named_type.split(':')[1]
 
     properties = []
-    for t in current_app.extensions['sdsc-knowledge-graph-sync'].named_types:
+    for t in current_app.extensions['renga-knowledge-graph-sync'].named_types:
         if t['name'] == name:
             for prop in t['properties']:
                 prop_names = prop['name'].split('_')

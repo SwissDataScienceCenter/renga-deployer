@@ -21,7 +21,7 @@ from flask import current_app, g, request
 from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
-from sdsc_deployer.ext import current_deployer
+from renga_deployer.ext import current_deployer
 
 
 def check_token(*scopes):

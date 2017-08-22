@@ -22,7 +22,7 @@ from flask import current_app, request
 from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
-from sdsc_deployer.utils import join_url
+from renga_deployer.utils import join_url
 
 
 class ResourceManager(object):
@@ -44,7 +44,7 @@ class ResourceManager(object):
             raise RuntimeError('You must provide the DEPLOYER_JWT_KEY')
 
         app.before_request(exchange_token)
-        app.extensions['sdsc-resource-manager'] = self
+        app.extensions['renga-resource-manager'] = self
 
 
 def exchange_token():

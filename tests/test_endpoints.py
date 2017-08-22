@@ -21,37 +21,37 @@ import pytest
 from flask import Flask
 from werkzeug.exceptions import Unauthorized
 
-from sdsc_deployer import SDSCDeployer
-from sdsc_deployer.ext import current_deployer
-from sdsc_deployer.models import Context, Execution, db
+from renga_deployer import RengaDeployer
+from renga_deployer.ext import current_deployer
+from renga_deployer.models import Context, Execution, db
 
 
 def test_version():
     """Test version import."""
-    from sdsc_deployer import __version__
+    from renga_deployer import __version__
     assert __version__
 
 
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
-    ext = SDSCDeployer(app)
-    assert 'sdsc-deployer' in app.extensions
+    ext = RengaDeployer(app)
+    assert 'renga-deployer' in app.extensions
 
     app = Flask('testapp')
-    ext = SDSCDeployer()
-    assert 'sdsc-deployer' not in app.extensions
+    ext = RengaDeployer()
+    assert 'renga-deployer' not in app.extensions
     ext.init_app(app)
-    assert 'sdsc-deployer' in app.extensions
+    assert 'renga-deployer' in app.extensions
 
 
 def test_view(app):
     """Test view."""
-    SDSCDeployer(app)
+    RengaDeployer(app)
     with app.test_client() as client:
         res = client.get("/")
         assert res.status_code == 200
-        assert 'Welcome to SDSC-Deployer' in str(res.data)
+        assert 'Welcome to Renga-Deployer' in str(res.data)
 
 
 def test_token_check(app, auth_header):

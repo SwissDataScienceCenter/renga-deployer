@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
-  description: SDSC Deployer Service.
+  description: Renga Deployer Service.
   version: 1.0.0
-  title: SDSC Deployer Service
+  title: Renga Deployer Service
   termsOfService: 'http://datascience.ch/terms/'
   contact:
     email: contact@datascience.ch
@@ -100,7 +100,7 @@ paths:
         - deployer
       summary: List context executions.
       description: ''
-      operationId: sdsc_deployer.api.contexts.executions.search
+      operationId: renga_deployer.api.contexts.executions.search
       produces:
         - application/json
       parameters:
@@ -123,7 +123,7 @@ paths:
       tags:
         - deployer
       summary: Execute a context
-      operationId: sdsc_deployer.api.contexts.executions.post
+      operationId: renga_deployer.api.contexts.executions.post
       produces:
         - application/json
       parameters:
@@ -154,7 +154,7 @@ paths:
         - deployer
       summary: Find execution by ID
       description: Returns a single execution
-      operationId: sdsc_deployer.api.contexts.executions.get
+      operationId: renga_deployer.api.contexts.executions.get
       produces:
         - application/json
       parameters:
@@ -182,7 +182,7 @@ paths:
         - deployer
       summary: Remove an execution
       description: Remove an execution from an engine
-      operationId: sdsc_deployer.api.contexts.executions.delete
+      operationId: renga_deployer.api.contexts.executions.delete
       produces:
         - application/json
       parameters:
@@ -213,7 +213,7 @@ paths:
         - deployer
       summary: Fetch the execution logs
       description: Gets the logs from the engine
-      operationId: sdsc_deployer.api.contexts.executions.logs
+      operationId: renga_deployer.api.contexts.executions.logs
       produces:
         - application/json
       parameters:
@@ -246,7 +246,7 @@ paths:
         - deployer
       summary: Fetch the public host and exposed port of running job
       description: Fetch the public host and exposed port of running job
-      operationId: sdsc_deployer.api.contexts.executions.ports
+      operationId: renga_deployer.api.contexts.executions.ports
       produces:
         - application/json
       parameters:

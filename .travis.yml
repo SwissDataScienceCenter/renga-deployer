@@ -70,5 +70,5 @@ after_success:
 #   on:
 #     tags: true
 #     python: "2.7"
-#     repo: SwissDataScienceCenter/sdsc-deployer
+#     repo: SwissDataScienceCenter/renga-deployer
 #     condition: $DEPLOY = true

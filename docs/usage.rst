@@ -17,4 +17,4 @@
 Usage
 =====
 
-.. automodule:: sdsc_deployer
+.. automodule:: renga_deployer
