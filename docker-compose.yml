@@ -14,5 +14,5 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/code
     ports:
-      - 5000
+      - 5000:5000
     restart: on-failure
