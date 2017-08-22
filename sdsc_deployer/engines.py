@@ -32,12 +32,20 @@ class Engine(object):
         """Create new execution environment for a given context."""
         raise NotImplemented
 
+    def stop(self, execution, remove=False):
+        """Stop an execution."""
+        raise NotImplemented
+
     def get_logs(self, execution):
         """Extract logs for a container."""
         raise NotImplemented
 
     def get_host_port(self, execution):
         """Retrieve the host/port where the application can be reached."""
+        raise NotImplemented
+
+    def get_execution_environment(self, execution) -> dict:
+        """Retrieve the environment specified for an execution container."""
         raise NotImplemented
 
 
@@ -70,6 +78,13 @@ class DockerEngine(Engine):
 
         return execution
 
+    def stop(self, execution, remove=False):
+        """Stop a running container, optionally removing it."""
+        container = self.client.containers.get(execution.engine_id)
+        container.stop()
+        if remove:
+            container.remove()
+
     def get_logs(self, execution):
         """Extract logs for a container."""
         return decode_bytes(
@@ -90,12 +105,15 @@ class DockerEngine(Engine):
                       for host_spec in host_specs],
         }
 
-    def stop(self, execution, remove=False):
-        """Stop a running container, optionally removing it."""
+    def get_execution_environment(self, execution) -> dict:
+        """Retrieve the environment specified for an execution container."""
         container = self.client.containers.get(execution.engine_id)
-        container.stop()
-        if remove:
-            container.remove()
+        return {
+            k: v
+            for (
+                k,
+                v) in [e.split('=') for e in container.attrs['Config']['Env']]
+        }
 
 
 class K8SEngine(Engine):
@@ -268,4 +286,15 @@ class K8SEngine(Engine):
                 'exposed': port.node_port,
                 'protocol': port.protocol,
             } for port in service.items[0].spec.ports]
+        }
+
+    def get_execution_environment(self, execution) -> dict:
+        """Retrieve the environment specified for an execution container."""
+        client = self._kubernetes.client.BatchV1Api()
+        job = client.list_namespaced_job(
+            execution.namespace,
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+        return {
+            e.name: e.value
+            for e in job.items[0].spec.template.spec.containers[0].env
         }

@@ -240,22 +240,9 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
             headers=auth_header)
         execution = Execution.query.get(json.loads(resp.data)['identifier'])
 
-    if engine == 'docker':
-        import docker
-        client = docker.from_env()
-        container = client.containers.get(execution.engine_id)
-        assert any('SDSC_VERTEX_ID' in s
-                   for s in container.attrs['Config']['Env'])
-
-    elif engine == 'k8s':
-        import kubernetes
-        kubernetes.config.load_kube_config()
-        client = kubernetes.client.BatchV1Api()
-        job = client.list_namespaced_job(
-            'default',
-            label_selector='controller-uid={0}'.format(execution.engine_id))
-        assert any('SDSC_VERTEX_ID' in s.name
-                   for s in job.items[0].spec.template.spec.containers[0].env)
+        assert 'SDSC_VERTEX_ID' in current_app.extensions[
+            'sdsc-deployer'].deployer.ENGINES[
+                engine]().get_execution_environment(execution)
 
 
 def test_rm_extension(app, keypair, monkeypatch):
