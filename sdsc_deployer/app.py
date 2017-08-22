@@ -35,8 +35,7 @@ logging.basicConfig(level=logging.INFO)
 
 def create_app(**kwargs):
     """Create an instance of the flask app."""
-    api = connexion.App(
-        __name__, specification_dir='schemas/')
+    api = connexion.App(__name__, specification_dir='schemas/')
     api.app.config.from_object(config)
     api.app.config.update(**config.from_env(config))
     api.app.config.update(**kwargs)
@@ -60,6 +59,11 @@ def create_app(**kwargs):
     if api.app.config['RESOURCE_MANAGER_URL']:
         from .contrib.resource_manager import ResourceManager
         ResourceManager(api.app)
+
+    if api.app.config['WSGI_NUM_PROXIES']:
+        from werkzeug.contrib.fixers import ProxyFix
+        api.app.wsgi_app = ProxyFix(
+            api.app.wsgi_app, num_proxies=api.app.config['WSGI_NUM_PROXIES'])
 
     # create database and tables
     with api.app.app_context():

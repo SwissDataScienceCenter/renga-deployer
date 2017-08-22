@@ -81,6 +81,12 @@ RESOURCE_MANAGER_URL = None
 SDSC_PLATFORM_URL = 'http://localhost:9000/api'
 """URL for other platform services."""
 
+WSGI_NUM_PROXIES = None
+"""The number of proxy servers in front of the app.
+
+Disable proxy fixer by setting value evaluating to ``False``.
+"""
+
 
 def from_env(config):
     """Load configuration options from environment variables."""

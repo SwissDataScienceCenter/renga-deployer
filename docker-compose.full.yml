@@ -10,7 +10,10 @@ services:
     depends_on:
       - db
     environment:
+      DEPLOYER_URL: localhost
+      DEPLOYER_BASE_PATH: /api/deployer
       SQLALCHEMY_DATABASE_URI: "postgres+psycopg2://postgres:postgres@db/deployer"
+      WSGI_NUM_PROXIES: 1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/code
@@ -20,9 +23,7 @@ services:
     labels:
       - "traefik.backend=deployer"
       - "traefik.enable=true"
-      - "traefik.frontend.entryPoints=http,https"
-      - "traefik.frontend.passHostHeader=true"
-      - "traefik.frontend.rule=Host:localhost"
+      - "traefik.frontend.rule=PathPrefix:/api/deployer"
   traefik:
     image: traefik
     command: --web --docker --docker.watch --docker.domain=localhost \
