@@ -21,7 +21,6 @@ services:
       - 5000
     restart: on-failure
     labels:
-      - "traefik.backend=deployer"
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefix:/api/deployer"
   traefik:
