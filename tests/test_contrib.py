@@ -215,16 +215,16 @@ def test_kg_serialization(kg_app, deployer, kg_requests):
         vertex_operation(1, 0)
 
 
-def test_kg_handlers(kg_app, auth_header, kg_requests):
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
     """Test Context and Execution creation handlers."""
-    import docker
-
     with kg_app.test_client() as client:
         # 1. test context creation
         resp = client.post(
             'v1/contexts',
             data=json.dumps({
-                'image': 'hello-world'
+                'image': 'hello-world',
+                'namespace': 'default'
             }),
             content_type='application/json',
             headers=auth_header)
@@ -234,17 +234,28 @@ def test_kg_handlers(kg_app, auth_header, kg_requests):
         resp = client.post(
             'v1/contexts/{0}/executions'.format(context['identifier']),
             data=json.dumps({
-                'engine': 'docker'
+                'engine': engine
             }),
             content_type='application/json',
             headers=auth_header)
-        execution = json.loads(resp.data)
+        execution = Execution.query.get(json.loads(resp.data)['identifier'])
 
-    client = docker.from_env()
+    if engine == 'docker':
+        import docker
+        client = docker.from_env()
+        container = client.containers.get(execution.engine_id)
+        assert any('SDSC_VERTEX_ID' in s
+                   for s in container.attrs['Config']['Env'])
 
-    execution = Execution.query.get(execution['identifier'])
-    container = client.containers.get(execution.engine_id)
-    assert any('SDSC_VERTEX_ID' in s for s in container.attrs['Config']['Env'])
+    elif engine == 'k8s':
+        import kubernetes
+        kubernetes.config.load_kube_config()
+        client = kubernetes.client.BatchV1Api()
+        job = client.list_namespaced_job(
+            'default',
+            label_selector='controller-uid={0}'.format(execution.engine_id))
+        assert any('SDSC_VERTEX_ID' in s.name
+                   for s in job.items[0].spec.template.spec.containers[0].env)
 
 
 def test_rm_extension(app, keypair, monkeypatch):

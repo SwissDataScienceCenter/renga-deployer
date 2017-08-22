@@ -118,7 +118,7 @@ class K8SEngine(Engine):
 
         batch = self._kubernetes.client.BatchV1Api()
         namespace = kwargs.pop('namespace', 'default')
-        job_spec = self._k8s_job_template(namespace, context)
+        job_spec = self._k8s_job_template(namespace, execution)
         job = batch.create_namespaced_job(namespace, job_spec)
         uid = job.metadata.labels['controller-uid']
 
@@ -156,9 +156,11 @@ class K8SEngine(Engine):
         return execution
 
     @staticmethod
-    def _k8s_job_template(namespace, context):
+    def _k8s_job_template(namespace, execution):
         """Return simple kubernetes job JSON."""
         # required spec
+        context = execution.context
+
         spec = {
             "containers": [{
                 "name": "{0}".format(context.id),
@@ -179,6 +181,11 @@ class K8SEngine(Engine):
             spec['containers'][0]['command'] = [command[0]]
             if len(command) > 1:
                 spec['containers'][0]['args'] = command[1:]
+
+        spec['containers'][0]['env'] = [{
+            'name': k,
+            'value': str(v)
+        } for k, v in execution.environment.items()]
 
         # finalize job template
         template = {
