@@ -77,8 +77,8 @@ For development, mount the code directly and enable flask debug mode:
 You can test the API by pointing your browser to http://localhost:5000/v1/ui
 
 
-Orchestration with postgres and load-balancing
-----------------------------------------------
+Orchestration with Postgres and load-balancer
+---------------------------------------------
 
 The packages includes two simple orchestration setup files:
 ``docker-compose.yml`` and ``docker-compose.full.yml``.
@@ -90,7 +90,7 @@ To use the deployer with postgres:
 
     $ docker-compose up
 
-As before, the service is available on port 5000.
+As before, the service is available on port ``5000``.
 
 The second can be used as a template to define your own production deployment
 environment including the `Traefik <http://traefik.io>`_ load balancer and
@@ -100,9 +100,8 @@ environment including the `Traefik <http://traefik.io>`_ load balancer and
 
     $ docker-compose -f docker-compose.full.yml up
 
-The service is available on ``http://localhost/api/deployer``. You can access the
+The service is available on ``https://localhost/api/deployer``. You can access the
 traefik dashboard on http://localhost:8080/.
-
 
 
 Platform integration
