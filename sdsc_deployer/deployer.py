@@ -58,18 +58,20 @@ class Deployer(object):
     def create(self, spec):
         """Create a context with a given specification."""
         context = Context.create(spec=spec)
+        db.session.add(context)
         context_created.send(context)
+        db.session.commit()
         return context
 
     def launch(self, context=None, engine=None, **kwargs):
-        """Create new execution environment for a given context."""
+        """Create new execution for a given context."""
         execution = Execution.from_context(context, engine=engine, **kwargs)
+        db.session.add(execution)
         execution_created.send(execution)
 
         execution = self.ENGINES[engine]().launch(execution)
         execution_launched.send(execution)
 
-        db.session.add(execution)
         db.session.commit()
         return execution
 

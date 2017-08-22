@@ -58,8 +58,6 @@ class Context(db.Model, Timestamp):
     def create(cls, spec=None):
         """Create a new context."""
         context = cls(spec=spec)
-        db.session.add(context)
-        db.session.commit()
         return context
 
 
@@ -105,5 +103,6 @@ class Execution(db.Model, Timestamp):
     @classmethod
     def from_context(cls, context, **kwargs):
         """Create a new execution for a given context."""
+        kwargs.setdefault('environment', {})
         execution = cls(context=context, **kwargs)
         return execution
