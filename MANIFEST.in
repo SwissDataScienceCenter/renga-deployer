@@ -18,6 +18,7 @@
 include .dockerignore
 include .editorconfig
 include .tx/config
+include .travis/deploy-docker.sh
 prune docs/_build
 recursive-include renga_deployer *.po *.pot *.mo
 

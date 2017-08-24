@@ -61,8 +61,13 @@ script:
 after_success:
   - coveralls
 
-# deploy:
-#   provider: pypi
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: bash ./.travis/deploy-docker.sh
+  on:
+    branch: master
+# - provider: pypi
 #   user: swissdatasciencecenter
 #   password:
 #     secure: TODO:PYPISECUREHASH
