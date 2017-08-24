@@ -8,7 +8,7 @@ info:
     email: contact@datascience.ch
   license:
     name: 'Apache License 2.0'
-    url: 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html'
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
 host: {{ DEPLOYER_URL }}
 basePath: {{ DEPLOYER_BASE_PATH }}
 tags:
@@ -18,6 +18,7 @@ tags:
       description: Find out more
       url: 'http://datascience.ch/services/deployer'
 schemes:
+  - http
   - https
 paths:
   /contexts:
@@ -93,6 +94,9 @@ paths:
           description: Invalid ID supplied
         '404':
           description: context not found
+      security:
+        - token_auth:
+            - 'deployer:contexts_read'
 
   /contexts/{context_id}/executions:
     get:
@@ -119,6 +123,7 @@ paths:
       security:
         - token_auth:
             - 'deployer:contexts_read'
+            - 'deployer:executions_read'
     post:
       tags:
         - deployer
@@ -147,6 +152,10 @@ paths:
           description: Invalid ID supplied
         '404':
           description: context not found
+      security:
+        - token_auth:
+            - 'deployer:contexts_read'
+            - 'deployer:executions_write'
 
   /contexts/{context_id}/executions/{execution_id}:
     get:
@@ -177,6 +186,9 @@ paths:
           description: Invalid ID supplied
         '404':
           description: context not found
+      security:
+        - token_auth:
+            - 'deployer:executions_read'
     delete:
       tags:
         - deployer
@@ -205,7 +217,10 @@ paths:
           description: Invalid ID supplied
         '404':
           description: context not found
-
+      security:
+        - token_auth:
+            - 'deployer:executions_read'
+            - 'deployer:executions_write'
 
   /contexts/{context_id}/executions/{execution_id}/logs:
     get:
@@ -239,6 +254,9 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Context or execution not found
+      security:
+        - token_auth:
+            - 'deployer:executions_read'
 
   /contexts/{context_id}/executions/{execution_id}/ports:
     get:
@@ -283,6 +301,9 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Context or execution not found
+      security:
+        - token_auth:
+            - 'deployer:executions_read'
 
 securityDefinitions:
   token_auth:
@@ -292,6 +313,8 @@ securityDefinitions:
     scopes:
       deployer:contexts_write: "modify contexts"
       deployer:contexts_read: "read contexts"
+      deployer:executions_write: "modify executions"
+      deployer:executions_read: "read executions"
 
 definitions:
   Specification:
