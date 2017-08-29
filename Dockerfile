@@ -1,7 +1,7 @@
-FROM python:3.6
+FROM python:alpine
 
 # install the postgres driver
-RUN apt-get -y update && apt-get -y install libpq-dev && apt-get clean
+RUN apk update && apk add postgresql-client postgresql-dev build-base python-dev linux-headers
 
 COPY . /code
 WORKDIR /code

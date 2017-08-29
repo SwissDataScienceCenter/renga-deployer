@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Reinstalls Renga Deployer. This is needed if the folder is mounted into the container.
 if [ ! -d "renga_deployer.egg-info" ]; then
