@@ -124,7 +124,6 @@ def create_context(context, token=None):
         labels['renga.execution_context.vertex_id'] = vertex_id
     else:
         current_app.logger.error('Mutation failed')
-        raise RuntimeError('Mutation failed')
 
     db.session.add(GraphContext(id=vertex_id, context=context))
     db.session.commit()
