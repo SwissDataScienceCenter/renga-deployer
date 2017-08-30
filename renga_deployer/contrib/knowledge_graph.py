@@ -96,17 +96,35 @@ class KnowledgeGraphSync(object):
 def create_context(context, token=None):
     """Create context node."""
     token = token or request.headers['Authorization']
+    operations = [vertex_operation(context, temp_id=0)]
 
-    response = mutation(
-        [vertex_operation(context, temp_id=0)],
-        wait_for_response=True,
-        token=token)
+    # link the context to a project if a project_id is provided
+    labels = context.spec.get('labels', {})
+
+    if 'renga.project.vertex_id' in labels:
+        operations.append({
+            'type': 'create_edge',
+            'element': {
+                'label': 'project:is_part_of',
+                'from': {
+                    'type': 'persisted_vertex',
+                    'id': labels['renga.project.vertex_id'],
+                },
+                'to': {
+                    'type': 'new_vertex',
+                    'id': 0
+                }
+            }
+        })
+
+    response = mutation(operations, wait_for_response=True, token=token)
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
+        labels['renga.execution_context.vertex_id'] = vertex_id
     else:
-        print(response)
-        raise RuntimeError('Adding vertex failed')
+        current_app.logger.error('Mutation failed')
+        raise RuntimeError('Mutation failed')
 
     db.session.add(GraphContext(id=vertex_id, context=context))
     db.session.commit()

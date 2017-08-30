@@ -327,6 +327,8 @@ definitions:
         type: "array"
         items:
           type: "string"
+      labels:
+        type: "object"
 
   Context:
     type: "object"

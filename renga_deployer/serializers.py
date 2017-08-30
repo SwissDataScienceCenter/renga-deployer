@@ -25,6 +25,7 @@ class SpecificationSchema(Schema):
 
     image = fields.String()
     ports = fields.Dict()
+    labels = fields.Dict()
 
 
 class ContextSchema(Schema):
