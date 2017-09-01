@@ -166,8 +166,8 @@ def create_execution(execution, token=None):
         vertex_id,
         'RENGA_ACCESS_TOKEN':
         token.split('Bearer')[1],
-        'RENGA_PLATFORM_URL':
-        current_app.config['RENGA_PLATFORM_URL']
+        'RENGA_ENDPOINT':
+        current_app.config['RENGA_ENDPOINT']
     })
 
 
