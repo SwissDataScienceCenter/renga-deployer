@@ -229,8 +229,11 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
             content_type='application/json',
             headers=auth_header)
 
-        # 2. test execution creation
         context = json.loads(resp.data)
+        assert 'labels' in context['spec']
+        assert 'renga.execution_context.vertex_id' in context['spec']['labels']
+
+        # 2. test execution creation
         resp = client.post(
             'v1/contexts/{0}/executions'.format(context['identifier']),
             data=json.dumps({

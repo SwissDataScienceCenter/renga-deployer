@@ -121,12 +121,12 @@ def create_context(context, token=None):
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
-        labels['renga.execution_context.vertex_id'] = vertex_id
+        context.spec.setdefault('labels', {})
+        context.spec['labels']['renga.execution_context.vertex_id'] = vertex_id
     else:
         current_app.logger.error('Mutation failed')
 
     db.session.add(GraphContext(id=vertex_id, context=context))
-    db.session.commit()
 
 
 def create_execution(execution, token=None):
@@ -160,7 +160,6 @@ def create_execution(execution, token=None):
         raise RuntimeError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))
-    db.session.commit()
 
     execution.environment.update({
         'RENGA_VERTEX_ID':

@@ -57,7 +57,7 @@ class Context(db.Model, Timestamp):
     @classmethod
     def create(cls, spec=None):
         """Create a new context."""
-        context = cls(spec=spec)
+        context = cls(spec=spec, id=uuid.uuid4())
         return context
 
 
@@ -104,5 +104,6 @@ class Execution(db.Model, Timestamp):
     def from_context(cls, context, **kwargs):
         """Create a new execution for a given context."""
         kwargs.setdefault('environment', {})
+        kwargs.setdefault('id', uuid.uuid4())
         execution = cls(context=context, **kwargs)
         return execution
