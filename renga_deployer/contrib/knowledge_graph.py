@@ -87,7 +87,7 @@ class KnowledgeGraphSync(object):
     def named_types(self):
         """Fetch named types from types service."""
         if self._named_types is None:
-            service_access_token = renga_get_service_access_token(
+            service_access_token = get_service_access_token(
                 token_url=current_app.config['DEPLOYER_TOKEN_URL'],
                 audience='renga-services',
                 client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
@@ -105,8 +105,16 @@ class KnowledgeGraphSync(object):
         return self._named_types
 
 
-def create_context(context):
+def create_context(context, service_access_token=None):
     """Create context node."""
+    if service_access_token is None:
+        service_access_token = get_service_access_token(
+            token_url=current_app.config['DEPLOYER_TOKEN_URL'],
+            audience='renga-services',
+            client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
+            client_secret=current_app.config[
+                'RENGA_AUTHORIZATION_CLIENT_SECRET'])
+
     operations = [vertex_operation(context, temp_id=0)]
 
     # link the context to a project if a project_id is provided
@@ -128,7 +136,10 @@ def create_context(context):
             }
         })
 
-    response = mutation(operations, wait_for_response=True)
+    response = mutation(
+        operations,
+        wait_for_response=True,
+        service_access_token=service_access_token)
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -140,9 +151,17 @@ def create_context(context):
     db.session.add(GraphContext(id=vertex_id, context=context))
 
 
-def create_execution(execution, token=None):
+def create_execution(execution, token=None, service_access_token=None):
     """Create execution node and vertex connecting context."""
     token = token or request.headers['Authorization']
+
+    if service_access_token is None:
+        service_access_token = get_service_access_token(
+            token_url=current_app.config['DEPLOYER_TOKEN_URL'],
+            audience='renga-services',
+            client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
+            client_secret=current_app.config[
+                'RENGA_AUTHORIZATION_CLIENT_SECRET'])
 
     operations = [
         vertex_operation(execution, temp_id=0),
@@ -162,7 +181,10 @@ def create_execution(execution, token=None):
         }
     })
 
-    response = mutation(operations, wait_for_response=True)
+    response = mutation(
+        operations,
+        wait_for_response=True,
+        service_access_token=service_access_token)
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -279,14 +301,6 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
     """
     knowledge_graph_url = current_app.config['KNOWLEDGE_GRAPH_URL']
 
-    if service_access_token is None:
-        service_access_token = renga_get_service_access_token(
-            token_url=current_app.config['DEPLOYER_TOKEN_URL'],
-            audience='renga-services',
-            client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
-            client_secret=current_app.config[
-                'RENGA_AUTHORIZATION_CLIENT_SECRET'])
-
     headers = {'Authorization': 'Bearer {}'.format(service_access_token)}
 
     response = requests.post(
@@ -313,8 +327,7 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
     return response.json()['uuid']
 
 
-def renga_get_service_access_token(token_url, audience, client_id,
-                                   client_secret):
+def get_service_access_token(token_url, audience, client_id, client_secret):
     """Retrieve a service access token."""
     r = requests.post(
         token_url,
