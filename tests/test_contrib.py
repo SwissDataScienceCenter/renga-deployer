@@ -67,12 +67,16 @@ def kg_requests(monkeypatch):
                             '/mutation/mutation')
     named_type_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                               '/types/management/named_type')
+    token_url = current_app.config['DEPLOYER_TOKEN_URL']
 
     def kg_post(*args, **kwargs):
         """Override requests.post for KG urls."""
         if mutation_url in args[0]:
             """Override /api/mutation/mutation."""
             return Response({'uuid': '1234'}, 201)
+        elif token_url in args[0]:
+            """Override fetching access tokens."""
+            return Response({'access_token': '1234'}, 200)
         else:
             return r_post(*args, **kwargs)
 

@@ -66,6 +66,12 @@ DEPLOYER_SWAGGER_UI = False
 DEPLOYER_BASE_TEMPLATE = 'renga_deployer/base.html'
 """Default base template for the demo page."""
 
+RENGA_AUTHORIZATION_CLIENT_SECRET = None
+"""Client secret for fetching the service access token."""
+
+RENGA_AUTHORIZATION_CLIENT_ID = None
+"""Client id for fetching the service access token."""
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
 """The URI of the database to be used for preserving internal state."""
 

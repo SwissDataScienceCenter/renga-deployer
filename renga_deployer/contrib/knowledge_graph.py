@@ -87,15 +87,26 @@ class KnowledgeGraphSync(object):
     def named_types(self):
         """Fetch named types from types service."""
         if self._named_types is None:
+            service_access_token = renga_get_service_access_token(
+                token_url=current_app.config['DEPLOYER_TOKEN_URL'],
+                audience='renga-services',
+                client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
+                client_secret=current_app.config[
+                    'RENGA_AUTHORIZATION_CLIENT_SECRET'])
+
+            headers = {
+                'Authorization': 'Bearer {}'.format(service_access_token)
+            }
+
             self._named_types = requests.get(
                 join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
-                         'types/management/named_type')).json()
+                         'types/management/named_type'),
+                headers=headers).json()
         return self._named_types
 
 
-def create_context(context, token=None):
+def create_context(context):
     """Create context node."""
-    token = token or request.headers['Authorization']
     operations = [vertex_operation(context, temp_id=0)]
 
     # link the context to a project if a project_id is provided
@@ -117,7 +128,7 @@ def create_context(context, token=None):
             }
         })
 
-    response = mutation(operations, wait_for_response=True, token=token)
+    response = mutation(operations, wait_for_response=True)
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -151,7 +162,7 @@ def create_execution(execution, token=None):
         }
     })
 
-    response = mutation(operations, wait_for_response=True, token=token)
+    response = mutation(operations, wait_for_response=True)
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -259,7 +270,7 @@ def vertex_operation(obj, temp_id):
     return operation
 
 
-def mutation(operations, wait_for_response=False, token=None):
+def mutation(operations, wait_for_response=False, service_access_token=None):
     """
     Submit a mutation to the graph.
 
@@ -267,12 +278,21 @@ def mutation(operations, wait_for_response=False, token=None):
     otherwise the mutation UUID is returned.
     """
     knowledge_graph_url = current_app.config['KNOWLEDGE_GRAPH_URL']
-    headers = {'Authorization': token}
+
+    if service_access_token is None:
+        service_access_token = renga_get_service_access_token(
+            token_url=current_app.config['DEPLOYER_TOKEN_URL'],
+            audience='renga-services',
+            client_id=current_app.config['RENGA_AUTHORIZATION_CLIENT_ID'],
+            client_secret=current_app.config[
+                'RENGA_AUTHORIZATION_CLIENT_SECRET'])
+
+    headers = {'Authorization': 'Bearer {}'.format(service_access_token)}
 
     response = requests.post(
         join_url(knowledge_graph_url, '/mutation/mutation'),
         json={'operations': operations},
-        headers=headers, )
+        headers=headers)
 
     uuid = response.json()['uuid']
 
@@ -282,7 +302,8 @@ def mutation(operations, wait_for_response=False, token=None):
             response = requests.get(
                 join_url(
                     knowledge_graph_url,
-                    '/mutation/mutation/{uuid}'.format(uuid=uuid))).json()
+                    '/mutation/mutation/{uuid}'.format(uuid=uuid)),
+                headers=headers).json()
             completed = response['status'] == 'completed'
             # sleep for 200 miliseconds
             time.sleep(0.2)
@@ -290,6 +311,20 @@ def mutation(operations, wait_for_response=False, token=None):
         return response
 
     return response.json()['uuid']
+
+
+def renga_get_service_access_token(token_url, audience, client_id,
+                                   client_secret):
+    """Retrieve a service access token."""
+    r = requests.post(
+        token_url,
+        data={
+            'audience': audience,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'grant_type': 'client_credentials'
+        })
+    return r.json()['access_token']
 
 
 named_types_mapping = {
