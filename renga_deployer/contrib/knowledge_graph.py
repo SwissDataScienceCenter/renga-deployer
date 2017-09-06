@@ -27,7 +27,7 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 from renga_deployer.deployer import context_created, execution_created, \
     execution_launched
 from renga_deployer.models import Context, Execution, db
-from renga_deployer.utils import join_url
+from renga_deployer.utils import dict_from_labels, join_url
 
 
 class GraphContext(db.Model):
@@ -118,7 +118,7 @@ def create_context(context, service_access_token=None):
     operations = [vertex_operation(context, temp_id=0)]
 
     # link the context to a project if a project_id is provided
-    labels = context.spec.get('labels', {})
+    labels = dict_from_labels(context.spec.get('labels', []))
 
     if 'renga.project.vertex_id' in labels:
         operations.append({
@@ -143,8 +143,9 @@ def create_context(context, service_access_token=None):
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
-        context.spec.setdefault('labels', {})
-        context.spec['labels']['renga.execution_context.vertex_id'] = vertex_id
+        context.spec.setdefault('labels', [])
+        context.spec['labels'].insert(
+            0, 'renga.execution_context.vertex_id={0}'.format(vertex_id))
     else:
         current_app.logger.error('Mutation failed')
 

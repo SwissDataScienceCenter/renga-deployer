@@ -18,6 +18,8 @@
 import time
 from functools import wraps
 
+from werkzeug.datastructures import MultiDict
+
 
 def decode_bytes(func):
     """Function wrapper that always returns string."""
@@ -59,3 +61,10 @@ def resource_available(func):
 def join_url(*args):
     """Join together url strings."""
     return '/'.join(s.strip('/') for s in args)
+
+
+def dict_from_labels(labels, separator='='):
+    """Create a multidict from label string."""
+    return MultiDict((
+        (label[0].strip(), label[1].strip()) for label in (
+            raw.split(separator, 1) for raw in labels)))

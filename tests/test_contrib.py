@@ -21,9 +21,11 @@ import pytest
 import requests
 from flask import current_app
 from jose import jwt
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
 
 from renga_deployer import contrib
-from renga_deployer.models import Execution
+from renga_deployer.models import Execution, db
 from renga_deployer.utils import join_url
 
 r_get = requests.get
@@ -49,15 +51,26 @@ class Response(object):
 
 
 @pytest.fixture()
-def kg_app(app):
+def kg_app(base_app):
     """Deployer app with KnowledgeGraph extension."""
     from renga_deployer.contrib.knowledge_graph import KnowledgeGraphSync
 
-    app.config['KNOWLEDGE_GRAPH_URL'] = 'http://localhost:9000/api'
-    with app.app_context():
-        KnowledgeGraphSync(app)
-        yield app
-        app.extensions['renga-knowledge-graph-sync'].disconnect()
+    base_app.config['KNOWLEDGE_GRAPH_URL'] = 'http://localhost:9000/api'
+    KnowledgeGraphSync(base_app)
+
+    with base_app.app_context():
+        if database_exists(db.engine.url):
+            # drop_database(db.engine.url)
+            raise RuntimeError('Database exists')
+        create_database(db.engine.url)
+        db.create_all()
+
+        yield base_app
+
+        db.drop_all()
+        drop_database(db.engine.url)
+
+        base_app.extensions['renga-knowledge-graph-sync'].disconnect()
 
 
 @pytest.fixture()
@@ -235,7 +248,8 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
 
         context = json.loads(resp.data)
         assert 'labels' in context['spec']
-        assert 'renga.execution_context.vertex_id' in context['spec']['labels']
+        assert 'renga.execution_context.vertex_id=1234' in context['spec'][
+            'labels']
 
         # 2. test execution creation
         resp = client.post(
