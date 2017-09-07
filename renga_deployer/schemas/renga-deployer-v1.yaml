@@ -12,11 +12,10 @@ info:
 host: {{ DEPLOYER_URL }}
 basePath: {{ DEPLOYER_BASE_PATH }}
 tags:
-  - name: deployer
-    description: Everything about deployed contexts.
-    externalDocs:
-      description: Find out more
-      url: 'http://datascience.ch/services/deployer'
+  - name: Deployer-Contexts
+    description: Managing Renga deployment contexts.
+  - name: Deployer-Executions
+    description: Managing Renga deployment executions.
 schemes:
   - http
   - https
@@ -24,7 +23,7 @@ paths:
   /contexts:
     get:
       tags:
-        - deployer
+        - Deployer-Contexts
       summary: List defined contexts.
       description: ''
       produces:
@@ -41,7 +40,7 @@ paths:
             - 'deployer:contexts_read'
     post:
       tags:
-        - deployer
+        - Deployer-Contexts
       summary: Create a new context.
       description: ''
       consumes:
@@ -74,7 +73,7 @@ paths:
   /contexts/{context_id}:
     get:
       tags:
-        - deployer
+        - Deployer-Contexts
       summary: Find context by ID
       description: Returns a single context
       produces:
@@ -101,7 +100,7 @@ paths:
   /contexts/{context_id}/executions:
     get:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: List context executions.
       description: ''
       operationId: renga_deployer.api.contexts.executions.search
@@ -126,7 +125,7 @@ paths:
             - 'deployer:executions_read'
     post:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: Execute a context
       operationId: renga_deployer.api.contexts.executions.post
       produces:
@@ -160,7 +159,7 @@ paths:
   /contexts/{context_id}/executions/{execution_id}:
     get:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: Find execution by ID
       description: Returns a single execution
       operationId: renga_deployer.api.contexts.executions.get
@@ -191,7 +190,7 @@ paths:
             - 'deployer:executions_read'
     delete:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: Remove an execution
       description: Remove an execution from an engine
       operationId: renga_deployer.api.contexts.executions.delete
@@ -225,7 +224,7 @@ paths:
   /contexts/{context_id}/executions/{execution_id}/logs:
     get:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: Fetch the execution logs
       description: Gets the logs from the engine
       operationId: renga_deployer.api.contexts.executions.logs
@@ -261,7 +260,7 @@ paths:
   /contexts/{context_id}/executions/{execution_id}/ports:
     get:
       tags:
-        - deployer
+        - Deployer-Executions
       summary: Fetch the public host and exposed port of running job
       description: Fetch the public host and exposed port of running job
       operationId: renga_deployer.api.contexts.executions.ports
