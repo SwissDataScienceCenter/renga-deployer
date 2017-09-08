@@ -54,6 +54,11 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Specification'
+        - in: header
+          name: Renga-Project-ID
+          description: Renga project ID to link to
+          required: false
+          type: string
       responses:
         '201':
           description: create successful

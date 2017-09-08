@@ -120,16 +120,16 @@ def create_context(context, service_access_token=None):
     operations = [vertex_operation(context, temp_id=0)]
 
     # link the context to a project if a project_id is provided
-    labels = dict_from_labels(context.spec.get('labels', []))
+    project_id = request.headers.get('Renga-Project-ID')
 
-    if 'renga.project.vertex_id' in labels:
+    if project_id:
         operations.append({
             'type': 'create_edge',
             'element': {
                 'label': 'project:is_part_of',
                 'from': {
                     'type': 'persisted_vertex',
-                    'id': labels['renga.project.vertex_id'],
+                    'id': project_id
                 },
                 'to': {
                     'type': 'new_vertex',
