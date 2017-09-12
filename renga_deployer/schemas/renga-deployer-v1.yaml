@@ -321,15 +321,18 @@ definitions:
     properties:
       image:
         type: "string"
-        default: "hello-world"
+        example: "hello-world"
       ports:
         type: "array"
         items:
           type: "string"
+        example: ["9999"]
+        default: []
       labels:
         type: "array"
         items:
           type: "string"
+        default: []
 
   Context:
     type: "object"
@@ -344,10 +347,10 @@ definitions:
     properties:
       engine:
         type: "string"
-        default: "docker"
+        example: docker
       namespace:
-        type: "string"
-        default: "default"
+        type: string
+        example: default
 
   Execution:
     allOf:
