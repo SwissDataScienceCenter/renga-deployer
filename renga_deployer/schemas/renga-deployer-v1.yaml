@@ -55,7 +55,7 @@ paths:
           schema:
             $ref: '#/definitions/Specification'
         - in: header
-          name: Renga-Project-ID
+          name: Renga-Projects-Project
           description: Renga project ID to link to
           required: false
           type: string
