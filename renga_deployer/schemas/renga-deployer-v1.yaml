@@ -234,7 +234,7 @@ paths:
       description: Gets the logs from the engine
       operationId: renga_deployer.api.contexts.executions.logs
       produces:
-        - application/json
+        - text/plain
       parameters:
         - name: context_id
           in: path
@@ -249,11 +249,6 @@ paths:
       responses:
         '200':
           description: successful operation
-          schema:
-            type: "object"
-            properties:
-              logs:
-                type: "string"
         '400':
           description: Invalid ID supplied
         '404':
