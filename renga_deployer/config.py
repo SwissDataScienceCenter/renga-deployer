@@ -86,7 +86,7 @@ KNOWLEDGE_GRAPH_URL = None
 RESOURCE_MANAGER_URL = None
 """Obtain and validate ResourceManager authorization tokens."""
 
-RENGA_ENDPOINT = 'http://localhost/api'
+RENGA_ENDPOINT = 'http://localhost'
 """URL for other platform services."""
 
 WSGI_NUM_PROXIES = None

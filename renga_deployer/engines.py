@@ -69,6 +69,16 @@ class DockerEngine(Engine):
         else:
             ports = None
 
+        # replace localhost with gateway in environment variables
+        for network in self.client.networks.list():
+            if 'bridge' == network.attrs['Name']:
+                gateway = network.attrs['IPAM']['Config'][0]['Gateway']
+
+        for key, value in execution.environment.items():
+            if 'localhost' in str(value):
+                execution.environment[key] = value.replace(
+                    'localhost', gateway)
+
         container = self.client.containers.run(
             image=context.spec['image'],
             ports=ports,
