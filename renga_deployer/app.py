@@ -42,6 +42,8 @@ def create_app(**kwargs):
     api.app.config.update(**config.from_env(config))
     api.app.config.update(**kwargs)
 
+    api.app.url_map.strict_slashes = False
+
     api.add_api(
         'renga-deployer-v1.yaml',
         arguments=api.app.config,
