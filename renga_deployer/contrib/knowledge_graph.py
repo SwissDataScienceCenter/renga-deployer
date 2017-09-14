@@ -148,10 +148,9 @@ def create_context(context, service_access_token=None):
         context.spec.setdefault('labels', [])
         context.spec['labels'].insert(
             0, 'renga.execution_context.vertex_id={0}'.format(vertex_id))
+        db.session.add(GraphContext(id=vertex_id, context=context))
     else:
         current_app.logger.error('Mutation failed')
-
-    db.session.add(GraphContext(id=vertex_id, context=context))
 
 
 def create_execution(execution, token=None, service_access_token=None):
