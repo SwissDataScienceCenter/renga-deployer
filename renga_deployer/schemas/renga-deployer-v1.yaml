@@ -9,7 +9,7 @@ info:
   license:
     name: 'Apache License 2.0'
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
-host: {{ DEPLOYER_URL }}
+host: {{ DEPLOYER_HOST }}
 basePath: {{ DEPLOYER_BASE_PATH }}
 tags:
   - name: Deployer-Contexts
@@ -17,8 +17,7 @@ tags:
   - name: Deployer-Executions
     description: Managing Renga deployment executions.
 schemes:
-  - http
-  - https
+  - {{ DEPLOYER_SCHEME }}
 paths:
   /contexts:
     get:

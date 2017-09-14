@@ -20,6 +20,7 @@
 import logging
 import os
 import sys
+from urllib.parse import urlparse
 
 import connexion
 from connexion.resolver import RestyResolver
@@ -43,6 +44,10 @@ def create_app(**kwargs):
     api.app.config.update(**kwargs)
 
     api.app.url_map.strict_slashes = False
+
+    deployer_url = urlparse(api.app.config.get('DEPLOYER_URL'))
+    api.app.config.setdefault('DEPLOYER_HOST', deployer_url.netloc)
+    api.app.config.setdefault('DEPLOYER_SCHEME', deployer_url.scheme)
 
     api.add_api(
         'renga-deployer-v1.yaml',

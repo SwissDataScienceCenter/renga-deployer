@@ -201,7 +201,7 @@ def create_execution(execution, token=None, service_access_token=None):
         'RENGA_VERTEX_ID':
         vertex_id,
         'RENGA_ACCESS_TOKEN':
-        token.split('Bearer')[1],
+        token[len('Bearer'):].strip(),
         'RENGA_ENDPOINT':
         current_app.config['RENGA_ENDPOINT']
     })

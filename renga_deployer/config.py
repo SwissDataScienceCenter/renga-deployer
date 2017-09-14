@@ -23,8 +23,8 @@ import os
 DEPLOYER_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
-DEPLOYER_URL = 'localhost:5000'
-"""Basre URL for the service."""
+DEPLOYER_URL = 'http://localhost:5000'
+"""Base URL for the service."""
 
 DEPLOYER_BASE_PATH = '/v1'
 """Base path for the API."""
