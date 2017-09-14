@@ -41,7 +41,8 @@ def check_token(*scopes):
         @wraps(function)
         def wrapper(*args, **kwargs):
             """Check JWT and scopes."""
-            access_token = request.headers.get('Authorization')
+            access_token = getattr(g, 'access_token',
+                                   request.headers.get('Authorization'))
 
             # verify the token
             if not access_token or not access_token.lower().startswith(

@@ -20,7 +20,7 @@
 import os
 
 import requests
-from flask import current_app, request
+from flask import current_app, g, request
 from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
@@ -66,10 +66,7 @@ def exchange_token():
     if access_token is None:
         raise Unauthorized('Could not retrieve an ' 'authorization token')
 
-    header_token = 'Bearer {0}'.format(access_token)
-    # This is very dirty workaround to immutable request headers.
-    request.headers.environ['HTTP_AUTHORIZATION'] = header_token
-    assert request.headers['Authorization'] == header_token
+    g.access_token = 'Bearer {0}'.format(access_token)
 
 
 def request_authorization_token(headers, resource_request):
