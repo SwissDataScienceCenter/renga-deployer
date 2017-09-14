@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: Renga Deployer Service.
-  version: 1.0.0
+  version: 0.1.0
   title: Renga Deployer Service
   termsOfService: 'http://datascience.ch/terms/'
   contact:
