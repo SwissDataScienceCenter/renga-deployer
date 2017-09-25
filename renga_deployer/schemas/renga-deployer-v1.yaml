@@ -350,6 +350,8 @@ definitions:
       namespace:
         type: string
         example: default
+      environment:
+        type: "object"
 
   Execution:
     allOf:

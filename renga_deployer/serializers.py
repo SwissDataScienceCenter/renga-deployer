@@ -56,6 +56,7 @@ class ExecutionSchema(Schema):
     identifier = fields.UUID(attribute='id', dump_only=True)
     engine = fields.String(required=True)
     namespace = fields.String(default='default')
+    environment = fields.Dict()
     engine_id = fields.String(load_only=True)
     jwt = fields.Dict(load_only=True)
 
