@@ -69,8 +69,14 @@ class DockerEngine(Engine):
         else:
             ports = None
 
+        # Fix an unexpected behaviour of the python docker client which
+        # leads to all images being downloaded when no tag is specified.
+        image = context.spec['image']
+        if ':' not in image:
+            image += ':latest'
+
         container = self.client.containers.run(
-            image=context.spec['image'],
+            image=image,
             ports=ports,
             command=context.spec.get('command'),
             detach=True,
