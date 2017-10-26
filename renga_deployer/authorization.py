@@ -41,6 +41,9 @@ def check_token(*scopes):
         @wraps(function)
         def wrapper(*args, **kwargs):
             """Check JWT and scopes."""
+            if current_app.config['DEPLOYER_NO_AUTHORIZATION']:
+                return function(*args, **kwargs)
+
             access_token = getattr(g, 'access_token',
                                    request.headers.get('Authorization'))
 

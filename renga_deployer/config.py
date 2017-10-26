@@ -56,6 +56,9 @@ DEPLOYER_JWT_ISSUER = 'http://localhost:8080/auth/realms/Renga'
 DEPLOYER_JWT_KEY = None
 """Public key used to verify JWT tokens."""
 
+DEPLOYER_NO_AUTHORIZATION = False
+"""Turn off token checks."""
+
 DEPLOYER_TOKEN_SCOPE_KEY = None
 """Key inside JWT containing scopes.
 

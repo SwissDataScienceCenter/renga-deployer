@@ -32,7 +32,10 @@ db = SQLAlchemy()
 def load_jwt():
     """Load JWT from a context."""
     if has_request_context():
-        return g.jwt
+        try:
+            return g.jwt
+        except:
+            return None
 
 
 class Context(db.Model, Timestamp):
