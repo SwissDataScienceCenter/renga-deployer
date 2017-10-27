@@ -21,6 +21,7 @@ import os
 import shlex
 import time
 
+from flask import current_app
 from werkzeug.utils import cached_property
 
 from .models import Execution
@@ -106,11 +107,12 @@ class DockerEngine(Engine):
             'ports': [{
                 'specified': container_port.split('/')[0],
                 'protocol': container_port.split('/')[1].upper(),
-                'host': host_spec['HostIp'],
+                'host': current_app.config[
+                    'DEPLOYER_CONTAINER_IP'] or host_spec['HostIp'],
                 'exposed': host_spec['HostPort'],
             }
-                      for container_port, host_specs in port_bindings.items()
-                      for host_spec in host_specs],
+                for container_port, host_specs in port_bindings.items()
+                for host_spec in host_specs],
         }
 
     def get_execution_environment(self, execution) -> dict:

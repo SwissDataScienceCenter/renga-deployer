@@ -47,6 +47,9 @@ DEPLOYER_CLIENT_ID = 'demo-client'
 DEPLOYER_CLIENT_SECRET = None
 """Client credentials used for OIDC authentication."""
 
+DEPLOYER_CONTAINER_IP = None
+"""Specific IP for deployed containers."""
+
 DEPLOYER_APP_NAME = 'demo-client'
 """Application name."""
 
