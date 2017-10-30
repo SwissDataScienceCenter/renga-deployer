@@ -16,19 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Check manifest will not automatically add these two files:
-include .dockerignore
-include .editorconfig
-include .tx/config
-include .travis/deploy-docker.sh
-prune docs/_build
-recursive-include renga_deployer *.po *.pot *.mo
-
-# added by check_manifest.py
 include *.rst
 include *.sh
 include *.txt
 include *.yml
+include .dockerignore
+include .editorconfig
+include .travis/deploy-docker.sh
+include .tx/config
 include Dockerfile
 include LICENSE
 include Makefile
@@ -36,6 +31,8 @@ include NOTICE
 include babel.ini
 include pytest.ini
 include uwsgi.ini
+prune docs/_build
+recursive-include .github CODEOWNERS
 recursive-include docker *
 recursive-include docs *.bat
 recursive-include docs *.py
@@ -52,6 +49,7 @@ recursive-include renga_deployer *.js
 recursive-include renga_deployer *.json
 recursive-include renga_deployer *.map
 recursive-include renga_deployer *.png
+recursive-include renga_deployer *.po *.pot *.mo
 recursive-include renga_deployer *.ttf
 recursive-include renga_deployer *.yaml
 recursive-include tests *.py
