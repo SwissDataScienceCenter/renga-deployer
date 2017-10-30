@@ -107,5 +107,6 @@ class Execution(db.Model, Timestamp):
         """Create a new execution for a given context."""
         kwargs.setdefault('environment', {})
         kwargs.setdefault('id', uuid.uuid4())
+        kwargs['environment']['RENGA_CONTEXT_ID'] = str(context.id)
         execution = cls(context=context, **kwargs)
         return execution
