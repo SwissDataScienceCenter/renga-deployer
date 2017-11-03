@@ -201,8 +201,8 @@ class K8SEngine(Engine):
         # optional spec
         if context.spec.get('ports'):
             spec['containers'][0]['ports'] = [{
-                'containerPort': port
-            } for port in context.spec['ports']]
+                'containerPort': int(port)
+            } for port in context.spec['ports'] if len(port) > 0]
 
         if context.spec.get('command'):
             command = shlex.split(context.spec['command'])
@@ -238,7 +238,7 @@ class K8SEngine(Engine):
             'apiVersion': 'v1',
             'kind': 'Service',
             'metadata': {
-                'generateName': context.spec['image'],
+                'generateName': context.spec['image'].replace('/', '-'),
                 'namespace': namespace,
                 'labels': {
                     'job-uid': "{0}".format(uid)
@@ -247,7 +247,7 @@ class K8SEngine(Engine):
             'spec': {
                 'hostNetwork': 'true',
                 'ports': [{
-                    'port': port
+                    'port': int(port)
                 } for port in context.spec['ports']],
                 'selector': {
                     'controller-uid': "{0}".format(uid)

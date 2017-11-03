@@ -62,10 +62,9 @@ def test_open_port(app, engine, deployer):
         'command':
         'sh -c "mkfifo /tmp/f; cat /tmp/f | nc -l -p 9999 > /tmp/f"',
         'ports': [
-            9999,
+            '9999',
         ],
-        'interactive':
-        True
+        'interactive': 'true'
     })
     execution = deployer.launch(context, engine=engine)
 

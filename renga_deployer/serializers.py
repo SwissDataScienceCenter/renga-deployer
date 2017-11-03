@@ -26,8 +26,9 @@ class SpecificationSchema(Schema):
     """Specification schema."""
 
     image = fields.String()
-    ports = fields.Dict()
+    ports = fields.List(fields.String)
     labels = fields.List(fields.String)
+    interactive = fields.Boolean()
 
 
 class ContextSchema(Schema):
