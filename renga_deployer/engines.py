@@ -105,11 +105,15 @@ class DockerEngine(Engine):
         port_bindings = container.attrs['NetworkSettings'].get('Ports', {})
         return {
             'ports': [{
-                'specified': container_port.split('/')[0],
-                'protocol': container_port.split('/')[1].upper(),
-                'host': current_app.config[
+                'specified':
+                container_port.split('/')[0],
+                'protocol':
+                container_port.split('/')[1].upper(),
+                'host':
+                current_app.config[
                     'DEPLOYER_CONTAINER_IP'] or host_spec['HostIp'],
-                'exposed': host_spec['HostPort'],
+                'exposed':
+                host_spec['HostPort'],
             }
                 for container_port, host_specs in port_bindings.items()
                 for host_spec in host_specs],
@@ -157,6 +161,14 @@ class K8SEngine(Engine):
             service_spec = self._k8s_service_template(namespace, context, uid)
             service = api.create_namespaced_service(namespace, service_spec)
 
+            # if using an ingress, need to make an additional object
+            if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
+                beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
+                ingress = beta_api.create_namespaced_ingress(
+                    namespace,
+                    self._k8s_ingress_template(uid, service.metadata.name,
+                                               context.spec['ports'][0]))
+
         execution.engine_id = uid
         execution.namespace = namespace
         return execution
@@ -174,6 +186,15 @@ class K8SEngine(Engine):
             api.delete_namespaced_service(
                 service.items[0].metadata.name,
                 execution.namespace, )
+
+            if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
+                beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
+                ingress = beta_api.list_namespaced_ingress(
+                    execution.namespace,
+                    label_selector='job-uid={0}'.format(execution.engine_id))
+                beta_api.delete_namespaced_ingress(
+                    ingress.items[0].metadata.name, execution.namespace,
+                    self._kubernetes.client.V1DeleteOptions())
 
         batch.delete_collection_namespaced_job(
             execution.namespace,
@@ -233,7 +254,7 @@ class K8SEngine(Engine):
 
     @staticmethod
     def _k8s_service_template(namespace, context, uid):
-        """Return simple kubernetes job JSON."""
+        """Return simple kubernetes service JSON."""
         return {
             'apiVersion': 'v1',
             'kind': 'Service',
@@ -253,6 +274,26 @@ class K8SEngine(Engine):
                     'controller-uid': "{0}".format(uid)
                 },
                 'type': 'NodePort'
+            }
+        }
+
+    @staticmethod
+    def _k8s_ingress_template(uid, service_name, service_port):
+        """Return kubernetes ingress JSON."""
+        return {
+            'apiVersion': 'extensions/v1beta1',
+            'kind': 'Ingress',
+            'metadata': {
+                'generateName': 'interactive',
+                'labels': {
+                    'job-uid': "{0}".format(uid)
+                }
+            },
+            'spec': {
+                'backend': {
+                    'serviceName': service_name,
+                    'servicePort': int(service_port)
+                }
             }
         }
 
@@ -291,10 +332,15 @@ class K8SEngine(Engine):
 
         return {
             'ports': [{
-                'specified': port.port,
-                'host': pod.items[0].status.host_ip,
-                'exposed': port.node_port,
-                'protocol': port.protocol,
+                'specified':
+                port.port,
+                'host':
+                current_app.config[
+                    'DEPLOYER_CONTAINER_IP'] or pod.items[0].status.host_ip,
+                'exposed':
+                port.node_port,
+                'protocol':
+                port.protocol,
             } for port in service.items[0].spec.ports]
         }
 
