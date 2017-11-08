@@ -111,12 +111,12 @@ class DockerEngine(Engine):
                 container_port.split('/')[1].upper(),
                 'host':
                 current_app.config[
-                    'DEPLOYER_CONTAINER_IP'] or host_spec['HostIp'],
+                    'DEPLOYER_DOCKER_CONTAINER_IP'] or host_spec['HostIp'],
                 'exposed':
                 host_spec['HostPort'],
             }
-                for container_port, host_specs in port_bindings.items()
-                for host_spec in host_specs],
+                      for container_port, host_specs in port_bindings.items()
+                      for host_spec in host_specs],
         }
 
     def get_execution_environment(self, execution) -> dict:
@@ -330,19 +330,25 @@ class K8SEngine(Engine):
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        return {
-            'ports': [{
-                'specified':
-                port.port,
-                'host':
-                current_app.config[
-                    'DEPLOYER_CONTAINER_IP'] or pod.items[0].status.host_ip,
-                'exposed':
-                port.node_port,
-                'protocol':
-                port.protocol,
-            } for port in service.items[0].spec.ports]
-        }
+        if not service.items:
+            # this service doesn't exist
+            return {'ports': []}
+
+        else:
+            return {
+                'ports': [{
+                    'specified':
+                    port.port,
+                    'host':
+                    current_app.config[
+                        'DEPLOYER_K8S_CONTAINER_IP'] or pod.items[
+                            0].status.host_ip,
+                    'exposed':
+                    port.node_port,
+                    'protocol':
+                    port.protocol,
+                } for port in service.items[0].spec.ports]
+            }
 
     def get_execution_environment(self, execution) -> dict:
         """Retrieve the environment specified for an execution container."""

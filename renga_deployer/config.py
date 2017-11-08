@@ -47,8 +47,11 @@ DEPLOYER_CLIENT_ID = 'demo-client'
 DEPLOYER_CLIENT_SECRET = None
 """Client credentials used for OIDC authentication."""
 
-DEPLOYER_CONTAINER_IP = None
-"""Specific IP for deployed containers."""
+DEPLOYER_DOCKER_CONTAINER_IP = None
+"""Specific IP for docker-deployed containers."""
+
+DEPLOYER_K8S_CONTAINER_IP = None
+"""Specific IP for kubernetes-deployed containers."""
 
 DEPLOYER_APP_NAME = 'demo-client'
 """Application name."""
