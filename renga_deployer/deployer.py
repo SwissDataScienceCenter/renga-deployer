@@ -17,6 +17,7 @@
 # limitations under the License.
 """Deployer sub-module."""
 
+import logging
 import os
 
 from blinker import Namespace
@@ -29,6 +30,8 @@ deployer_signals = Namespace()
 context_created = deployer_signals.signal('context-created')
 execution_created = deployer_signals.signal('execution-created')
 execution_launched = deployer_signals.signal('execution-launched')
+
+logger = logging.getLogger('renga.deployer.deployer')
 
 
 class Deployer(object):

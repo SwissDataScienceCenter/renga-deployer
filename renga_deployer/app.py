@@ -33,7 +33,7 @@ from . import config
 from .ext import RengaDeployer
 from .models import db
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('renga.deployer.app')
 
 
 def create_app(**kwargs):
@@ -78,7 +78,8 @@ def create_app(**kwargs):
     with api.app.app_context():
         if not functions.database_exists(db.engine.url):
             functions.create_database(db.engine.url)
+            logger.debug('Database created.')
 
         db.create_all()
-
+        logger.debug('Database initialized.')
     return api.app

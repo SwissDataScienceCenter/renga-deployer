@@ -74,6 +74,7 @@ install_requires = [
     'requests>=2.18.1',
     'six>=1.10.0',
     'sqlalchemy-utils>=0.32.14',
+    'python-logstash-async>=1.3.1'
 ]
 
 packages = find_packages()

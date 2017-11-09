@@ -83,6 +83,9 @@ RENGA_AUTHORIZATION_CLIENT_SECRET = None
 RENGA_AUTHORIZATION_CLIENT_ID = None
 """Client id for fetching the service access token."""
 
+RENGA_LOGGING_CONFIG = None
+"""Logging configuration file path."""
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
 """The URI of the database to be used for preserving internal state."""
 

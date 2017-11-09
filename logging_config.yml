@@ -1,0 +1,27 @@
+# logging configuration using a logstash async logger
+version: 1
+formatters:
+  f:
+    format: '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: f
+    level: DEBUG
+  logstash:
+    class: logstash_async.handler.AsynchronousLogstashHandler
+    database_path: logstash.db
+    host: localhost
+    level: DEBUG
+    port: 5001
+    transport: logstash_async.transport.TcpTransport
+loggers:
+  renga:
+    handlers:
+    - console
+    level: INFO
+  renga.deployer.engines:
+    handlers:
+    - console
+    - logstash
+    level: DEBUG

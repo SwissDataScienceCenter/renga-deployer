@@ -17,6 +17,7 @@
 # limitations under the License.
 """Engine sub-module."""
 
+import logging
 import os
 import shlex
 import time
@@ -26,6 +27,8 @@ from werkzeug.utils import cached_property
 
 from .models import Execution
 from .utils import decode_bytes, resource_available
+
+logger = logging.getLogger('renga.deployer.engines')
 
 
 class Engine(object):
@@ -64,6 +67,9 @@ class DockerEngine(Engine):
     def launch(self, execution, **kwargs):
         """Launch a docker container with the context image."""
         context = execution.context
+
+        logger.debug(
+            'Launching execution context')
 
         if context.spec.get('ports'):
             ports = {port: None for port in context.spec.get('ports')}
