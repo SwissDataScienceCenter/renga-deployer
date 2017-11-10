@@ -77,7 +77,8 @@ class DockerEngine(Engine):
         context = execution.context
 
         if context.spec.get('ports'):
-            ports = {port: None for port in context.spec.get('ports')}
+            ports = {port: None for port in filter(
+                None, context.spec.get('ports'))}
         else:
             ports = None
 
@@ -206,7 +207,8 @@ class K8SEngine(Engine):
                 extra={'service': service.to_dict()})
 
             # if using an ingress, need to make an additional object
-            if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
+            if current_app.config.get(
+                    'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
                 beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
                 ingress = beta_api.create_namespaced_ingress(
                     namespace,
@@ -240,7 +242,8 @@ class K8SEngine(Engine):
                 'Deleted namespaced service {}'.format(service.metadata.name),
                 extra={'service': service.to_dict()})
 
-            if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
+            if current_app.config.get(
+                    'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
                 beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
                 ingress = beta_api.list_namespaced_ingress(
                     execution.namespace,
@@ -292,7 +295,7 @@ class K8SEngine(Engine):
         if context.spec.get('ports'):
             spec['containers'][0]['ports'] = [{
                 'containerPort': int(port)
-            } for port in context.spec['ports'] if len(port) > 0]
+            } for port in filter(None, context.spec['ports'])]
 
         if context.spec.get('command'):
             command = shlex.split(context.spec['command'])
@@ -347,7 +350,8 @@ class K8SEngine(Engine):
         }
 
     @staticmethod
-    def _k8s_ingress_template(uid, service_name, service_port):
+    def _k8s_ingress_template(
+            uid, service_name, service_port):  # pragma no cover
         """Return kubernetes ingress JSON."""
         return {
             'apiVersion': 'extensions/v1beta1',

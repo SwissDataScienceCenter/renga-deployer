@@ -38,16 +38,20 @@ def test_deployer_env_create(monkeypatch):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_execution_launch(app, engine, deployer):
+@pytest.mark.parametrize('spec', [
+    {'image': 'hello-world'},
+    {'image': 'hello-world', 'ports': ['', '9999']},
+])
+def test_execution_launch(app, engine, spec, deployer):
     """Test node launching."""
-    context = deployer.create({'image': 'hello-world'})
+    context = deployer.create(spec)
     execution = deployer.launch(context, engine=engine)
 
     assert isinstance(context, Context)
     assert isinstance(execution, Execution)
     assert execution.engine == engine
-
     assert 'Hello from Docker!' in deployer.get_logs(execution)
+
     deployer.stop(execution, remove=True)
 
 
