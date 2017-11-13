@@ -17,7 +17,8 @@
 # limitations under the License.
 """Renga Logging."""
 
-import logging
+
+from logging import DEBUG, INFO, getLogger
 from logging.config import dictConfig
 
 import yaml
@@ -41,16 +42,16 @@ else:
             'console': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'f',
-                'level': logging.DEBUG
+                'level': DEBUG
             },
         },
         'loggers': {
             'renga': {
                 'handlers': ['console'],
-                'level': logging.INFO
+                'level': INFO
             }
         }
     })
 
-logger = logging.getLogger('renga.deployer.logging')
+logger = getLogger('renga.deployer.logging')
 logger.debug('Logging initialized.')

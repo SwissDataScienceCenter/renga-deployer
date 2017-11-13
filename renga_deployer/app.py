@@ -17,7 +17,6 @@
 # limitations under the License.
 """Renga Deployer application."""
 
-import logging
 import os
 import sys
 from urllib.parse import urlparse
@@ -29,7 +28,7 @@ from flask_babelex import Babel
 from jose import jwt
 from sqlalchemy_utils import functions
 
-from . import config
+from . import config, logging
 from .ext import RengaDeployer
 from .models import db
 
@@ -82,4 +81,5 @@ def create_app(**kwargs):
 
         db.create_all()
         logger.debug('Database initialized.')
+
     return api.app

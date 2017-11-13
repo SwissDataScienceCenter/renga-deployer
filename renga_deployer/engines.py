@@ -25,10 +25,13 @@ import time
 from flask import current_app
 from werkzeug.utils import cached_property
 
+from renga_deployer.serializers import ContextSchema, ExecutionSchema
+
 from .models import Execution
 from .utils import decode_bytes, resource_available
 
-logger = logging.getLogger('renga.deployer.engines')
+context_schema = ContextSchema()
+execution_schema = ExecutionSchema()
 
 
 class Engine(object):
@@ -59,6 +62,11 @@ class DockerEngine(Engine):
     """Class for deploying contexts on docker."""
 
     @cached_property
+    def logger(self):
+        """Create a logger instance."""
+        return logging.getLogger('renga.deployer.engines.docker')
+
+    @cached_property
     def client(self):
         """Create a docker client from local environment."""
         import docker
@@ -67,9 +75,6 @@ class DockerEngine(Engine):
     def launch(self, execution, **kwargs):
         """Launch a docker container with the context image."""
         context = execution.context
-
-        logger.debug(
-            'Launching execution context')
 
         if context.spec.get('ports'):
             ports = {port: None for port in context.spec.get('ports')}
@@ -89,6 +94,13 @@ class DockerEngine(Engine):
             detach=True,
             environment=execution.environment or None)
 
+        self.logger.info(
+            'Launched container for execution {1} of context {0}'.format(
+                execution.id, context.id),
+            extra={'container_attrs': container.attrs,
+                   'execution': execution_schema.dump(execution).data,
+                   'context': context_schema.dump(execution.context).data})
+
         execution.engine_id = container.id
 
         return execution
@@ -99,6 +111,13 @@ class DockerEngine(Engine):
         container.stop()
         if remove:
             container.remove()
+
+        self.logger.info(
+            'Stopped execution {0} of context {1}'.format(
+                execution.id, execution.context.id),
+            extra={'container_attrs': container.attrs,
+                   'execution': execution_schema.dump(execution).data,
+                   'context': context_schema.dump(execution.context).data})
 
     def get_logs(self, execution):
         """Extract logs for a container."""
@@ -121,8 +140,8 @@ class DockerEngine(Engine):
                 'exposed':
                 host_spec['HostPort'],
             }
-                      for container_port, host_specs in port_bindings.items()
-                      for host_spec in host_specs],
+                for container_port, host_specs in port_bindings.items()
+                for host_spec in host_specs],
         }
 
     def get_execution_environment(self, execution) -> dict:
@@ -149,6 +168,14 @@ class K8SEngine(Engine):
 
         if self.config is None:
             self.config = kubernetes.config.load_kube_config()
+            self.logger.debug(
+                'Loaded k8s configuration.',
+                extra=kubernetes.config.kube_config.configuration.__dict__)
+
+    @cached_property
+    def logger(self):
+        """Create a logger instance."""
+        return logging.getLogger('renga.deployer.engines.k8s')
 
     def launch(self, execution, engine=None, **kwargs):
         """Launch a Kubernetes Job with the context spec."""
@@ -160,12 +187,23 @@ class K8SEngine(Engine):
         job = batch.create_namespaced_job(namespace, job_spec)
         uid = job.metadata.labels['controller-uid']
 
+        self.logger.info(
+            'Created job for execution {0} of context {1}'.format(
+                execution.id, execution.context.id),
+            extra={'job': job.to_dict(),
+                   'execution': execution_schema.dump(execution).data,
+                   'context': context_schema.dump(execution.context).data})
+
         if context.spec.get('interactive'):
             # To expose an interactive job, we need to start a service.
             # We use the job controller-uid to link the service.
             api = self._kubernetes.client.CoreV1Api()
             service_spec = self._k8s_service_template(namespace, context, uid)
             service = api.create_namespaced_service(namespace, service_spec)
+
+            self.logger.info(
+                'Created service for namespaced job {}'.format(uid),
+                extra={'service': service.to_dict()})
 
             # if using an ingress, need to make an additional object
             if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
@@ -174,6 +212,10 @@ class K8SEngine(Engine):
                     namespace,
                     self._k8s_ingress_template(uid, service.metadata.name,
                                                context.spec['ports'][0]))
+                self.logger.info(
+                    'Created ingress for service {}'.format(
+                        service.metadata.name),
+                    extra={'ingress': ingress.to_dict()})
 
         execution.engine_id = uid
         execution.namespace = namespace
@@ -187,27 +229,48 @@ class K8SEngine(Engine):
         if execution.context.spec.get('interactive'):
             service = api.list_namespaced_service(
                 execution.namespace,
-                label_selector='job-uid={0}'.format(execution.engine_id))
+                label_selector='job-uid={0}'.format(
+                    execution.engine_id)).items[0]
 
             api.delete_namespaced_service(
-                service.items[0].metadata.name,
+                service.metadata.name,
                 execution.namespace, )
+
+            self.logger.info(
+                'Deleted namespaced service {}'.format(service.metadata.name),
+                extra={'service': service.to_dict()})
 
             if current_app.config.get('DEPLOYER_K8S_USE_INGRESS'):
                 beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
                 ingress = beta_api.list_namespaced_ingress(
                     execution.namespace,
-                    label_selector='job-uid={0}'.format(execution.engine_id))
+                    label_selector='job-uid={0}'.format(
+                        execution.engine_id)).items[0]
                 beta_api.delete_namespaced_ingress(
-                    ingress.items[0].metadata.name, execution.namespace,
+                    ingress.metadata.name, execution.namespace,
                     self._kubernetes.client.V1DeleteOptions())
+
+                self.logger.info(
+                    'Deleted namespaced ingress {0} for service {1}'.format(
+                        ingress.metadata.uid, service.metadata.name),
+                    extra={'ingress': ingress.to_dict()})
 
         batch.delete_collection_namespaced_job(
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
+
+        self.logger.info('Deleted namespaced job for execution {}'.format(
+            execution.engine_id), extra={
+                'execution': execution_schema.dump(execution).data,
+                'context': context_schema.dump(execution.context).data})
+
         api.delete_collection_namespaced_pod(
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
+
+        self.logger.info('Deleted namespaced pod for execution {}'.format(
+            execution.engine_id))
+
         return execution
 
     @staticmethod

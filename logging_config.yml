@@ -8,20 +8,27 @@ handlers:
     class: logging.StreamHandler
     formatter: f
     level: DEBUG
-  logstash:
-    class: logstash_async.handler.AsynchronousLogstashHandler
-    database_path: logstash.db
-    host: localhost
-    level: DEBUG
-    port: 5001
-    transport: logstash_async.transport.TcpTransport
+
+# Example of adding a logstash handler
+#
+# Install with: pip install python-logstash-async
+#
+#  logstash:
+#    class: logstash_async.handler.AsynchronousLogstashHandler
+#    database_path: logstash.db
+#    host: localhost
+#    level: DEBUG
+#    port: 5001
+#    transport: logstash_async.transport.TcpTransport
+
 loggers:
   renga:
     handlers:
-    - console
+      - console
     level: INFO
+    propagate: False
   renga.deployer.engines:
     handlers:
-    - console
-    - logstash
+      - console
     level: DEBUG
+    propagate: False
