@@ -17,6 +17,7 @@
 # limitations under the License.
 """Retrieve authorization from the Resource Manager service."""
 
+import logging
 import os
 
 import requests
@@ -25,6 +26,8 @@ from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
 from renga_deployer.utils import join_url
+
+logger = logging.getLogger('renga.deployer.contrib.resource_manager')
 
 
 class ResourceManager(object):
@@ -48,6 +51,8 @@ class ResourceManager(object):
         app.before_request(exchange_token)
         app.extensions['renga-resource-manager'] = self
 
+        logger.debug('Resource manager extension started.')
+
 
 def exchange_token():
     """Request new token from resource manager."""
@@ -64,7 +69,7 @@ def exchange_token():
                                                resource_request)
 
     if access_token is None:
-        raise Unauthorized('Could not retrieve an ' 'authorization token')
+        raise Unauthorized('Could not retrieve an authorization token.')
 
     g.access_token = 'Bearer {0}'.format(access_token)
 
@@ -83,6 +88,20 @@ def request_authorization_token(headers, resource_request):
         json=resource_request)
 
     if r.status_code != 200:
+        logger.warn(
+            'Could not retrieve an authorization token.',
+            extra={
+                'request': {
+                    'body': r.request.body,
+                    'headers': r.request.headers,
+                    'url': r.request.url
+                },
+                'response': {
+                    'content': r.content,
+                    'headers': r.headers,
+                    'status_code': r.status_code
+                }
+            })
         return None
     else:
         return r.json()['access_token']

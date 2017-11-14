@@ -17,6 +17,7 @@
 # limitations under the License.
 """Send events to Graph Mutation Service."""
 
+import logging
 import os
 import time
 import uuid
@@ -25,11 +26,14 @@ import requests
 from flask import current_app, request
 from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
+from werkzeug.exceptions import InternalServerError
 
 from renga_deployer.deployer import context_created, execution_created, \
     execution_launched
 from renga_deployer.models import Context, Execution, db
 from renga_deployer.utils import dict_from_labels, join_url
+
+logger = logging.getLogger('renga.deployer.contrib.knowledge_graph')
 
 
 class GraphContext(db.Model):
@@ -79,6 +83,8 @@ class KnowledgeGraphSync(object):
         context_created.connect(create_context)
         execution_created.connect(create_execution)
         execution_launched.connect(launch_execution)
+
+        logger.debug('Knowledge graph extension started.')
 
     def disconnect(self):
         """Remove signal handlers."""
@@ -150,7 +156,8 @@ def create_context(context, service_access_token=None):
             0, 'renga.execution_context.vertex_id={0}'.format(vertex_id))
         db.session.add(GraphContext(id=vertex_id, context=context))
     else:
-        current_app.logger.error('Mutation failed')
+        logger.error('Mutation failed.', extra={'response': response.json()})
+        raise InternalServerError('Adding vertex and/or edge failed')
 
 
 def create_execution(execution, token=None, service_access_token=None):
@@ -191,8 +198,8 @@ def create_execution(execution, token=None, service_access_token=None):
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
     else:
-        print(response)
-        raise RuntimeError('Adding vertex and/or edge failed')
+        logger.error('Mutation failed.', extra={'response': response.json()})
+        raise InternalServerError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))
 
@@ -310,7 +317,11 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
         json={'operations': operations},
         headers=headers)
 
-    uuid = response.json()['uuid']
+    if 'uuid' not in response.json():
+        logger.warn(
+            'Mutation request failed.', extra={'response': response.json()})
+
+    uuid = response.json().get('uuid')
 
     if wait_for_response:
         completed = False
@@ -325,8 +336,7 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
             time.sleep(0.2)
 
         return response
-
-    return response.json()['uuid']
+    return uuid
 
 
 def get_service_access_token(token_url, audience, client_id, client_secret):

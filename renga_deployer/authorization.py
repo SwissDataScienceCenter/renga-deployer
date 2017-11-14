@@ -17,6 +17,7 @@
 # limitations under the License.
 """Provide decorators for securing endpoints."""
 
+import logging
 from functools import wraps
 
 from flask import current_app, g, request
@@ -24,6 +25,8 @@ from jose import jwt
 from werkzeug.exceptions import Unauthorized
 
 from renga_deployer.ext import current_deployer
+
+logger = logging.getLogger('renga.deployer.authorization')
 
 
 def check_token(*scopes):
@@ -47,6 +50,8 @@ def check_token(*scopes):
             # verify the token
             if not access_token or not access_token.lower().startswith(
                     'bearer '):
+                logger.warn('Authorization token not found in headers.',
+                            extra={'g': g, 'request': request.json()})
                 raise Unauthorized('Authorization token not found in headers.')
 
             access_token = access_token[len('bearer '):]
@@ -66,6 +71,9 @@ def check_token(*scopes):
             scope_key = current_app.config['DEPLOYER_TOKEN_SCOPE_KEY']
             if scope_key and not all(
                     s in auth.get(scope_key, []) for s in scopes):
+                logger.warn('Insufficient scope.',
+                            extra={'g': g, 'request': request.json(),
+                                   'scope_key': scope_key})
                 raise Unauthorized('Insufficient scope.')
 
             return function(*args, **kwargs)

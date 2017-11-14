@@ -5,7 +5,8 @@ RUN apk --no-cache add --update \
     postgresql-client \
     postgresql-dev \
     build-base \
-    linux-headers
+    linux-headers \
+    curl
 
 # Install only Python requirements
 COPY setup.py README.rst CHANGES.rst /code/
