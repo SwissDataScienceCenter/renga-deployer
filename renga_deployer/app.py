@@ -73,6 +73,9 @@ def create_app(**kwargs):
         api.app.wsgi_app = ProxyFix(
             api.app.wsgi_app, num_proxies=api.app.config['WSGI_NUM_PROXIES'])
 
+    # setup logging
+    logging.setup_logging(api.app.config['RENGA_LOGGING_CONFIG'])
+
     # create database and tables
     with api.app.app_context():
         if not functions.database_exists(db.engine.url):

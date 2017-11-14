@@ -17,41 +17,46 @@
 # limitations under the License.
 """Renga Logging."""
 
-
+import os
 from logging import DEBUG, INFO, getLogger
 from logging.config import dictConfig
 
 import yaml
 
-from . import config
 
-conf = config.from_env(config)
+def setup_logging(conf):
+    """Configure logging for the deployer app."""
+    if conf and os.path.exists(os.path.dirname(conf)):
+        with open(conf, 'r') as fp:
+            dictConfig(yaml.load(fp))
 
-if conf.get('RENGA_LOGGING_CONFIG'):
-    with open(conf['RENGA_LOGGING_CONFIG'], 'r') as fp:
-        dictConfig(yaml.load(fp))
-else:
-    dictConfig({
-        'version': 1,
-        'formatters': {
-            'f': {
-                'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'f',
-                'level': DEBUG
+    elif isinstance(conf, dict):
+        dictConfig(conf)
+
+    else:
+        # no configuration provided, use a default
+        dictConfig({
+            'version': 1,
+            'formatters': {
+                'f': {
+                    'format':
+                    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+                }
             },
-        },
-        'loggers': {
-            'renga': {
-                'handlers': ['console'],
-                'level': INFO
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'f',
+                    'level': DEBUG
+                },
+            },
+            'loggers': {
+                'renga': {
+                    'handlers': ['console'],
+                    'level': INFO
+                }
             }
-        }
-    })
+        })
 
-logger = getLogger('renga.deployer.logging')
-logger.debug('Logging initialized.')
+    logger = getLogger('renga.deployer.logging')
+    logger.debug('Logging initialized.')
