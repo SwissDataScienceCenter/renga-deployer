@@ -50,8 +50,12 @@ def check_token(*scopes):
             # verify the token
             if not access_token or not access_token.lower().startswith(
                     'bearer '):
-                logger.warn('Authorization token not found in headers.',
-                            extra={'g': g, 'request': request.json()})
+                logger.warn(
+                    'Authorization token not found in headers.',
+                    extra={'g': g,
+                           'request': {
+                               'headers': request.headers
+                           }})
                 raise Unauthorized('Authorization token not found in headers.')
 
             access_token = access_token[len('bearer '):]
@@ -71,9 +75,13 @@ def check_token(*scopes):
             scope_key = current_app.config['DEPLOYER_TOKEN_SCOPE_KEY']
             if scope_key and not all(
                     s in auth.get(scope_key, []) for s in scopes):
-                logger.warn('Insufficient scope.',
-                            extra={'g': g, 'request': request.json(),
-                                   'scope_key': scope_key})
+                logger.warn(
+                    'Insufficient scope.',
+                    extra={
+                        'g': g,
+                        'request': {'headers': request.headers},
+                        'scope_key': scope_key
+                    })
                 raise Unauthorized('Insufficient scope.')
 
             return function(*args, **kwargs)

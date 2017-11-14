@@ -18,6 +18,7 @@
 """Contrib modules tests."""
 
 import json
+from collections import namedtuple
 
 import pytest
 import requests
@@ -33,18 +34,29 @@ from renga_deployer.utils import join_url
 r_get = requests.get
 r_post = requests.post
 
+Request = namedtuple('Request', ['body', 'headers', 'url'])
+
 
 class Response(object):
     """Fake response."""
 
-    def __init__(self, data, status_code):
+    def __init__(self, content, status_code, headers=None):
         """Initialize fake response object with a json."""
-        self.data = data
+        self.content = content
         self.status_code = status_code
+        self.headers = headers or {'header': 'some-header'}
 
     def json(self):
         """Return json."""
-        return self.data
+        return self.content
+
+    @property
+    def request(self):
+        """Return a fake request object."""
+        return Request(
+            body='1234',
+            headers={'header': 'some-header'},
+            url='http://example.com')
 
 
 #
