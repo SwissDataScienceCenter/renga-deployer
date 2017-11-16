@@ -68,7 +68,6 @@ def test_open_port(app, engine, deployer):
         'ports': [
             '9999',
         ],
-        'interactive': 'true'
     })
     execution = deployer.launch(context, engine=engine)
 

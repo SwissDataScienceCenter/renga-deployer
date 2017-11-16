@@ -77,8 +77,7 @@ class DockerEngine(Engine):
         context = execution.context
 
         if context.spec.get('ports'):
-            ports = {port: None for port in filter(
-                None, context.spec.get('ports'))}
+            ports = {port: None for port in context.spec.get('ports')}
         else:
             ports = None
 
@@ -195,7 +194,9 @@ class K8SEngine(Engine):
                    'execution': execution_schema.dump(execution).data,
                    'context': context_schema.dump(execution.context).data})
 
-        if context.spec.get('interactive'):
+        # assume that if the user specified a port to open, they want
+        # it available from the outside
+        if context.spec.get('ports'):
             # To expose an interactive job, we need to start a service.
             # We use the job controller-uid to link the service.
             api = self._kubernetes.client.CoreV1Api()
@@ -295,7 +296,7 @@ class K8SEngine(Engine):
         if context.spec.get('ports'):
             spec['containers'][0]['ports'] = [{
                 'containerPort': int(port)
-            } for port in filter(None, context.spec['ports'])]
+            } for port in context.spec['ports']]
 
         if context.spec.get('command'):
             command = shlex.split(context.spec['command'])

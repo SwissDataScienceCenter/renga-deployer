@@ -59,6 +59,8 @@ class Context(db.Model, Timestamp):
     @classmethod
     def create(cls, spec=None):
         """Create a new context."""
+        if 'ports' in spec:
+            spec['ports'] = list(filter(None, spec['ports']))
         context = cls(spec=spec, id=uuid.uuid4())
         return context
 
