@@ -38,10 +38,12 @@ def test_deployer_env_create(monkeypatch):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-@pytest.mark.parametrize('spec', [
-    {'image': 'hello-world'},
-    {'image': 'hello-world', 'ports': ['', '9999']},
-])
+@pytest.mark.parametrize('spec', [{
+    'image': 'hello-world'
+}, {
+    'image': 'hello-world',
+    'ports': ['', '9999']
+}])
 def test_execution_launch(app, engine, spec, deployer):
     """Test node launching."""
     context = deployer.create(spec)
@@ -56,13 +58,14 @@ def test_execution_launch(app, engine, spec, deployer):
 
 
 @pytest.mark.parametrize('engine', ['docker', 'k8s'])
-def test_open_port(app, engine, deployer):
+@pytest.mark.parametrize('image', ['alpine', 'alpine:latest'])
+def test_open_port(app, engine, image, deployer):
     """Test that engines make a port available."""
     from renga_deployer.utils import resource_available
 
     context = deployer.create({
         'image':
-        'alpine',
+        image,
         'command':
         'sh -c "mkfifo /tmp/f; cat /tmp/f | nc -l -p 9999 > /tmp/f"',
         'ports': [

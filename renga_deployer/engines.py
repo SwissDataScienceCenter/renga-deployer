@@ -19,6 +19,7 @@
 
 import logging
 import os
+import re
 import shlex
 import time
 
@@ -332,7 +333,7 @@ class K8SEngine(Engine):
             'apiVersion': 'v1',
             'kind': 'Service',
             'metadata': {
-                'generateName': context.spec['image'].replace('/', '-'),
+                'generateName': re.sub('[^\w]+', '-', context.spec['image']),
                 'namespace': namespace,
                 'labels': {
                     'job-uid': "{0}".format(uid)
