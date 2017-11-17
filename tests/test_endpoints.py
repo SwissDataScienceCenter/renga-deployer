@@ -21,7 +21,7 @@ import json
 
 import pytest
 from flask import Flask
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import BadRequest
 
 from renga_deployer import RengaDeployer
 from renga_deployer.ext import current_deployer
@@ -172,3 +172,6 @@ def test_context_get(app, auth_header):
             headers=auth_header)
         assert resp.status_code == 200
         assert context == json.loads(resp.data)
+
+        resp = client.get('v1/contexts/0', headers=auth_header)
+        assert resp.status_code == 400

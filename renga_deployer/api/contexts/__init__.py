@@ -18,13 +18,16 @@
 """Implement ``/contexts`` endpoint."""
 
 import json
+import uuid
 
 from flask import current_app, request
+from werkzeug.exceptions import BadRequest
 
 from renga_deployer.authorization import check_token
 from renga_deployer.ext import current_deployer
 from renga_deployer.models import Context
 from renga_deployer.serializers import ContextSchema
+from renga_deployer.utils import validate_uuid
 
 context_schema = ContextSchema()
 contexts_schema = ContextSchema(many=True)
@@ -39,8 +42,10 @@ def search():
 @check_token('deployer:contexts_read')
 def get(context_id):
     """Return information about a specific context."""
-    context = Context.query.get_or_404(context_id)
-    return context_schema.dump(context).data, 200
+    if validate_uuid(context_id):
+        context = Context.query.get_or_404(context_id)
+        return context_schema.dump(context).data, 200
+    raise BadRequest('context_id must be a UUID string')
 
 
 @check_token('deployer:contexts_read', 'deployer:contexts_write')

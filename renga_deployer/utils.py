@@ -18,6 +18,7 @@
 """Utility functions."""
 
 import time
+import uuid
 from functools import wraps
 
 from werkzeug.datastructures import MultiDict
@@ -70,3 +71,13 @@ def dict_from_labels(labels, separator='='):
     return MultiDict((
         (label[0].strip(), label[1].strip()) for label in (
             raw.split(separator, 1) for raw in labels)))
+
+
+def validate_uuid(s, version=4):
+    """Check that a string is a valid UUID."""
+    try:
+        uid = uuid.UUID(s, version=version)
+    except ValueError:
+        return False
+
+    return s == str(uid)
