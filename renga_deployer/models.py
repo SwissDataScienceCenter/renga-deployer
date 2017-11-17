@@ -61,6 +61,12 @@ class Context(db.Model, Timestamp):
         """Create a new context."""
         if 'ports' in spec:
             spec['ports'] = list(filter(None, spec['ports']))
+
+        # Fix an unexpected behaviour of the python docker client which
+        # leads to all images being downloaded when no tag is specified.
+        if ':' not in spec['image']:
+            spec['image'] += ':latest'
+
         context = cls(spec=spec, id=uuid.uuid4())
         return context
 
