@@ -22,6 +22,7 @@ import sys
 from urllib.parse import urlparse
 
 import connexion
+import pkg_resources
 from connexion.resolver import RestyResolver
 from flask import jsonify, request
 from flask_babelex import Babel
@@ -31,6 +32,12 @@ from sqlalchemy_utils import functions
 from . import config, logging
 from .ext import RengaDeployer
 from .models import db
+
+try:
+    pkg_resources.get_distribution('raven')
+    from raven.contrib.flask import Sentry
+except pkg_resources.DistributionNotFound:  # pragma: no cover
+    Sentry = None
 
 logger = logging.getLogger('renga.deployer.app')
 
@@ -47,6 +54,10 @@ def create_app(**kwargs):
     deployer_url = urlparse(api.app.config.get('DEPLOYER_URL'))
     api.app.config.setdefault('DEPLOYER_HOST', deployer_url.netloc)
     api.app.config.setdefault('DEPLOYER_SCHEME', deployer_url.scheme)
+
+    # Setup Sentry service:
+    if Sentry and api.app.config['SENTRY_DSN']:  # pragma: no cover
+        Sentry(api.app, dsn=api.app.config['SENTRY_DSN'])
 
     api.add_api(
         'renga-deployer-v1.yaml',

@@ -50,6 +50,7 @@ extras_require = {
     ],
     'logging': [
         'python-logstash-async>=1.3.1',
+        'raven[flask]>=6.3.0',
     ],
 }
 

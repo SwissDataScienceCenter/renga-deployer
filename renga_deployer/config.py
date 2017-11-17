@@ -86,6 +86,9 @@ RENGA_AUTHORIZATION_CLIENT_ID = None
 RENGA_LOGGING_CONFIG = None
 """Logging configuration file path."""
 
+SENTRY_DSN = None
+"""The default Sentry environment variable key."""
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///deployer.db'
 """The URI of the database to be used for preserving internal state."""
 
