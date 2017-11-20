@@ -280,6 +280,57 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
                 engine]().get_execution_environment(execution)
 
 
+def test_missing_kg_endpoint(kg_app, auth_header, kg_requests, monkeypatch):
+    """Test that missing the mutation service is handled gracefully."""
+    mutation_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
+                            '/mutation/mutation')
+    token_url = current_app.config['DEPLOYER_TOKEN_URL']
+
+    def kg_post(*args, **kwargs):
+        """Override requests.post for KG urls."""
+        if mutation_url in args[0]:
+            """Override /api/mutation/mutation."""
+            return Response({}, 404)
+        elif token_url in args[0]:
+            """Override fetching access tokens."""
+            return Response({'access_token': '1234'}, 200)
+
+    monkeypatch.setattr(requests, 'post', kg_post)
+
+    with kg_app.test_client() as client:
+        resp = client.post(
+            'v1/contexts',
+            data=json.dumps({
+                'image': 'hello-world',
+                'namespace': 'default'
+            }),
+            content_type='application/json',
+            headers=auth_header)
+
+    assert resp.status_code == 504
+
+    def kg_get(*args, **kwargs):
+        """Overrides requests.get for KG URLs."""
+        named_type_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
+                                  '/types/management/named_type')
+        if named_type_url in args[0]:
+            return Response({}, 404)
+
+    monkeypatch.setattr(requests, 'get', kg_get)
+
+    with kg_app.test_client() as client:
+        resp = client.post(
+            'v1/contexts',
+            data=json.dumps({
+                'image': 'hello-world',
+                'namespace': 'default'
+            }),
+            content_type='application/json',
+            headers=auth_header)
+
+    assert resp.status_code == 504
+
+
 def test_rm_extension(app, keypair, monkeypatch):
     """Test that the extension is added."""
     from renga_deployer.contrib.resource_manager import ResourceManager

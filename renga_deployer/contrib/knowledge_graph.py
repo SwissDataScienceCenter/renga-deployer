@@ -23,10 +23,11 @@ import time
 import uuid
 
 import requests
-from flask import current_app, request
+from flask import abort, current_app, request
 from sqlalchemy.types import Integer
 from sqlalchemy_utils.types import JSONType, UUIDType
 from werkzeug.exceptions import InternalServerError
+from werkzeug.wrappers import Response
 
 from renga_deployer.deployer import context_created, execution_created, \
     execution_launched
@@ -106,10 +107,15 @@ class KnowledgeGraphSync(object):
                 'Authorization': 'Bearer {}'.format(service_access_token)
             }
 
-            self._named_types = requests.get(
+            response = requests.get(
                 join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                          'types/management/named_type'),
-                headers=headers).json()
+                headers=headers)
+            if not 200 <= response.status_code < 300:
+                logger.error('Retrieving types failed.')
+                raise RuntimeError('Retrieving types failed.')
+            else:
+                self._named_types = response.json()
         return self._named_types
 
 
@@ -123,7 +129,10 @@ def create_context(context, service_access_token=None):
             client_secret=current_app.config[
                 'RENGA_AUTHORIZATION_CLIENT_SECRET'])
 
-    operations = [vertex_operation(context, temp_id=0)]
+    try:
+        operations = [vertex_operation(context, temp_id=0)]
+    except RuntimeError:
+        abort(Response('Vertex operation failed.', 504))
 
     # link the context to a project if a project_id is provided
     project_id = request.headers.get('Renga-Projects-Project')
@@ -172,9 +181,11 @@ def create_execution(execution, token=None, service_access_token=None):
             client_secret=current_app.config[
                 'RENGA_AUTHORIZATION_CLIENT_SECRET'])
 
-    operations = [
-        vertex_operation(execution, temp_id=0),
-    ]
+    try:
+        operations = [vertex_operation(execution, temp_id=0)]
+    except RuntimeError:
+        abort(Response('Vertex operation failed.', 504))
+
     operations.append({
         'type': 'create_edge',
         'element': {
@@ -317,9 +328,10 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
         json={'operations': operations},
         headers=headers)
 
-    if 'uuid' not in response.json():
+    if not 200 <= response.status_code < 300 and 'uuid' not in response.json():
         logger.warn(
             'Mutation request failed.', extra={'response': response.json()})
+        abort(Response('Mutation service failed.', status=504))
 
     uuid = response.json().get('uuid')
 
@@ -334,9 +346,7 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
             completed = response['status'] == 'completed'
             # sleep for 200 miliseconds
             time.sleep(0.2)
-
-        return response
-    return uuid
+    return response
 
 
 def get_service_access_token(token_url, audience, client_id, client_secret):
