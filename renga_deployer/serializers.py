@@ -37,6 +37,7 @@ class ContextSchema(Schema):
     identifier = fields.UUID(attribute='id', dump_only=True)
     spec = fields.Nested(SpecificationSchema)
     jwt = fields.Dict(load_only=True)
+    created = fields.DateTime(attribute='created', dump_only=True)
 
     @post_dump(pass_many=True)
     def add_envelope(self, data, many):
@@ -56,10 +57,11 @@ class ExecutionSchema(Schema):
 
     identifier = fields.UUID(attribute='id', dump_only=True)
     engine = fields.String(required=True)
-    namespace = fields.String(default='default')
     environment = fields.Dict()
     engine_id = fields.String(load_only=True)
     jwt = fields.Dict(load_only=True)
+    namespace = fields.String(default='default')
+    created = fields.DateTime(attribute='created', dump_only=True)
 
     @post_dump(pass_many=True)
     def add_envelope(self, data, many):
