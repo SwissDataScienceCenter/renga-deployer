@@ -20,8 +20,10 @@
 import time
 import uuid
 from functools import wraps
+from inspect import signature
 
 from werkzeug.datastructures import MultiDict
+from werkzeug.exceptions import BadRequest
 
 
 def decode_bytes(func):
@@ -81,3 +83,22 @@ def validate_uuid(s, version=4):
         return False
 
     return s == str(uid)
+
+
+def validate_uuid_args(*names):
+    """Check that input arguments are valid UUIDs."""
+    def decorator(func):
+        if not all([name in signature(func).parameters for name in names]):
+            raise TypeError('Argument names must match function signature')
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            """Check the input arguments and return."""
+            uuid_check = {name: validate_uuid(kwargs[name]) for name in names}
+            if all(uuid_check.values()):
+                return func(*args, **kwargs)
+            raise BadRequest('Argument {} is not a valid uuid'.format(
+                ','.join(
+                    [name for name in names if not uuid_check[name]])))
+        return wrapper
+    return decorator

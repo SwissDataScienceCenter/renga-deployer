@@ -21,12 +21,14 @@ from renga_deployer.authorization import check_token
 from renga_deployer.ext import current_deployer
 from renga_deployer.models import Context, Execution
 from renga_deployer.serializers import ExecutionSchema
+from renga_deployer.utils import validate_uuid_args
 
 execution_schema = ExecutionSchema()
 executions_schema = ExecutionSchema(many=True)
 
 
 @check_token('deployer:contexts_read', 'deployer:executions_read')
+@validate_uuid_args('context_id')
 def search(context_id):
     """Return currently stored ``Executions`` of a given context."""
     return executions_schema.dump(
@@ -34,6 +36,7 @@ def search(context_id):
 
 
 @check_token('deployer:contexts_read', 'deployer:executions_read')
+@validate_uuid_args('context_id', 'execution_id')
 def get(context_id, execution_id):
     """Return information about a specific ``Execution``."""
     execution = Execution.query.get_or_404(execution_id)
@@ -42,6 +45,7 @@ def get(context_id, execution_id):
 
 
 @check_token('deployer:contexts_read', 'deployer:executions_write')
+@validate_uuid_args('context_id')
 def post(context_id, data):
     """Create a new ``Execution`` for a given context."""
     context = Context.query.get_or_404(context_id)
@@ -50,6 +54,7 @@ def post(context_id, data):
 
 
 @check_token
+@validate_uuid_args('context_id', 'execution_id')
 def logs(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)
@@ -58,6 +63,7 @@ def logs(context_id, execution_id):
 
 
 @check_token
+@validate_uuid_args('context_id', 'execution_id')
 def ports(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)
@@ -66,6 +72,7 @@ def ports(context_id, execution_id):
 
 
 @check_token
+@validate_uuid_args('context_id', 'execution_id')
 def delete(context_id, execution_id):
     """Retrieve execution logs."""
     execution = Execution.query.get_or_404(execution_id)

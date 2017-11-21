@@ -171,11 +171,22 @@ def test_context_get(app, auth_header):
             client.get('v1/contexts', headers=auth_header).data)
         assert context in listing['contexts']
 
+        # 1. we get back the same context
         resp = client.get(
             'v1/contexts/{0}'.format(context['identifier']),
             headers=auth_header)
         assert resp.status_code == 200
         assert context == json.loads(resp.data)
 
+        # 2. we fail with bad request if context id is not a uuid
         resp = client.get('v1/contexts/0', headers=auth_header)
         assert resp.status_code == 400
+
+        # 3. we fail if the decorator is incorrectly configured
+        from renga_deployer.utils import validate_uuid_args
+
+        with pytest.raises(TypeError):
+            @validate_uuid_args('bad_arg')
+            def testfunc(arg):
+                return arg
+            testfunc('val')
