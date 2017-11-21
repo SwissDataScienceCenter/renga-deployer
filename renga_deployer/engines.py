@@ -82,12 +82,14 @@ class DockerEngine(Engine):
         else:
             ports = None
 
-        if context.spec['image'].split(':')[1] == 'latest':
-            # always pull images tagged latest
-            self.client.images.pull(context.spec['image'])
+        # Fix an unexpected behaviour of the python docker client which
+        # leads to all images being downloaded when no tag is specified.
+        image = context.spec['image']
+        if ':' not in image:
+            image += ':latest'
 
         container = self.client.containers.run(
-            image=context.spec['image'],
+            image=image,
             ports=ports,
             command=context.spec.get('command'),
             detach=True,
@@ -166,10 +168,11 @@ class K8SEngine(Engine):
         self.config = config
 
         if self.config is None:
-            self.config = kubernetes.config.load_kube_config()
+            kubernetes.config.load_kube_config()
+            self.config = kubernetes.config.kube_config.Configuration()
             self.logger.debug(
                 'Loaded k8s configuration.',
-                extra=kubernetes.config.kube_config.configuration.__dict__)
+                extra=self.config.__dict__)
 
     @cached_property
     def logger(self):
