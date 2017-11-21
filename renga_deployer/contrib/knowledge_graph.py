@@ -132,6 +132,7 @@ def create_context(context, service_access_token=None):
     try:
         operations = [vertex_operation(context, temp_id=0)]
     except RuntimeError:
+        db.session.rollback()
         abort(Response('Vertex operation failed.', 504))
 
     # link the context to a project if a project_id is provided
@@ -184,6 +185,7 @@ def create_execution(execution, token=None, service_access_token=None):
     try:
         operations = [vertex_operation(execution, temp_id=0)]
     except RuntimeError:
+        db.session.rollback()
         abort(Response('Vertex operation failed.', 504))
 
     operations.append({
