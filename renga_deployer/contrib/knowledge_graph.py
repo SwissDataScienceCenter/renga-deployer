@@ -144,12 +144,12 @@ def create_context(context, service_access_token=None):
             'element': {
                 'label': 'project:is_part_of',
                 'from': {
-                    'type': 'persisted_vertex',
-                    'id': int(project_id)
-                },
-                'to': {
                     'type': 'new_vertex',
                     'id': 0
+                },
+                'to': {
+                    'type': 'persisted_vertex',
+                    'id': int(project_id)
                 }
             }
         })
