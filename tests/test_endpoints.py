@@ -150,6 +150,18 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
             'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
                                                     execution['identifier']),
             headers=auth_header)
+
+        # 7. check that retrieving the context executions still works after
+        #    deletion of the execution
+        listing = json.loads(
+            client.get(
+                'v1/contexts/{0}/executions'.format(context['identifier']),
+                headers=auth_header).data)
+
+        assert execution['identifier'] in [
+            e['identifier'] for e in listing['executions']
+        ]
+
         if engine == 'docker':
             import docker
             client = docker.from_env()
