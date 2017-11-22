@@ -96,3 +96,7 @@ class Deployer(object):
     def get_state(self, execution):
         """Fetch the status of a running job."""
         return self.ENGINES[execution.engine]().get_state(execution)
+
+    def has_started(self, execution):
+        """Check whether the execution has started."""
+        return self.ENGINES[execution.engine]().has_started(execution)

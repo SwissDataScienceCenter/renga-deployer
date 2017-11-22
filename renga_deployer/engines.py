@@ -58,6 +58,14 @@ class Engine(object):
         """Retrieve the environment specified for an execution container."""
         raise NotImplemented
 
+    def get_state(self, execution):
+        """Check the state of an execution."""
+        raise NotImplemented
+
+    def has_started(self, execution):
+        """Check whether the execution has started."""
+        return self.get_state(execution) in {'exited', 'running', 'terminated'}
+
 
 class DockerEngine(Engine):
     """Class for deploying contexts on docker."""
@@ -98,9 +106,11 @@ class DockerEngine(Engine):
         self.logger.info(
             'Launched container for execution {1} of context {0}'.format(
                 execution.id, context.id),
-            extra={'container_attrs': container.attrs,
-                   'execution': execution_schema.dump(execution).data,
-                   'context': context_schema.dump(execution.context).data})
+            extra={
+                'container_attrs': container.attrs,
+                'execution': execution_schema.dump(execution).data,
+                'context': context_schema.dump(execution.context).data
+            })
 
         execution.engine_id = container.id
 
@@ -116,17 +126,24 @@ class DockerEngine(Engine):
         self.logger.info(
             'Stopped execution {0} of context {1}'.format(
                 execution.id, execution.context.id),
-            extra={'container_attrs': container.attrs,
-                   'execution': execution_schema.dump(execution).data,
-                   'context': context_schema.dump(execution.context).data})
+            extra={
+                'container_attrs': container.attrs,
+                'execution': execution_schema.dump(execution).data,
+                'context': context_schema.dump(execution.context).data
+            })
 
     def get_logs(self, execution):
         """Extract logs for a container."""
+        if not self.has_started(execution):
+            return 'Execution has not started yet.'
         return decode_bytes(
             self.client.containers.get(execution.engine_id).logs)()
 
     def get_host_ports(self, execution):
         """Returns host ip and port bindings for the running execution."""
+        if 'running' != self.get_state(execution):
+            return {'ports': []}
+
         container = self.client.containers.get(execution.engine_id)
         port_bindings = container.attrs['NetworkSettings'].get('Ports', {})
         return {
@@ -199,9 +216,11 @@ class K8SEngine(Engine):
         self.logger.info(
             'Created job for execution {0} of context {1}'.format(
                 execution.id, execution.context.id),
-            extra={'job': job.to_dict(),
-                   'execution': execution_schema.dump(execution).data,
-                   'context': context_schema.dump(execution.context).data})
+            extra={
+                'job': job.to_dict(),
+                'execution': execution_schema.dump(execution).data,
+                'context': context_schema.dump(execution.context).data
+            })
 
         # assume that if the user specified a port to open, they want
         # it available from the outside
@@ -272,10 +291,13 @@ class K8SEngine(Engine):
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        self.logger.info('Deleted namespaced job for execution {}'.format(
-            execution.engine_id), extra={
+        self.logger.info(
+            'Deleted namespaced job for execution {}'.format(
+                execution.engine_id),
+            extra={
                 'execution': execution_schema.dump(execution).data,
-                'context': context_schema.dump(execution.context).data})
+                'context': context_schema.dump(execution.context).data
+            })
 
         api.delete_collection_namespaced_pod(
             execution.namespace,
@@ -292,10 +314,14 @@ class K8SEngine(Engine):
         pod = api.list_namespaced_pod(
             execution.namespace,
             label_selector='controller-uid={}'.format(
-                execution.engine_id)).items[0]
+                execution.engine_id))
+
+        if not pod.items:
+            return 'unavailable'
+
         status = list(
             filter(lambda c: c.name == str(execution.context.id),
-                   pod.status.container_statuses))[0]
+                   pod.items[0].status.container_statuses))[0]
 
         return list(
             filter(lambda x: x[1], status.state.to_dict().items()))[0][0]
@@ -374,8 +400,8 @@ class K8SEngine(Engine):
         }
 
     @staticmethod
-    def _k8s_ingress_template(
-            uid, service_name, service_port):  # pragma no cover
+    def _k8s_ingress_template(uid, service_name,
+                              service_port):  # pragma no cover
         """Return kubernetes ingress JSON."""
         return {
             'apiVersion': 'extensions/v1beta1',
@@ -399,6 +425,9 @@ class K8SEngine(Engine):
 
         :params execution: Instance of ``ExecutionEnvironment``
         """
+        if not self.has_started(execution):
+            return 'Execution has not started yet.'
+
         api = self._kubernetes.client.CoreV1Api()
         namespace = execution.namespace
 
@@ -427,8 +456,8 @@ class K8SEngine(Engine):
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        if not service.items:
-            # this service doesn't exist
+        if not service.items or self.get_state(execution) != 'running':
+            # this service doesn't exist or job isn't running yet
             return {'ports': []}
 
         else:

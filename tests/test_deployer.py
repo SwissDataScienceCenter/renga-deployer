@@ -52,6 +52,11 @@ def test_execution_launch(app, engine, spec, deployer):
     assert isinstance(context, Context)
     assert isinstance(execution, Execution)
     assert execution.engine == engine
+    state = deployer.get_state(execution)
+
+    while True:
+        if deployer.has_started(execution):
+            break
     assert 'Hello from Docker!' in deployer.get_logs(execution)
 
     deployer.stop(execution, remove=True)

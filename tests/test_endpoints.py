@@ -134,6 +134,12 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
         ]
 
         # 5. get the logs of an execution
+        while True:
+            if b'Execution has not started yet.' != client.get(
+                    'v1/contexts/{0}/executions/{1}/logs'.format(
+                        context['identifier'], execution['identifier']),
+                    headers=auth_header).data:
+                break
         assert b'Hello from Docker!' in client.get(
             'v1/contexts/{0}/executions/{1}/logs'.format(
                 context['identifier'], execution['identifier']),
