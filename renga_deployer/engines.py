@@ -155,6 +155,14 @@ class DockerEngine(Engine):
                 v) in [e.split('=') for e in container.attrs['Config']['Env']]
         }
 
+    def get_state(self, execution):
+        """Return the status of an execution."""
+        import docker
+        try:
+            return self.client.containers.get(execution.engine_id).status
+        except docker.errors.NotFound:
+            return 'unavailable'
+
 
 class K8SEngine(Engine):
     """Class for deploying contexts on Kubernetes."""
@@ -171,8 +179,7 @@ class K8SEngine(Engine):
             kubernetes.config.load_kube_config()
             self.config = kubernetes.config.kube_config.Configuration()
             self.logger.debug(
-                'Loaded k8s configuration.',
-                extra=self.config.__dict__)
+                'Loaded k8s configuration.', extra=self.config.__dict__)
 
     @cached_property
     def logger(self):
@@ -231,7 +238,7 @@ class K8SEngine(Engine):
         api = self._kubernetes.client.CoreV1Api()
         batch = self._kubernetes.client.BatchV1Api()
 
-        if execution.context.spec.get('interactive'):
+        if execution.context.spec.get('ports'):
             service = api.list_namespaced_service(
                 execution.namespace,
                 label_selector='job-uid={0}'.format(
@@ -278,6 +285,20 @@ class K8SEngine(Engine):
             execution.engine_id))
 
         return execution
+
+    def get_state(self, execution):
+        """Get status of a running job."""
+        api = self._kubernetes.client.CoreV1Api()
+        pod = api.list_namespaced_pod(
+            execution.namespace,
+            label_selector='controller-uid={}'.format(
+                execution.engine_id)).items[0]
+        status = list(
+            filter(lambda c: c.name == str(execution.context.id),
+                   pod.status.container_statuses))[0]
+
+        return list(
+            filter(lambda x: x[1], status.state.to_dict().items()))[0][0]
 
     @staticmethod
     def _k8s_job_template(namespace, execution):

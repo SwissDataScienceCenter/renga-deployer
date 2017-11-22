@@ -22,6 +22,7 @@ from collections import namedtuple
 
 from flask import g, has_request_context
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.types import String
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 
@@ -56,17 +57,14 @@ class Context(db.Model, Timestamp):
         default=load_jwt)
     """JWT with which the context has been created."""
 
+    creator = db.Column(String)
+    """Creator of the context."""
+
     @classmethod
     def create(cls, spec=None):
         """Create a new context."""
         if 'ports' in spec:
             spec['ports'] = list(filter(None, spec['ports']))
-
-        # Fix an unexpected behaviour of the python docker client which
-        # leads to all images being downloaded when no tag is specified.
-        if ':' not in spec['image']:
-            spec['image'] += ':latest'
-
         context = cls(spec=spec, id=uuid.uuid4())
         return context
 

@@ -120,14 +120,18 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
             headers=auth_header)
 
         assert resp.status_code == 200
-        assert execution == json.loads(resp.data)
+        assert all(
+            list(execution[k] == v for k, v in json.loads(resp.data).items()
+                 if k != 'state'))
 
         listing = json.loads(
             client.get(
                 'v1/contexts/{0}/executions'.format(context['identifier']),
                 headers=auth_header).data)
 
-        assert execution in listing['executions']
+        assert execution['identifier'] in [
+            e['identifier'] for e in listing['executions']
+        ]
 
         # 5. get the logs of an execution
         assert b'Hello from Docker!' in client.get(

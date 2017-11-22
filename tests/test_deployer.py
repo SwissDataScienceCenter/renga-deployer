@@ -84,5 +84,8 @@ def test_open_port(app, engine, image, deployer):
     s.send(phrase)
     received = s.recv(100)
     assert received == phrase
+
+    state = deployer.get_state(execution)
+    assert state == 'running'
     deployer.stop(execution, remove=True)
     s.close()

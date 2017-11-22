@@ -92,3 +92,7 @@ class Deployer(object):
     def get_host_ports(self, execution):
         """Fetch hostname and ports for the running execution."""
         return self.ENGINES[execution.engine]().get_host_ports(execution)
+
+    def get_state(self, execution):
+        """Fetch the status of a running job."""
+        return self.ENGINES[execution.engine]().get_state(execution)

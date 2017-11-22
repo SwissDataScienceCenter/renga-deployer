@@ -17,7 +17,8 @@
 # limitations under the License.
 """Model serializers."""
 
-from marshmallow import Schema, fields, post_dump, post_load
+from flask import current_app
+from marshmallow import Schema, fields, post_dump, post_load, pre_dump
 
 from .models import Context, Execution
 
@@ -62,6 +63,15 @@ class ExecutionSchema(Schema):
     jwt = fields.Dict(load_only=True)
     namespace = fields.String(default='default')
     created = fields.DateTime(attribute='created', dump_only=True)
+    state = fields.String(dump_only=True)
+
+    @pre_dump
+    def get_state(self, data):
+        """Get state of an execution."""
+        if data.engine_id:
+            data.state = current_app.extensions[
+                'renga-deployer'].deployer.get_state(data)
+        return data
 
     @post_dump(pass_many=True)
     def add_envelope(self, data, many):
@@ -72,5 +82,5 @@ class ExecutionSchema(Schema):
 
     @post_load
     def make_execution(self, data):
-        """Create a context."""
+        """Create an execution."""
         return Execution(**data)
