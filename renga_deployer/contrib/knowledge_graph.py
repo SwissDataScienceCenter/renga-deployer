@@ -157,7 +157,7 @@ def create_context(context, service_access_token=None):
     response = mutation(
         operations,
         wait_for_response=True,
-        service_access_token=service_access_token)
+        service_access_token=service_access_token).json()
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -166,7 +166,7 @@ def create_context(context, service_access_token=None):
             0, 'renga.execution_context.vertex_id={0}'.format(vertex_id))
         db.session.add(GraphContext(id=vertex_id, context=context))
     else:
-        logger.error('Mutation failed.', extra={'response': response.json()})
+        logger.error('Mutation failed.', extra={'response': response})
         raise InternalServerError('Adding vertex and/or edge failed')
 
 
@@ -206,7 +206,7 @@ def create_execution(execution, token=None, service_access_token=None):
     response = mutation(
         operations,
         wait_for_response=True,
-        service_access_token=service_access_token)
+        service_access_token=service_access_token).json()
 
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
@@ -344,8 +344,8 @@ def mutation(operations, wait_for_response=False, service_access_token=None):
                 join_url(
                     knowledge_graph_url,
                     '/mutation/mutation/{uuid}'.format(uuid=uuid)),
-                headers=headers).json()
-            completed = response['status'] == 'completed'
+                headers=headers)
+            completed = response.json()['status'] == 'completed'
             # sleep for 200 miliseconds
             time.sleep(0.2)
     return response
