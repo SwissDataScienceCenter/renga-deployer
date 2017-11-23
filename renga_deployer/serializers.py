@@ -23,13 +23,23 @@ from marshmallow import Schema, fields, post_dump, post_load, pre_dump
 from .models import Context, Execution
 
 
+class VolumeSchema(Schema):
+    """Volume schema."""
+
+    hostPath = fields.Dict()
+    name = fields.String()
+
+
 class SpecificationSchema(Schema):
     """Specification schema."""
 
     image = fields.String()
     ports = fields.List(fields.String)
     labels = fields.List(fields.String)
-    interactive = fields.Boolean()
+    resources = fields.Dict()
+    volumeMounts = fields.List(fields.Dict)
+    volumes = fields.Dict()
+    env = fields.List(fields.Dict)
 
 
 class ContextSchema(Schema):
