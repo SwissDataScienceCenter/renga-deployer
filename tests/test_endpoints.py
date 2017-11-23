@@ -135,10 +135,12 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
 
         # 5. get the logs of an execution
         while True:
-            if b'Execution has not started yet.' != client.get(
-                    'v1/contexts/{0}/executions/{1}/logs'.format(
+            resp = client.get(
+                    'v1/contexts/{0}/executions/{1}'.format(
                         context['identifier'], execution['identifier']),
-                    headers=auth_header).data:
+                    headers=auth_header)
+            assert resp.status_code == 200
+            if json.loads(resp.data)['state'] in {'running', 'exited'}:
                 break
         assert b'Hello from Docker!' in client.get(
             'v1/contexts/{0}/executions/{1}/logs'.format(
@@ -167,7 +169,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
                 context['identifier'], execution['identifier']),
             headers=auth_header)
 
-        assert resp.data == b'unavailable'
+        assert resp.status_code == 404
 
         resp = client.get(
             'v1/contexts/{0}/executions/{1}/ports'.format(

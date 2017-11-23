@@ -66,12 +66,13 @@ class ExecutionSchema(Schema):
     state = fields.String(dump_only=True)
 
     @pre_dump
-    def get_state(self, data):
+    def get_state(self, execution):
         """Get state of an execution."""
-        if data.engine_id:
-            data.state = current_app.extensions[
-                'renga-deployer'].deployer.get_state(data)
-        return data
+        if execution.engine_id:
+            execution.state = current_app.extensions[
+                'renga-deployer'].deployer.ENGINES[
+                    execution.engine]().get_state(execution).value
+        return execution
 
     @post_dump(pass_many=True)
     def add_envelope(self, data, many):

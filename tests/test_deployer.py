@@ -24,7 +24,7 @@ import pytest
 from flask import Flask
 
 from renga_deployer.deployer import Deployer
-from renga_deployer.models import Context, Execution
+from renga_deployer.models import Context, Execution, ExecutionStates
 
 
 def test_deployer_env_create(monkeypatch):
@@ -52,12 +52,11 @@ def test_execution_launch(app, engine, spec, deployer):
     assert isinstance(context, Context)
     assert isinstance(execution, Execution)
     assert execution.engine == engine
-    state = deployer.get_state(execution)
 
     while True:
-        if deployer.get_state(execution) in {
-                'running', 'exited', 'terminated'
-        }:
+        if execution.check_state(
+            [ExecutionStates.RUNNING,
+             ExecutionStates.EXITED], deployer.ENGINES[engine]()):
             break
     assert 'Hello from Docker!' in deployer.get_logs(execution)
 
@@ -82,17 +81,19 @@ def test_open_port(app, engine, image, deployer):
     execution = deployer.launch(context, engine=engine)
 
     # connect to the job and do send/receive
-    time.sleep(20)  # FIXME
+    while True:
+        if execution.check_state(ExecutionStates.RUNNING,
+                                 deployer.ENGINES[engine]()):
+            break
+    time.sleep(5)
     binding = deployer.get_host_ports(execution)['ports'][0]
-    timein = time.time()
     s = socket.socket()
     s.connect((binding['host'], int(binding['exposed'])))
     phrase = b'earth_calling'
     s.send(phrase)
     received = s.recv(100)
     assert received == phrase
-
-    state = deployer.get_state(execution)
-    assert state == 'running'
+    assert execution.check_state(ExecutionStates.RUNNING,
+                                 deployer.ENGINES[engine]())
     deployer.stop(execution, remove=True)
     s.close()

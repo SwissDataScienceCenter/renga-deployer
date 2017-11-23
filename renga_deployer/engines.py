@@ -22,34 +22,20 @@ import os
 import re
 import shlex
 import time
+from enum import Enum
 from functools import wraps
 
-from flask import current_app
+from flask import abort, current_app
+from werkzeug.exceptions import NotFound
 from werkzeug.utils import cached_property
 
 from renga_deployer.serializers import ContextSchema, ExecutionSchema
 
-from .models import Execution
+from .models import Execution, ExecutionStates
 from .utils import decode_bytes, resource_available
 
 context_schema = ContextSchema()
 execution_schema = ExecutionSchema()
-
-
-def check_state(func):
-    """Check if the execution is available."""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        """Wraps the func."""
-        obj = args[0]
-        execution = args[1]
-        state = obj.get_state(execution)
-        if state == 'unavailable':
-            return state
-        elif state not in {'running', 'exited', 'terminated'}:
-            return 'Execution has not started yet.'
-        return func(*args, **kwargs)
-    return wrapper
 
 
 class Engine(object):
@@ -83,6 +69,19 @@ class Engine(object):
 class DockerEngine(Engine):
     """Class for deploying contexts on docker."""
 
+    class EXECUTION_STATE_MAPPING(Enum):
+        """State mappings for the Docker engine."""
+
+        running = ExecutionStates.RUNNING
+        exited = ExecutionStates.EXITED
+        restarting = ExecutionStates.UNAVAILABLE
+        paused = ExecutionStates.UNAVAILABLE
+
+    def __init__(self):
+        """Initialize the docker engine."""
+        import docker
+        self._docker = docker
+
     @cached_property
     def logger(self):
         """Create a logger instance."""
@@ -91,8 +90,7 @@ class DockerEngine(Engine):
     @cached_property
     def client(self):
         """Create a docker client from local environment."""
-        import docker
-        return docker.from_env()
+        return self._docker.from_env()
 
     def launch(self, execution, **kwargs):
         """Launch a docker container with the context image."""
@@ -145,15 +143,18 @@ class DockerEngine(Engine):
                 'context': context_schema.dump(execution.context).data
             })
 
-    @check_state
     def get_logs(self, execution):
         """Extract logs for a container."""
-        return decode_bytes(
-            self.client.containers.get(execution.engine_id).logs)()
+        try:
+            return decode_bytes(
+                self.client.containers.get(execution.engine_id).logs)()
+        except self._docker.errors.NotFound:
+            # FIXME: implement proper exception handling and propagation
+            raise NotFound('Execution container not found.')
 
     def get_host_ports(self, execution):
         """Returns host ip and port bindings for the running execution."""
-        if 'running' != self.get_state(execution):
+        if not execution.check_state(ExecutionStates.RUNNING, self):
             return {'ports': []}
 
         container = self.client.containers.get(execution.engine_id)
@@ -170,8 +171,8 @@ class DockerEngine(Engine):
                 'exposed':
                 host_spec['HostPort'],
             }
-                for container_port, host_specs in port_bindings.items()
-                for host_spec in host_specs],
+                      for container_port, host_specs in port_bindings.items()
+                      for host_spec in host_specs],
         }
 
     def get_execution_environment(self, execution) -> dict:
@@ -186,15 +187,23 @@ class DockerEngine(Engine):
 
     def get_state(self, execution):
         """Return the status of an execution."""
-        import docker
         try:
-            return self.client.containers.get(execution.engine_id).status
-        except docker.errors.NotFound:
-            return 'unavailable'
+            return getattr(
+                self.__class__.EXECUTION_STATE_MAPPING,
+                self.client.containers.get(execution.engine_id).status).value
+        except self._docker.errors.NotFound:
+            return ExecutionStates.UNAVAILABLE
 
 
 class K8SEngine(Engine):
     """Class for deploying contexts on Kubernetes."""
+
+    class EXECUTION_STATE_MAPPING(Enum):
+        """State mappings for the K8S engine."""
+
+        running = ExecutionStates.RUNNING
+        terminated = ExecutionStates.EXITED
+        waiting = ExecutionStates.UNAVAILABLE
 
     def __init__(self, config=None, timeout=10):
         """Create a K8SNode instance."""
@@ -266,6 +275,10 @@ class K8SEngine(Engine):
 
     def stop(self, execution, remove=False):
         """Stop a running job."""
+        if not execution.check_state(
+                {ExecutionStates.RUNNING, ExecutionStates.EXITED}, self):
+            return execution
+
         api = self._kubernetes.client.CoreV1Api()
         batch = self._kubernetes.client.BatchV1Api()
 
@@ -311,12 +324,14 @@ class K8SEngine(Engine):
                 'context': context_schema.dump(execution.context).data
             })
 
-        api.delete_collection_namespaced_pod(
-            execution.namespace,
-            label_selector='controller-uid={0}'.format(execution.engine_id))
+        if remove:
+            api.delete_collection_namespaced_pod(
+                execution.namespace,
+                label_selector='controller-uid={0}'.format(
+                    execution.engine_id))
 
-        self.logger.info('Deleted namespaced pod for execution {}'.format(
-            execution.engine_id))
+            self.logger.info('Deleted namespaced pod for execution {}'.format(
+                execution.engine_id))
 
         return execution
 
@@ -325,18 +340,19 @@ class K8SEngine(Engine):
         api = self._kubernetes.client.CoreV1Api()
         pod = api.list_namespaced_pod(
             execution.namespace,
-            label_selector='controller-uid={}'.format(
-                execution.engine_id))
+            label_selector='controller-uid={}'.format(execution.engine_id))
 
         if not pod.items:
-            return 'unavailable'
+            return ExecutionStates.UNAVAILABLE
 
         status = list(
-            filter(lambda c: c.name == str(execution.context.id),
-                   pod.items[0].status.container_statuses))[0]
+            filter(lambda c: c.name == str(execution.context.id), pod.items[0]
+                   .status.container_statuses))[0]
 
-        return list(
-            filter(lambda x: x[1], status.state.to_dict().items()))[0][0]
+        return getattr(
+            self.__class__.EXECUTION_STATE_MAPPING,
+            list(filter(lambda x: x[1], status.state.to_dict().items()))[0][
+                0]).value
 
     @staticmethod
     def _k8s_job_template(namespace, execution):
@@ -432,7 +448,6 @@ class K8SEngine(Engine):
             }
         }
 
-    @check_state
     def get_logs(self, execution, timeout=None, **kwargs):
         """Extract logs for the Job from the Pod."""
         api = self._kubernetes.client.CoreV1Api()
@@ -442,8 +457,11 @@ class K8SEngine(Engine):
             namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        timein = time.time()
+        if not pod.items:
+            # FIXME: implement proper exception handling and propagation
+            raise NotFound('Execution container not found.')
 
+        timein = time.time()
         while not resource_available(api.read_namespaced_pod_log)(
                 pod.items[0].metadata.name, namespace):
             if time.time() - timein > (timeout or self.timeout):
@@ -463,7 +481,8 @@ class K8SEngine(Engine):
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
 
-        if not service.items or self.get_state(execution) != 'running':
+        if not service.items or not execution.check_state(
+                ExecutionStates.RUNNING, self):
             # this service doesn't exist or job isn't running yet
             return {'ports': []}
 
@@ -489,6 +508,10 @@ class K8SEngine(Engine):
         job = client.list_namespaced_job(
             execution.namespace,
             label_selector='controller-uid={0}'.format(execution.engine_id))
+        if not job.items:
+            # FIXME: implement proper exception handling and propagation
+            raise NotFound('Execution container not found.')
+
         return {
             e.name: e.value
             for e in job.items[0].spec.template.spec.containers[0].env

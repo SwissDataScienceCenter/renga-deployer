@@ -19,6 +19,7 @@
 
 import uuid
 from collections import namedtuple
+from enum import Enum
 
 from flask import g, has_request_context
 from flask_sqlalchemy import SQLAlchemy
@@ -34,6 +35,14 @@ def load_jwt():
     """Load JWT from a context."""
     if has_request_context():
         return g.jwt
+
+
+class ExecutionStates(Enum):
+    """Valid execution states."""
+
+    RUNNING = 'running'
+    EXITED = 'exited'
+    UNAVAILABLE = 'unavailable'
 
 
 class Context(db.Model, Timestamp):
@@ -116,3 +125,11 @@ class Execution(db.Model, Timestamp):
         kwargs['environment']['RENGA_CONTEXT_ID'] = str(context.id)
         execution = cls(context=context, **kwargs)
         return execution
+
+    def check_state(self, states, engine):
+        """Check whether the execution is in one of the specified states."""
+        if isinstance(states, ExecutionStates):
+            states = {states}
+        if not isinstance(states, set):
+            states = set(states)
+        return engine.get_state(self) in states
