@@ -162,6 +162,20 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
             e['identifier'] for e in listing['executions']
         ]
 
+        resp = client.get(
+            'v1/contexts/{0}/executions/{1}/logs'.format(
+                context['identifier'], execution['identifier']),
+            headers=auth_header)
+
+        assert resp.data == b'unavailable'
+
+        resp = client.get(
+            'v1/contexts/{0}/executions/{1}/ports'.format(
+                context['identifier'], execution['identifier']),
+            headers=auth_header)
+
+        assert json.loads(resp.data)['ports'] == []
+
         if engine == 'docker':
             import docker
             client = docker.from_env()
@@ -204,7 +218,9 @@ def test_context_get(app, auth_header):
         from renga_deployer.utils import validate_uuid_args
 
         with pytest.raises(TypeError):
+
             @validate_uuid_args('bad_arg')
             def testfunc(arg):
                 return arg
+
             testfunc('val')

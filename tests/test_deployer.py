@@ -55,7 +55,9 @@ def test_execution_launch(app, engine, spec, deployer):
     state = deployer.get_state(execution)
 
     while True:
-        if deployer.has_started(execution):
+        if deployer.get_state(execution) in {
+                'running', 'exited', 'terminated'
+        }:
             break
     assert 'Hello from Docker!' in deployer.get_logs(execution)
 

@@ -22,6 +22,7 @@ import os
 import re
 import shlex
 import time
+from functools import wraps
 
 from flask import current_app
 from werkzeug.utils import cached_property
@@ -33,6 +34,22 @@ from .utils import decode_bytes, resource_available
 
 context_schema = ContextSchema()
 execution_schema = ExecutionSchema()
+
+
+def check_state(func):
+    """Check if the execution is available."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        """Wraps the func."""
+        obj = args[0]
+        execution = args[1]
+        state = obj.get_state(execution)
+        if state == 'unavailable':
+            return state
+        elif state not in {'running', 'exited', 'terminated'}:
+            return 'Execution has not started yet.'
+        return func(*args, **kwargs)
+    return wrapper
 
 
 class Engine(object):
@@ -61,10 +78,6 @@ class Engine(object):
     def get_state(self, execution):
         """Check the state of an execution."""
         raise NotImplemented
-
-    def has_started(self, execution):
-        """Check whether the execution has started."""
-        return self.get_state(execution) in {'exited', 'running', 'terminated'}
 
 
 class DockerEngine(Engine):
@@ -132,10 +145,9 @@ class DockerEngine(Engine):
                 'context': context_schema.dump(execution.context).data
             })
 
+    @check_state
     def get_logs(self, execution):
         """Extract logs for a container."""
-        if not self.has_started(execution):
-            return 'Execution has not started yet.'
         return decode_bytes(
             self.client.containers.get(execution.engine_id).logs)()
 
@@ -420,14 +432,9 @@ class K8SEngine(Engine):
             }
         }
 
+    @check_state
     def get_logs(self, execution, timeout=None, **kwargs):
-        """Extract logs for the Job from the Pod.
-
-        :params execution: Instance of ``ExecutionEnvironment``
-        """
-        if not self.has_started(execution):
-            return 'Execution has not started yet.'
-
+        """Extract logs for the Job from the Pod."""
         api = self._kubernetes.client.CoreV1Api()
         namespace = execution.namespace
 
