@@ -211,7 +211,7 @@ def create_execution(execution, token=None, service_access_token=None):
     if response['response']['event']['status'] == 'success':
         vertex_id = response['response']['event']['results'][0]['id']
     else:
-        logger.error('Mutation failed.', extra={'response': response.json()})
+        logger.error('Mutation failed.', extra={'response': response})
         raise InternalServerError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))
