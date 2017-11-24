@@ -87,6 +87,41 @@ def kg_app(base_app):
         base_app.extensions['renga-knowledge-graph-sync'].disconnect()
 
 
+named_type_response = Response([{
+    'name':
+    'context',
+    'properties': [{
+        'name': 'context_id',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }, {
+        'name': 'context_spec_image',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }, {
+        'name': 'context_spec_ports',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }]
+}, {
+    'name':
+    'execution',
+    'properties': [{
+        'name': 'execution_id',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }, {
+        'name': 'execution_engine',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }, {
+        'name': 'execution_namespace',
+        'data_type': 'string',
+        'cardinality': 'single'
+    }]
+}], 200)
+
+
 @pytest.fixture()
 def kg_requests(monkeypatch):
     """Monkeypatch requests to immitate the KnowledgeGraph."""
@@ -125,39 +160,7 @@ def kg_requests(monkeypatch):
 
         elif named_type_url in args[0]:
             """Override /api/types/management/named_type."""
-            return Response([{
-                'name':
-                'context',
-                'properties': [{
-                    'name': 'context_id',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }, {
-                    'name': 'context_spec_image',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }, {
-                    'name': 'context_spec_ports',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }]
-            }, {
-                'name':
-                'execution',
-                'properties': [{
-                    'name': 'execution_id',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }, {
-                    'name': 'execution_engine',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }, {
-                    'name': 'execution_namespace',
-                    'data_type': 'string',
-                    'cardinality': 'single'
-                }]
-            }], 200)
+            return named_type_response
         else:
             return r_get(*args, **kwargs)
 
@@ -309,16 +312,13 @@ def test_missing_kg_endpoint(kg_app, auth_header, kg_requests, monkeypatch):
 
     assert resp.status_code == 504
 
-    def kg_get(*args, **kwargs):
-        """Overrides requests.get for KG URLs."""
-        named_type_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
-                                  '/types/management/named_type')
-        if named_type_url in args[0]:
-            return Response({}, 404)
 
-    monkeypatch.setattr(requests, 'get', kg_get)
-
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_failed_mutation(kg_app, auth_header, kg_requests, monkeypatch,
+                         engine):
+    """Test response to mutation failure."""
     with kg_app.test_client() as client:
+        # 1. test context creation
         resp = client.post(
             'v1/contexts',
             data=json.dumps({
@@ -328,7 +328,57 @@ def test_missing_kg_endpoint(kg_app, auth_header, kg_requests, monkeypatch):
             content_type='application/json',
             headers=auth_header)
 
-    assert resp.status_code == 504
+        context = json.loads(resp.data)
+
+    mutation_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
+                            '/mutation/mutation')
+    named_type_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
+                              '/types/management/named_type')
+
+    def kg_get_failed(*args, **kwargs):
+        """Overrides requests.get for KG URLs."""
+        if mutation_url in args[0]:
+            """Override /api/mutation/mutation/uuid."""
+            return Response({
+                'status': 'completed',
+                'response': {
+                    'event': {
+                        'status': 'failed',
+                        'results': [{
+                            'id': 1234
+                        }]
+                    }
+                }
+            }, 200)
+        elif named_type_url in args[0]:
+            """Override /api/types/management/named_type."""
+            return named_type_response
+        else:
+            return r_get(*args, **kwargs)
+
+    monkeypatch.setattr(requests, 'get', kg_get_failed)
+
+    # 2. test failure due to failed mutation
+    with kg_app.test_client() as client:
+        resp = client.post(
+            'v1/contexts',
+            data=json.dumps({
+                'image': 'hello-world',
+                'namespace': 'default'
+            }),
+            content_type='application/json',
+            headers=auth_header)
+        assert resp.status_code == 500
+
+        # 2. test failure during execution creation
+        resp = client.post(
+            'v1/contexts/{0}/executions'.format(context['identifier']),
+            data=json.dumps({
+                'engine': engine
+            }),
+            content_type='application/json',
+            headers=auth_header)
+        assert resp.status_code == 500
 
 
 def test_rm_extension(app, keypair, monkeypatch):

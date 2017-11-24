@@ -23,13 +23,6 @@ from marshmallow import Schema, fields, post_dump, post_load, pre_dump
 from .models import Context, Execution
 
 
-class VolumeSchema(Schema):
-    """Volume schema."""
-
-    hostPath = fields.Dict()
-    name = fields.String()
-
-
 class SpecificationSchema(Schema):
     """Specification schema."""
 
@@ -38,7 +31,7 @@ class SpecificationSchema(Schema):
     labels = fields.List(fields.String)
     resources = fields.Dict()
     volumeMounts = fields.List(fields.Dict)
-    volumes = fields.Dict()
+    volumes = fields.List(fields.Dict)
     env = fields.List(fields.Dict)
 
 

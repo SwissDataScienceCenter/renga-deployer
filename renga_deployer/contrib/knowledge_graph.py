@@ -167,6 +167,7 @@ def create_context(context, service_access_token=None):
         db.session.add(GraphContext(id=vertex_id, context=context))
     else:
         logger.error('Mutation failed.', extra={'response': response})
+        db.session.rollback()
         raise InternalServerError('Adding vertex and/or edge failed')
 
 
@@ -212,6 +213,7 @@ def create_execution(execution, token=None, service_access_token=None):
         vertex_id = response['response']['event']['results'][0]['id']
     else:
         logger.error('Mutation failed.', extra={'response': response})
+        db.session.rollback()
         raise InternalServerError('Adding vertex and/or edge failed')
 
     db.session.add(GraphExecution(id=vertex_id, execution=execution))

@@ -136,9 +136,9 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
         # 5. get the logs of an execution
         while True:
             resp = client.get(
-                    'v1/contexts/{0}/executions/{1}'.format(
-                        context['identifier'], execution['identifier']),
-                    headers=auth_header)
+                'v1/contexts/{0}/executions/{1}'.format(
+                    context['identifier'], execution['identifier']),
+                headers=auth_header)
             assert resp.status_code == 200
             if json.loads(resp.data)['state'] in {'running', 'exited'}:
                 break
@@ -226,3 +226,64 @@ def test_context_get(app, auth_header):
                 return arg
 
             testfunc('val')
+
+
+@pytest.mark.parametrize('engine', ['docker', 'k8s'])
+def test_extended_spec(app, engine, no_auth_connexion, auth_data, auth_header):
+    """Test extra spec options."""
+    if engine == 'docker':
+        # not implemented for docker yet
+        return
+
+    spec = {
+        'image': 'hello-world',
+        'env': [{
+            'name': 'MY_ENV',
+            'value': '1234'
+        }],
+        'volumes': [{
+            'hostPath': {
+                'path': '/1234'
+            },
+            'name': '5678'
+        }],
+        'volumeMounts': [{
+            'mountPath': '/1234',
+            'name': '5678'
+        }]
+    }
+
+    with app.test_client() as client:
+        # 1. create a context
+        resp = client.post(
+            'v1/contexts',
+            data=json.dumps(spec),
+            content_type='application/json',
+            headers=auth_header)
+
+        assert resp.status_code == 201
+        context = json.loads(resp.data)
+        assert all(
+            x in context['spec']
+            for x in ['env', 'volumes', 'volumeMounts'])
+
+        assert spec == context['spec']
+
+        # 2. create the execution
+        resp = client.post(
+            'v1/contexts/{0}/executions'.format(context['identifier']),
+            data=json.dumps({
+                'engine': engine
+            }),
+            content_type='application/json',
+            headers=auth_header)
+
+        assert resp.status_code == 201
+
+        execution = json.loads(resp.data)
+
+        # 6. remove the execution from the engine
+        client.delete(
+            'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
+                                                    execution['identifier']),
+            headers=auth_header)

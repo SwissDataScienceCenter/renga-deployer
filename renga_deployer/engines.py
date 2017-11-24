@@ -65,12 +65,6 @@ class Engine(object):
         """Check the state of an execution."""
         raise NotImplemented
 
-    @cached_property
-    def logger(self):
-        """Create a logger instance."""
-        return logging.getLogger(
-            'renga.deployer.engines.{}'.format(self.__class__))
-
 
 class DockerEngine(Engine):
     """Class for deploying contexts on docker."""
@@ -87,6 +81,11 @@ class DockerEngine(Engine):
         """Initialize the docker engine."""
         import docker
         self._docker = docker
+
+    @cached_property
+    def logger(self):
+        """Create a logger instance."""
+        return logging.getLogger('renga.deployer.engines.docker')
 
     @cached_property
     def client(self):
@@ -220,10 +219,10 @@ class K8SEngine(Engine):
             self.logger.debug(
                 'Loaded k8s configuration.', extra=self.config.__dict__)
 
-    # @cached_property
-    # def logger(self):
-    #     """Create a logger instance."""
-    #     return logging.getLogger('renga.deployer.engines.k8s')
+    @cached_property
+    def logger(self):
+        """Create a logger instance."""
+        return logging.getLogger('renga.deployer.engines.k8s')
 
     def launch(self, execution, engine=None, **kwargs):
         """Launch a Kubernetes Job with the context spec."""
@@ -389,12 +388,12 @@ class K8SEngine(Engine):
             'value': str(v)
         } for k, v in execution.environment.items()]
 
+        spec['containers'][0]['env'] += context.spec.get('env', [])
+
         spec['containers'][0]['volumeMounts'] = context.spec.get(
             'volumeMounts', [])
 
         spec['volumes'] = context.spec.get('volumes', [])
-
-        spec['env'] = context.spec.get('env', [])
 
         # finalize job template
         template = {
