@@ -332,6 +332,19 @@ definitions:
         items:
           type: "string"
         default: []
+      volumes:
+        type: "array"
+        items:
+          type: "object"
+      volumeMounts:
+        type: "array"
+        items:
+          type: "object"
+      env:
+        type: "array"
+        items:
+          type: "object"
+        example: [{"name": "ENV_VAR", "value": "1234"}]
 
   Context:
     type: "object"
