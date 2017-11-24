@@ -32,6 +32,7 @@ class SpecificationSchema(Schema):
     resources = fields.Dict()
     volumeMounts = fields.List(fields.Dict)
     volumes = fields.List(fields.Dict)
+    resources = fields.Dict()
     env = fields.List(fields.Dict)
 
 

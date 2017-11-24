@@ -31,7 +31,7 @@ from werkzeug.utils import cached_property
 
 from renga_deployer.serializers import ContextSchema, ExecutionSchema
 
-from .models import Execution, ExecutionStates
+from .models import Context, Execution, ExecutionStates
 from .utils import decode_bytes, resource_available
 
 context_schema = ContextSchema()
@@ -287,32 +287,34 @@ class K8SEngine(Engine):
         if execution.context.spec.get('ports'):
             service = api.list_namespaced_service(
                 execution.namespace,
-                label_selector='job-uid={0}'.format(
-                    execution.engine_id)).items[0]
+                label_selector='job-uid={0}'.format(execution.engine_id))
 
-            api.delete_namespaced_service(
-                service.metadata.name,
-                execution.namespace, )
-
-            self.logger.info(
-                'Deleted namespaced service {}'.format(service.metadata.name),
-                extra={'service': service.to_dict()})
-
-            if current_app.config.get(
-                    'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
-                beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
-                ingress = beta_api.list_namespaced_ingress(
-                    execution.namespace,
-                    label_selector='job-uid={0}'.format(
-                        execution.engine_id)).items[0]
-                beta_api.delete_namespaced_ingress(
-                    ingress.metadata.name, execution.namespace,
-                    self._kubernetes.client.V1DeleteOptions())
+            if service.items:
+                service = service.items[0]
+                api.delete_namespaced_service(
+                    service.metadata.name,
+                    execution.namespace, )
 
                 self.logger.info(
-                    'Deleted namespaced ingress {0} for service {1}'.format(
-                        ingress.metadata.uid, service.metadata.name),
-                    extra={'ingress': ingress.to_dict()})
+                    'Deleted namespaced service {}'.format(
+                        service.metadata.name),
+                    extra={'service': service.to_dict()})
+
+                if current_app.config.get(
+                        'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
+                    beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
+                    ingress = beta_api.list_namespaced_ingress(
+                        execution.namespace,
+                        label_selector='job-uid={0}'.format(
+                            execution.engine_id)).items[0]
+                    beta_api.delete_namespaced_ingress(
+                        ingress.metadata.name, execution.namespace,
+                        self._kubernetes.client.V1DeleteOptions())
+
+                    self.logger.info(
+                        'Deleted namespaced ingress {0} for service {1}'.
+                        format(ingress.metadata.uid, service.metadata.name),
+                        extra={'ingress': ingress.to_dict()})
 
         batch.delete_collection_namespaced_job(
             execution.namespace,
@@ -361,24 +363,25 @@ class K8SEngine(Engine):
         """Return simple kubernetes job JSON."""
         # required spec
         context = execution.context
+        context_spec = context.spec.copy()
 
         spec = {
             "containers": [{
                 "name": "{0}".format(context.id),
-                "image": "{0}".format(context.spec['image'])
+                "image": "{0}".format(context_spec.pop('image'))
             }],
             "restartPolicy":
             "Never"
         }
 
         # optional spec
-        if context.spec.get('ports'):
+        if context_spec.get('ports'):
             spec['containers'][0]['ports'] = [{
                 'containerPort': int(port)
-            } for port in context.spec['ports']]
+            } for port in context_spec.pop('ports')]
 
-        if context.spec.get('command'):
-            command = shlex.split(context.spec['command'])
+        if context_spec.get('command'):
+            command = shlex.split(context_spec.pop('command'))
             spec['containers'][0]['command'] = [command[0]]
             if len(command) > 1:
                 spec['containers'][0]['args'] = command[1:]
@@ -388,12 +391,11 @@ class K8SEngine(Engine):
             'value': str(v)
         } for k, v in execution.environment.items()]
 
-        spec['containers'][0]['env'] += context.spec.get('env', [])
+        spec['containers'][0]['env'] += context_spec.pop('env', [])
+        spec['volumes'] = context_spec.pop('volumes', [])
 
-        spec['containers'][0]['volumeMounts'] = context.spec.get(
-            'volumeMounts', [])
-
-        spec['volumes'] = context.spec.get('volumes', [])
+        # add all other stuff to spec
+        spec['containers'][0].update(context_spec)
 
         # finalize job template
         template = {

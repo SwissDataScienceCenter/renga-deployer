@@ -345,6 +345,8 @@ definitions:
         items:
           type: "object"
         example: [{"name": "ENV_VAR", "value": "1234"}]
+      resources:
+        type: "object"
 
   Context:
     type: "object"
