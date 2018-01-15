@@ -295,6 +295,8 @@ paths:
                       type: "string"
                     exposed:
                       type: "string"
+                    path:
+                      type: "string"
         '400':
           description: Invalid ID supplied
         '404':

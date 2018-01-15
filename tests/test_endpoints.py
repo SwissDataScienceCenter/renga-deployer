@@ -18,6 +18,7 @@
 """Module tests."""
 
 import json
+import time
 
 import pytest
 from flask import Flask
@@ -86,7 +87,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
 
         assert resp.status_code == 201
 
-        context = json.loads(resp.data)
+        context = json.loads(resp.data.decode())
         assert context
         assert 'identifier' in context
 
@@ -101,7 +102,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
 
         assert resp.status_code == 201
 
-        execution = json.loads(resp.data)
+        execution = json.loads(resp.data.decode())
         assert execution
         assert 'identifier' in execution
 
@@ -111,7 +112,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
             headers=auth_header)
 
         assert resp.status_code == 200
-        assert json.loads(resp.data)['executions']
+        assert json.loads(resp.data.decode())['executions']
 
         # 4. get the details of an execution of a context
         resp = client.get(
@@ -121,13 +122,17 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
 
         assert resp.status_code == 200
         assert all(
-            list(execution[k] == v for k, v in json.loads(resp.data).items()
-                 if k != 'state'))
+            list(
+                execution[k] == v
+                for k, v in json.loads(resp.data.decode()).items()
+                if k != 'state'
+            )
+        )
 
         listing = json.loads(
             client.get(
                 'v1/contexts/{0}/executions'.format(context['identifier']),
-                headers=auth_header).data)
+                headers=auth_header).data.decode())
 
         assert execution['identifier'] in [
             e['identifier'] for e in listing['executions']
@@ -140,7 +145,8 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
                     context['identifier'], execution['identifier']),
                 headers=auth_header)
             assert resp.status_code == 200
-            if json.loads(resp.data)['state'] in {'running', 'exited'}:
+            if json.loads(
+                    resp.data.decode())['state'] in {'running', 'exited'}:
                 break
         assert b'Hello from Docker!' in client.get(
             'v1/contexts/{0}/executions/{1}/logs'.format(
@@ -148,6 +154,14 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
             headers=auth_header).data
 
         # 6. remove the execution from the engine
+        time.sleep(5)
+        client.delete(
+            'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
+                                                    execution['identifier']),
+            headers=auth_header)
+
+        # try a second time, it shouldn't fail
+        time.sleep(5)
         client.delete(
             'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
                                                     execution['identifier']),
@@ -158,7 +172,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
         listing = json.loads(
             client.get(
                 'v1/contexts/{0}/executions'.format(context['identifier']),
-                headers=auth_header).data)
+                headers=auth_header).data.decode())
 
         assert execution['identifier'] in [
             e['identifier'] for e in listing['executions']
@@ -176,7 +190,7 @@ def test_context_execution(app, engine, no_auth_connexion, auth_data,
                 context['identifier'], execution['identifier']),
             headers=auth_header)
 
-        assert json.loads(resp.data)['ports'] == []
+        assert json.loads(resp.data.decode())['ports'] == []
 
         if engine == 'docker':
             import docker
@@ -199,10 +213,10 @@ def test_context_get(app, auth_header):
                 'v1/contexts',
                 data=json.dumps(data),
                 content_type='application/json',
-                headers=auth_header).data)
+                headers=auth_header).data.decode())
 
         listing = json.loads(
-            client.get('v1/contexts', headers=auth_header).data)
+            client.get('v1/contexts', headers=auth_header).data.decode())
         assert context in listing['contexts']
 
         # 1. we get back the same context
@@ -210,7 +224,7 @@ def test_context_get(app, auth_header):
             'v1/contexts/{0}'.format(context['identifier']),
             headers=auth_header)
         assert resp.status_code == 200
-        assert context == json.loads(resp.data)
+        assert context == json.loads(resp.data.decode())
 
         # 2. we fail with bad request if context id is not a uuid
         resp = client.get('v1/contexts/0', headers=auth_header)
@@ -262,7 +276,7 @@ def test_extended_spec(app, engine, no_auth_connexion, auth_data, auth_header):
             headers=auth_header)
 
         assert resp.status_code == 201
-        context = json.loads(resp.data)
+        context = json.loads(resp.data.decode())
         assert all(
             x in context['spec']
             for x in ['env', 'volumes', 'volumeMounts'])
@@ -280,9 +294,17 @@ def test_extended_spec(app, engine, no_auth_connexion, auth_data, auth_header):
 
         assert resp.status_code == 201
 
-        execution = json.loads(resp.data)
+        execution = json.loads(resp.data.decode())
 
         # 6. remove the execution from the engine
+        time.sleep(5)
+        client.delete(
+            'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
+                                                    execution['identifier']),
+            headers=auth_header)
+
+        # try a second time, it shouldn't fail
+        time.sleep(5)
         client.delete(
             'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
                                                     execution['identifier']),

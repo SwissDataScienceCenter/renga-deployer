@@ -21,7 +21,9 @@ import socket
 import time
 
 import pytest
+import requests
 from flask import Flask
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from renga_deployer.deployer import Deployer
 from renga_deployer.models import Context, Execution, ExecutionStates
@@ -67,7 +69,6 @@ def test_execution_launch(app, engine, spec, deployer):
 @pytest.mark.parametrize('image', ['alpine', 'alpine:latest'])
 def test_open_port(app, engine, image, deployer):
     """Test that engines make a port available."""
-    from renga_deployer.utils import resource_available
 
     context = deployer.create({
         'image':
@@ -85,15 +86,69 @@ def test_open_port(app, engine, image, deployer):
         if execution.check_state(ExecutionStates.RUNNING,
                                  deployer.ENGINES[engine]()):
             break
-    time.sleep(5)
-    binding = deployer.get_host_ports(execution)['ports'][0]
+    time.sleep(10)
     s = socket.socket()
-    s.connect((binding['host'], int(binding['exposed'])))
-    phrase = b'earth_calling'
-    s.send(phrase)
-    received = s.recv(100)
-    assert received == phrase
-    assert execution.check_state(ExecutionStates.RUNNING,
-                                 deployer.ENGINES[engine]())
-    deployer.stop(execution, remove=True)
-    s.close()
+    try:
+        binding = deployer.get_host_ports(execution)['ports'][0]
+        s.connect((binding['host'], int(binding['exposed'])))
+        phrase = b'earth_calling'
+        s.send(phrase)
+        received = s.recv(100)
+        assert received == phrase
+        assert execution.check_state(ExecutionStates.RUNNING,
+                                     deployer.ENGINES[engine]())
+    except Exception as e:
+        raise e
+
+    finally:
+        deployer.stop(execution, remove=True)
+        s.close()
+
+
+@pytest.mark.parametrize('engine', ['k8s'])
+@pytest.mark.parametrize('image', ['nginx'])
+def test_open_ingress(app, engine, image, deployer):
+    """Test that k8s ingress is correctly deployed and accessible."""
+
+    app.config['DEPLOYER_K8S_INGRESS'] = 'nginx'
+
+    context = deployer.create({
+        'image':
+        image,
+        'ports': [
+            '80',
+        ],
+    })
+    execution = deployer.launch(context, engine=engine)
+
+    # connect to the job and do send/receive
+    while True:
+        if execution.check_state(ExecutionStates.RUNNING,
+                                 deployer.ENGINES[engine]()):
+            break
+
+    s = socket.socket()
+    try:
+
+        while not deployer.get_host_ports(execution)['ports'][0]['host']:
+            time.sleep(1)
+
+        binding = deployer.get_host_ports(execution)['ports'][0]
+        time.sleep(5)
+        with pytest.warns(InsecureRequestWarning):
+            response = requests.get("https://{}:{}{}".format(
+                binding['host'],
+                binding['exposed'],
+                binding['path']
+            ), verify=False)
+
+        assert response.status_code == 404
+        assert b'nginx' in response.content
+        assert execution.check_state(ExecutionStates.RUNNING,
+                                     deployer.ENGINES[engine]())
+    except Exception as e:
+        raise e
+
+    finally:
+        deployer.stop(execution, remove=True)
+        s.close()

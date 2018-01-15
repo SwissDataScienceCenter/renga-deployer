@@ -62,8 +62,15 @@ DEPLOYER_JWT_ISSUER = 'http://localhost:8080/auth/realms/Renga'
 DEPLOYER_JWT_KEY = None
 """Public key used to verify JWT tokens."""
 
-DEPLOYER_K8S_USE_INGRESS = False
-"""Whether to use an ingress for reaching k8s endpoints."""
+DEPLOYER_K8S_INGRESS = None
+"""The class of the ingress controller, for example 'nginx',
+to be used for the endpoints. Set to None (default) or False
+to disable ingress"""
+
+DEPLOYER_DEFAULT_BASE_URL = '/'
+"""The default base url that is passed inside the deployed container
+ via the DEPLOYER_BASE_URL environment variable. If an ingress is enabled
+ in a K8S deployer, this variable is changed dynamically per execution."""
 
 DEPLOYER_TOKEN_SCOPE_KEY = None
 """Key inside JWT containing scopes.

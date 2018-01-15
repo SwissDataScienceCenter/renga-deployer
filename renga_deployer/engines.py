@@ -96,6 +96,11 @@ class DockerEngine(Engine):
         """Launch a docker container with the context image."""
         context = execution.context
 
+        execution.environment.setdefault(
+            'DEPLOYER_BASE_URL',
+            current_app.config.get('DEPLOYER_DEFAULT_BASE_URL')
+        )
+
         if context.spec.get('ports'):
             ports = {port: None for port in context.spec.get('ports')}
         else:
@@ -129,7 +134,13 @@ class DockerEngine(Engine):
 
     def stop(self, execution, remove=False):
         """Stop a running container, optionally removing it."""
-        container = self.client.containers.get(execution.engine_id)
+        from docker.errors import NotFound
+
+        try:
+            container = self.client.containers.get(execution.engine_id)
+        except NotFound:
+            return execution
+
         container.stop()
         if remove:
             container.remove()
@@ -143,6 +154,8 @@ class DockerEngine(Engine):
                 'context': context_schema.dump(execution.context).data
             })
 
+        return execution
+
     def get_logs(self, execution):
         """Extract logs for a container."""
         try:
@@ -153,7 +166,7 @@ class DockerEngine(Engine):
             raise NotFound('Execution container not found.')
 
     def get_host_ports(self, execution):
-        """Returns host ip and port bindings for the running execution."""
+        """Return host ip and port bindings for the running execution."""
         if not execution.check_state(ExecutionStates.RUNNING, self):
             return {'ports': []}
 
@@ -228,6 +241,13 @@ class K8SEngine(Engine):
         """Launch a Kubernetes Job with the context spec."""
         context = execution.context
 
+        execution.environment.setdefault(
+            'DEPLOYER_BASE_URL',
+            '/interactive/{0}'.format(execution.id)
+            if current_app.config.get('DEPLOYER_K8S_INGRESS')
+            else current_app.config.get('DEPLOYER_DEFAULT_BASE_URL')
+        )
+
         batch = self._kubernetes.client.BatchV1Api()
         namespace = kwargs.pop('namespace', 'default')
         job_spec = self._k8s_job_template(namespace, execution)
@@ -260,12 +280,11 @@ class K8SEngine(Engine):
 
             # if using an ingress, need to make an additional object
             if current_app.config.get(
-                    'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
+                    'DEPLOYER_K8S_INGRESS'):
                 beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
                 ingress = beta_api.create_namespaced_ingress(
                     namespace,
-                    self._k8s_ingress_template(uid, service.metadata.name,
-                                               context.spec['ports'][0]))
+                    self._k8s_ingress_template(uid, service, execution))
                 self.logger.info(
                     'Created ingress for service {}'.format(
                         service.metadata.name),
@@ -301,7 +320,7 @@ class K8SEngine(Engine):
                     extra={'service': service.to_dict()})
 
                 if current_app.config.get(
-                        'DEPLOYER_K8S_USE_INGRESS'):  # pragma no cover
+                        'DEPLOYER_K8S_INGRESS'):
                     beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
                     ingress = beta_api.list_namespaced_ingress(
                         execution.namespace,
@@ -439,23 +458,40 @@ class K8SEngine(Engine):
         }
 
     @staticmethod
-    def _k8s_ingress_template(uid, service_name,
-                              service_port):  # pragma no cover
+    def _k8s_ingress_template(uid, service, execution):
         """Return kubernetes ingress JSON."""
+        service_name = service.metadata.name
+        service_port = execution.context.spec['ports'][0]
         return {
             'apiVersion': 'extensions/v1beta1',
             'kind': 'Ingress',
             'metadata': {
                 'generateName': 'interactive',
+                'annotations': {
+                    'kubernetes.io/ingress.class': current_app.config.get(
+                        'DEPLOYER_K8S_INGRESS_CLASS'),
+                },
                 'labels': {
                     'job-uid': "{0}".format(uid)
                 }
             },
             'spec': {
-                'backend': {
-                    'serviceName': service_name,
-                    'servicePort': int(service_port)
-                }
+                'rules': [
+                    {
+                        'http': {
+                            'paths': [
+                                {
+                                    'path': '/interactive/{0}'.format(
+                                        execution.id),
+                                    'backend': {
+                                        'serviceName': service_name,
+                                        'servicePort': int(service_port)
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
         }
 
@@ -482,7 +518,7 @@ class K8SEngine(Engine):
                                            namespace)
 
     def get_host_ports(self, execution):
-        """Returns host ip and port bindings for the running execution."""
+        """Return host ip and port bindings for the running execution."""
         api = self._kubernetes.client.CoreV1Api()
         service = api.list_namespaced_service(
             execution.namespace,
@@ -498,6 +534,38 @@ class K8SEngine(Engine):
             return {'ports': []}
 
         else:
+            if current_app.config.get(
+                    'DEPLOYER_K8S_INGRESS'):
+
+                beta_api = self._kubernetes.client.ExtensionsV1beta1Api()
+                ingress = beta_api.list_namespaced_ingress(
+                    execution.namespace,
+                    label_selector='job-uid={0}'.format(
+                        execution.engine_id)).items[0]
+
+                if not ingress.status.load_balancer.ingress or \
+                        not ingress.status.load_balancer.ingress[0].ip:
+                    host = None
+
+                else:
+                    host = ingress.status.load_balancer.ingress[0].ip
+
+                return {
+                    'ports': [{
+                        'specified':
+                        port.port,
+                        'host':
+                        current_app.config[
+                            'DEPLOYER_K8S_CONTAINER_IP'] or host,
+                        'path':
+                        ingress.spec.rules[0].http.paths[0].path,
+                        'exposed':
+                        '443',
+                        'protocol':
+                        port.protocol,
+                    } for port in service.items[0].spec.ports]
+                }
+
             return {
                 'ports': [{
                     'specified':

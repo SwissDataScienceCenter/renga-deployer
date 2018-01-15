@@ -24,7 +24,6 @@ ci-start-minikube: ci-setup-minikube
 	sudo chown -R $$USER $$HOME/.minikube
 	sudo chgrp -R $$USER $$HOME/.minikube
 	sudo -E ./minikube update-context
-
-
+	sudo -E ./minikube addons enable ingress
 
 ci: ci-start-minikube

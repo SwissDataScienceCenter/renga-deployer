@@ -18,6 +18,7 @@
 """Contrib modules tests."""
 
 import json
+import time
 from collections import namedtuple
 
 import pytest
@@ -263,7 +264,7 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
             content_type='application/json',
             headers=auth_header)
 
-        context = json.loads(resp.data)
+        context = json.loads(resp.data.decode())
         assert 'labels' in context['spec']
         assert 'renga.execution_context.vertex_id=1234' in context['spec'][
             'labels']
@@ -276,11 +277,19 @@ def test_kg_handlers(kg_app, auth_header, kg_requests, engine):
             }),
             content_type='application/json',
             headers=auth_header)
-        execution = Execution.query.get(json.loads(resp.data)['identifier'])
+        execution = Execution.query.get(json.loads(
+            resp.data.decode())['identifier'])
 
         assert 'RENGA_VERTEX_ID' in current_app.extensions[
             'renga-deployer'].deployer.ENGINES[
                 engine]().get_execution_environment(execution)
+
+        # 3. cleanup jobs
+        time.sleep(5)
+        client.delete(
+            'v1/contexts/{0}/executions/{1}'.format(context['identifier'],
+                                                    execution.id),
+            headers=auth_header)
 
 
 def test_missing_kg_endpoint(kg_app, auth_header, kg_requests, monkeypatch):
@@ -328,7 +337,7 @@ def test_failed_mutation(kg_app, auth_header, kg_requests, monkeypatch,
             content_type='application/json',
             headers=auth_header)
 
-        context = json.loads(resp.data)
+        context = json.loads(resp.data.decode())
 
     mutation_url = join_url(current_app.config['KNOWLEDGE_GRAPH_URL'],
                             '/mutation/mutation')

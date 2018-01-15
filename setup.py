@@ -43,7 +43,7 @@ extras_require = {
     'docker': ['docker>=2.4.2'],
     'k8s': ['kubernetes>=4.0.0'],
     'postgresql': [
-        'psycopg2>=2.6.1',
+        'psycopg2>=2.7',
     ],
     'wsgi': [
         'uwsgi>=2.0.15',
